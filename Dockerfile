@@ -1,25 +1,28 @@
-# STAGE 1: FRONTEND
-FROM node:20-bullseye AS frontend-builder
-WORKDIR /app
-COPY frontend/package*.json ./
-RUN npm install
-COPY frontend/ .
-RUN npm run build
+# Use a single stage with full tools for maximum reliability
+FROM maven:3.9-eclipse-temurin-17
 
-# STAGE 2: BACKEND
-FROM maven:3.9-eclipse-temurin-17 AS backend-builder
-WORKDIR /app
-COPY backend/pom.xml .
-RUN mvn dependency:go-offline
-COPY backend/src ./src
-RUN mkdir -p src/main/resources/static
-COPY --from=frontend-builder /app/dist/ src/main/resources/static/
-RUN mvn clean package -DskipTests
+# 1. Install Node.js directly (needed for frontend)
+RUN apt-get update && apt-get install -y curl
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+RUN apt-get install -y nodejs
 
-# STAGE 3: RUNTIME
-FROM eclipse-temurin:17-jre-bullseye
 WORKDIR /app
-COPY --from=backend-builder /app/target/*.jar app.jar
-ENV PORT=8081
+
+# 2. Build Frontend
+COPY frontend/package*.json ./frontend/
+RUN cd frontend && npm install
+COPY frontend/ ./frontend/
+RUN cd frontend && npm run build
+
+# 3. Build Backend
+COPY backend/pom.xml ./backend/
+COPY backend/src ./backend/src
+RUN mkdir -p backend/src/main/resources/static
+RUN cp -r frontend/dist/* backend/src/main/resources/static/
+
+RUN cd backend && mvn clean package -DskipTests
+
+# 4. Runtime
 EXPOSE 8081
-CMD ["java", "-jar", "-Dserver.port=${PORT}", "app.jar"]
+ENV PORT=8081
+CMD ["java", "-jar", "backend/target/controle-alimentar-0.0.1-SNAPSHOT.jar", "--server.port=${PORT}"]
