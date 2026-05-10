@@ -1,5 +1,6 @@
 # STAGE 1: FRONTEND
-FROM node:18-alpine AS frontend-builder
+# Vite 6+ requer Node.js 20+ ou 22+
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 COPY frontend/package*.json ./
 RUN npm install
@@ -12,7 +13,7 @@ WORKDIR /app
 COPY backend/pom.xml .
 RUN mvn dependency:go-offline
 COPY backend/src ./src
-# Copy frontend build to spring static resources
+# Copia o build do frontend para os recursos estáticos do Spring
 RUN mkdir -p src/main/resources/static
 COPY --from=frontend-builder /app/dist/ src/main/resources/static/
 RUN mvn clean package -DskipTests
@@ -21,6 +22,7 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=backend-builder /app/target/*.jar app.jar
+# Render usa a variável PORT, o Spring vai escutar nela
 ENV PORT=8081
 EXPOSE 8081
 CMD ["java", "-jar", "app.jar"]
