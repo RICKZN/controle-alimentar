@@ -141,12 +141,27 @@ const onScanSuccess = async (decodedText) => {
 onMounted(() => {
   carregarEstoque();
   
-  html5QrcodeScanner = new Html5QrcodeScanner(
-    "reader",
-    { fps: 10, qrbox: { width: 250, height: 250 } },
-    /* verbose= */ false
-  );
-  html5QrcodeScanner.render(onScanSuccess, () => {});
+  // Inicialização mais robusta do scanner
+  setTimeout(() => {
+    try {
+      html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { 
+          fps: 10, 
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        },
+        /* verbose= */ false
+      );
+      html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {
+        // Erros de scan (não encontrou QR na imagem) são ignorados para não poluir
+      });
+    } catch (err) {
+      console.error("Falha ao iniciar scanner:", err);
+      mensagem.value = "Erro ao acessar câmera. Verifique as permissões.";
+      mensagemTipo.value = "error";
+    }
+  }, 500); // Pequeno delay para garantir que o DOM está pronto
 });
 
 onUnmounted(() => {
