@@ -1,468 +1,538 @@
 <template>
-  <div class="app-container">
-    <header>
-      <h1>Distribuição Alimentar</h1>
-      <p>Instituição Federal de Ensino - Controle de Estoque</p>
-    </header>
+  <div class="app-layout" :class="{ 'sidebar-open': isSidebarOpen }">
+    <!-- Overlay para mobile -->
+    <div v-if="isSidebarOpen" class="sidebar-overlay" @click="isSidebarOpen = false"></div>
 
-    <main class="dashboard">
-      <!-- Card de Estoque -->
-      <section class="card glass-effect estoque-section">
-        <h2>Estoque de Ingredientes</h2>
-        <div class="estoque-grid">
-          <div v-for="item in estoqueList" :key="item.id" class="estoque-item-card">
-            <div class="item-info">
-              <h3>{{ item.nome }}</h3>
-              <span class="unidade">Unidade: {{ item.unidade }}</span>
-            </div>
-            <div class="item-controls">
-              <button @click="ajustarEstoque(item.id, -1)" class="btn-adjust minus">-</button>
-              <div class="quantidade-display">
-                <span class="qtd-numero">{{ formatarQuantidade(item.quantidade) }}</span>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">CONTROLE<span>IF</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <button 
+          @click="currentTab = 'validacao'; isSidebarOpen = false" 
+          :class="{ active: currentTab === 'validacao' }"
+        >
+          <span class="icon">📷</span> Validação
+        </button>
+        <button 
+          @click="currentTab = 'estoque'; isSidebarOpen = false" 
+          :class="{ active: currentTab === 'estoque' }"
+        >
+          <span class="icon">📦</span> Estoque
+        </button>
+        <button 
+          @click="currentTab = 'geracao'; isSidebarOpen = false" 
+          :class="{ active: currentTab === 'geracao' }"
+        >
+          <span class="icon">🎟️</span> Gerar Fichas
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <p>v2.0 - Nuvem</p>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <button class="menu-toggle" @click="isSidebarOpen = true">☰</button>
+        <h1>{{ tabTitles[currentTab] }}</h1>
+        <div class="user-status">Online</div>
+      </header>
+
+      <div class="content-area">
+        <!-- TELA DE VALIDAÇÃO (QR CODE) -->
+        <div v-if="currentTab === 'validacao'" class="tab-pane">
+          <div class="scanner-container card glass-effect">
+            <div id="reader" class="scanner-preview"></div>
+            
+            <!-- Botão de Validação que aparece após o Scan -->
+            <div v-if="matriculaLida" class="validation-confirm-overlay">
+              <div class="confirm-card">
+                <h3>Estudante Detectado!</h3>
+                <div class="matricula-badge">{{ matriculaLida }}</div>
+                <button @click="confirmarValidacao" class="btn btn-validate pulse">VALIDAR ACESSO</button>
+                <button @click="cancelarLeitura" class="btn-cancel">Cancelar</button>
               </div>
-              <button @click="ajustarEstoque(item.id, 1)" class="btn-adjust plus">+</button>
+            </div>
+
+            <div v-if="!matriculaLida" class="scanner-instructions">
+              <div class="scan-target"></div>
+              <p>Posicione o QR Code no centro</p>
+            </div>
+          </div>
+
+          <div class="manual-input-card card glass-effect">
+            <h3>Entrada Manual</h3>
+            <div class="input-group-row">
+              <input type="text" v-model="matriculaParaValidar" placeholder="Digite a matrícula" />
+              <button @click="validarFicha(matriculaParaValidar)" class="btn btn-primary">Validar</button>
+            </div>
+          </div>
+
+          <div v-if="mensagem" :class="['alert-toast', mensagemTipo]">
+            {{ mensagem }}
+          </div>
+        </div>
+
+        <!-- TELA DE ESTOQUE -->
+        <div v-if="currentTab === 'estoque'" class="tab-pane">
+          <div class="estoque-grid">
+            <div v-for="item in estoqueList" :key="item.id" class="estoque-card glass-effect">
+              <div class="item-header">
+                <h3>{{ item.nome }}</h3>
+                <span class="unit-tag">{{ item.unidade }}</span>
+              </div>
+              <div class="item-body">
+                <button @click="ajustarEstoque(item.id, -1)" class="adjust-btn minus">-</button>
+                <div class="qty-display">
+                  <span class="qty-value">{{ formatarQuantidade(item.quantidade) }}</span>
+                </div>
+                <button @click="ajustarEstoque(item.id, 1)" class="adjust-btn plus">+</button>
+              </div>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- Card de Validação -->
-      <section class="card glass-effect">
-        <h2>Validar Estudante</h2>
-        <p class="subtitle">Aproxime o QR Code do estudante (Requer Câmera)</p>
-        <div id="reader"></div>
-        <div class="manual-entry">
-          <p>Ou insira manualmente:</p>
-          <div class="input-group flex-row">
-            <input type="text" v-model="matriculaParaValidar" placeholder="Matrícula" />
-            <button @click="validarFicha" class="btn btn-primary">Validar</button>
+        <!-- TELA DE GERAÇÃO -->
+        <div v-if="currentTab === 'geracao'" class="tab-pane">
+          <div class="card glass-effect">
+            <div class="input-group">
+              <label>Número de Matrícula</label>
+              <input type="text" v-model="matriculaParaGerar" placeholder="Ex: 202410099" />
+              <button @click="gerarQrCode" class="btn btn-primary mt-1">Gerar QR Code</button>
+            </div>
+            
+            <div v-if="qrCodeGerado" class="qr-result">
+              <qrcode-vue :value="matriculaParaGerar" :size="200" level="H" class="qr-code-img" />
+              <div class="qr-info">
+                <strong>Matrícula:</strong> {{ matriculaParaGerar }}
+              </div>
+              <button @click="imprimirFicha" class="btn btn-secondary">Imprimir Ficha</button>
+            </div>
           </div>
         </div>
-        
-        <div v-if="mensagem" :class="['alert', mensagemTipo]">
-          {{ mensagem }}
-        </div>
-      </section>
-
-      <!-- Card de Geração (Opcional/Administrativo) -->
-      <section class="card glass-effect">
-        <h2>Gerar Ficha (QR Code)</h2>
-        <div class="input-group">
-          <label>Número de Matrícula</label>
-          <input type="text" v-model="matriculaParaGerar" placeholder="Ex: 2023100456" />
-        </div>
-        <button @click="gerarQrCode" class="btn btn-primary">Gerar QR Code</button>
-        
-        <div v-if="qrCodeGerado" class="qr-container">
-          <qrcode-vue :value="matriculaParaGerar" :size="200" level="H" />
-          <p class="qr-matricula-display">Matrícula: {{ matriculaParaGerar }}</p>
-          <button @click="imprimirFicha" class="btn btn-secondary btn-small">Imprimir</button>
-        </div>
-      </section>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import axios from 'axios';
 import QrcodeVue from 'qrcode.vue';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
+// Estado da UI
+const currentTab = ref('validacao');
+const isSidebarOpen = ref(false);
+const tabTitles = {
+  validacao: 'Validar Estudante',
+  estoque: 'Gerenciar Estoque',
+  geracao: 'Emitir Fichas'
+};
+
+// Dados
 const estoqueList = ref([]);
+const matriculaLida = ref(null);
+const matriculaParaValidar = ref('');
 const matriculaParaGerar = ref('');
 const qrCodeGerado = ref(false);
-
-const matriculaParaValidar = ref('');
 const mensagem = ref('');
 const mensagemTipo = ref('');
 
-let html5QrcodeScanner = null;
+let scanner = null;
 
 const carregarEstoque = async () => {
   try {
     const res = await axios.get(`${API_URL}/estoque`);
     estoqueList.value = res.data;
-  } catch (error) {
-    console.error("Erro ao carregar estoque", error);
-  }
+  } catch (err) { console.error(err); }
 };
 
-const ajustarEstoque = async (id, variacao) => {
+const ajustarEstoque = async (id, delta) => {
   try {
-    await axios.post(`${API_URL}/estoque/${id}/ajustar?variacao=${variacao}`);
+    await axios.post(`${API_URL}/estoque/${id}/ajustar?variacao=${delta}`);
     await carregarEstoque();
-  } catch (error) {
-    console.error("Erro ao ajustar estoque", error);
+  } catch (err) { console.error(err); }
+};
+
+const onScanSuccess = (decodedText) => {
+  if (matriculaLida.value) return; // Evita scans múltiplos
+  matriculaLida.value = decodedText;
+  // Feedback tátil no celular
+  if (navigator.vibrate) navigator.vibrate(100);
+};
+
+const confirmarValidacao = async () => {
+  await validarFicha(matriculaLida.value);
+  matriculaLida.value = null;
+};
+
+const cancelarLeitura = () => {
+  matriculaLida.value = null;
+};
+
+const validarFicha = async (matricula) => {
+  if (!matricula) return;
+  try {
+    const res = await axios.post(`${API_URL}/validar?matricula=${matricula}`);
+    mostrarMensagem(res.data.message, 'success');
+    matriculaParaValidar.value = '';
+    carregarEstoque(); // Atualiza estoque se houver baixa automática
+  } catch (err) {
+    mostrarMensagem(err.response?.data?.error || "Erro na validação", 'error');
   }
 };
 
-const formatarQuantidade = (qtd) => {
-  return Number.isInteger(qtd) ? qtd : qtd.toFixed(1);
+const mostrarMensagem = (txt, tipo) => {
+  mensagem.value = txt;
+  mensagemTipo.value = tipo;
+  setTimeout(() => mensagem.value = '', 4000);
 };
 
 const gerarQrCode = () => {
-  if (!matriculaParaGerar.value) {
-    alert("Insira a matrícula.");
-    return;
-  }
+  if (!matriculaParaGerar.value) return;
   qrCodeGerado.value = true;
 };
 
-const imprimirFicha = () => {
-  window.print();
-};
+const imprimirFicha = () => window.print();
 
-const validarFicha = async () => {
-  if (!matriculaParaValidar.value) return;
-  try {
-    const res = await axios.post(`${API_URL}/validar?matricula=${matriculaParaValidar.value}`);
-    mensagem.value = res.data.message;
-    mensagemTipo.value = 'success';
-    matriculaParaValidar.value = '';
-    
-    setTimeout(() => { mensagem.value = ''; }, 5000);
-  } catch (error) {
-    mensagem.value = error.response?.data?.error || "Erro ao validar ficha.";
-    mensagemTipo.value = 'error';
-    
-    setTimeout(() => { mensagem.value = ''; }, 5000);
-  }
-};
+const formatarQuantidade = (q) => Number.isInteger(q) ? q : q.toFixed(1);
 
-const onScanSuccess = async (decodedText) => {
-  console.log(`Scan result: ${decodedText}`);
-  matriculaParaValidar.value = decodedText;
-  await validarFicha();
+const initScanner = () => {
+  if (scanner) scanner.clear();
+  scanner = new Html5QrcodeScanner("reader", { 
+    fps: 15, 
+    qrbox: { width: 250, height: 250 },
+    aspectRatio: 1.0,
+    showTorchButtonIfSupported: true
+  }, false);
+  scanner.render(onScanSuccess, () => {});
 };
 
 onMounted(() => {
   carregarEstoque();
-  
-  // Inicialização mais robusta do scanner
-  setTimeout(() => {
-    try {
-      html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { 
-          fps: 10, 
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-          rememberLastUsedCamera: true,
-          supportedScanTypes: [0] // 0 = QR Code only
-        },
-        /* verbose= */ false
-      );
-      
-      // Tenta forçar a câmera traseira em celulares
-      html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {
-        // Ignora erros de frame (normal enquanto não foca)
-      });
-    } catch (err) {
-      console.error("Falha ao iniciar scanner:", err);
-      mensagem.value = "Erro ao acessar câmera. Verifique as permissões.";
-      mensagemTipo.value = "error";
-    }
-  }, 1000); // 1 segundo de delay para garantir estabilidade no mobile
+  if (currentTab.value === 'validacao') initScanner();
+});
+
+watch(currentTab, (newTab) => {
+  if (newTab === 'validacao') {
+    setTimeout(initScanner, 100);
+  } else if (scanner) {
+    scanner.clear();
+  }
 });
 
 onUnmounted(() => {
-  if (html5QrcodeScanner) {
-    html5QrcodeScanner.clear();
-  }
+  if (scanner) scanner.clear();
 });
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
 :root {
-  --bg-color: #0f172a;
-  --text-color: #f8fafc;
-  --card-bg: rgba(30, 41, 59, 0.7);
+  --sidebar-width: 280px;
   --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --secondary: #475569;
-  --secondary-hover: #334155;
   --success: #10b981;
   --danger: #ef4444;
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --bg-dark: #0f172a;
+  --card-glass: rgba(30, 41, 59, 0.7);
+  --border-glass: rgba(255, 255, 255, 0.1);
 }
+
+* { box-sizing: border-box; }
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  background-color: var(--bg-dark);
+  color: #f8fafc;
   margin: 0;
-  min-height: 100vh;
-  background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+  overflow-x: hidden;
 }
 
-.app-container {
-  padding: 1.5rem;
-  max-width: 1200px;
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* SIDEBAR STYLES */
+.sidebar {
+  width: var(--sidebar-width);
+  background: #1e293b;
+  border-right: 1px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.logo span { color: var(--primary); }
+
+.sidebar-nav {
+  padding: 1rem;
+  flex: 1;
+}
+
+.sidebar-nav button {
+  width: 100%;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.sidebar-nav button.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.sidebar-nav button:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+/* MAIN CONTENT STYLES */
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  min-width: 0;
+}
+
+.top-bar {
+  height: 70px;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--border-glass);
+  position: sticky;
+  top: 0;
+  z-index: 90;
+}
+
+.top-bar h1 { font-size: 1.25rem; margin: 0; }
+
+.menu-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.content-area {
+  padding: 2rem;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
-header {
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-
-header h1 {
-  font-size: 2.2rem;
-  background: linear-gradient(to right, #60a5fa, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
-}
-
-header p {
-  color: #94a3b8;
-  font-size: 1rem;
-}
-
-.dashboard {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  background: var(--card-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
   padding: 1.5rem;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 2rem;
 }
 
-.card h2 {
-  font-size: 1.25rem;
-  margin-bottom: 1.2rem;
-  font-weight: 600;
-  color: #e2e8f0;
-  border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 0.5rem;
+/* SCANNER STYLES */
+.scanner-container {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  aspect-ratio: 1;
+  max-width: 500px;
+  margin: 0 auto 2rem;
 }
 
-/* NOVO ESTILO PARA O ESTOQUE */
-.estoque-section {
-  grid-column: 1 / -1; /* Ocupa toda a largura se tiver espaço */
+.scanner-preview {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
 }
 
-.estoque-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-.estoque-item-card {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: transform 0.2s ease;
-}
-
-.estoque-item-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(96, 165, 250, 0.5);
-}
-
-.item-info h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
-  color: #fff;
-}
-
-.item-info .unidade {
-  font-size: 0.85rem;
-  color: #94a3b8;
-}
-
-.item-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.btn-adjust {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  font-size: 1.5rem;
-  font-weight: bold;
+#reader__dashboard_section_csr button {
+  background: var(--primary) !important;
+  color: white !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
   cursor: pointer;
+}
+
+.validation-confirm-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  transition: all 0.2s;
-  user-select: none;
+  z-index: 10;
+  animation: fadeIn 0.2s ease;
 }
 
-.btn-adjust.minus {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.5);
-}
-.btn-adjust.minus:active { background-color: rgba(239, 68, 68, 0.4); }
-
-.btn-adjust.plus {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.5);
-}
-.btn-adjust.plus:active { background-color: rgba(16, 185, 129, 0.4); }
-
-.quantidade-display {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 0.5rem 0.8rem;
-  border-radius: 8px;
-  min-width: 50px;
+.confirm-card {
   text-align: center;
+  padding: 2rem;
 }
 
-.qtd-numero {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #e2e8f0;
+.matricula-badge {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 1rem 0 2rem;
 }
 
-/* OUTROS ESTILOS */
-.input-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1.2rem;
-}
-
-.input-group.flex-row {
-  flex-direction: row;
-  gap: 0.5rem;
-  margin-bottom: 0;
-}
-
-label {
-  font-size: 0.9rem;
-  color: #cbd5e1;
-  margin-bottom: 0.4rem;
-}
-
-input {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--glass-border);
+.btn-validate {
+  background: var(--success);
   color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  outline: none;
+  font-size: 1.25rem;
+  padding: 1.5rem 2.5rem;
   width: 100%;
-  box-sizing: border-box;
-}
-
-input:focus { border-color: var(--primary); }
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
+  border-radius: 16px;
   border: none;
-  transition: all 0.2s ease;
-  width: 100%;
-  touch-action: manipulation;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
 }
 
-.btn-small { padding: 0.5rem 1rem; font-size: 0.9rem; }
-.btn-primary { background-color: var(--primary); color: white; }
-.btn-primary:hover { background-color: var(--primary-hover); }
-.btn-secondary { background-color: var(--secondary); color: white; }
-.btn-secondary:hover { background-color: var(--secondary-hover); }
+.pulse { animation: pulseAnim 1.5s infinite; }
 
-.qr-container {
-  margin-top: 1.5rem;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  text-align: center;
-  color: black;
-}
-
-.qr-matricula-display {
-  margin: 1rem 0;
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-.subtitle {
-  font-size: 0.9rem;
+.btn-cancel {
+  background: transparent;
+  border: none;
   color: #94a3b8;
-  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
-#reader {
-  width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
+/* ESTOQUE GRID */
+.estoque-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.estoque-card {
+  padding: 1.5rem;
+  border-radius: 16px;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 1.5rem;
-  border: 1px solid var(--glass-border);
-  background: rgba(255,255,255,0.05);
 }
 
-.manual-entry {
-  margin-top: auto;
-  border-top: 1px dashed var(--glass-border);
-  padding-top: 1.5rem;
+.unit-tag {
+  background: rgba(255,255,255,0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
 }
 
-.alert {
-  padding: 1rem;
-  border-radius: 8px;
-  margin-top: 1rem;
-  font-weight: 600;
+.item-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.adjust-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: white;
+  transition: transform 0.1s;
+}
+
+.adjust-btn:active { transform: scale(0.9); }
+.adjust-btn.minus { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+.adjust-btn.plus { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+
+.qty-display {
+  font-size: 1.5rem;
+  font-weight: 700;
+  min-width: 80px;
   text-align: center;
-  animation: fadeIn 0.3s ease-in-out;
 }
 
-.alert.success {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid #10b981;
+/* UTILS */
+.btn-primary { background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; }
+.alert-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  z-index: 1000;
+  animation: slideUp 0.3s ease;
+}
+.alert-toast.success { background: var(--success); color: white; }
+.alert-toast.error { background: var(--danger); color: white; }
+
+@keyframes pulseAnim {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
-.alert.error {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-  border: 1px solid #ef4444;
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media print {
-  body * { visibility: hidden; }
-  .qr-container, .qr-container * { visibility: visible; }
-  .qr-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-shadow: none;
+/* MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
   }
-  .btn-small { display: none; }
+  .sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+  .main-content { margin-left: 0; }
+  .menu-toggle { display: block; }
+  .top-bar { padding: 0 1rem; }
+  .sidebar-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 95;
+  }
 }
 </style>
