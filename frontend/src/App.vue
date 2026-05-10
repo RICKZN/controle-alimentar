@@ -149,19 +149,23 @@ onMounted(() => {
         { 
           fps: 10, 
           qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
+          aspectRatio: 1.0,
+          rememberLastUsedCamera: true,
+          supportedScanTypes: [0] // 0 = QR Code only
         },
         /* verbose= */ false
       );
+      
+      // Tenta forçar a câmera traseira em celulares
       html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {
-        // Erros de scan (não encontrou QR na imagem) são ignorados para não poluir
+        // Ignora erros de frame (normal enquanto não foca)
       });
     } catch (err) {
       console.error("Falha ao iniciar scanner:", err);
       mensagem.value = "Erro ao acessar câmera. Verifique as permissões.";
       mensagemTipo.value = "error";
     }
-  }, 500); // Pequeno delay para garantir que o DOM está pronto
+  }, 1000); // 1 segundo de delay para garantir estabilidade no mobile
 });
 
 onUnmounted(() => {
