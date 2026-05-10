@@ -478,7 +478,3 @@ body {
   .printable-area { position: absolute; top: 0; left: 0; width: 100%; text-align: center; color: black; }
 }
 </style>
-    z-index: 95;
-  }
-}
-</style>
