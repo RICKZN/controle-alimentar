@@ -6,7 +6,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo">CONTROLE<span>IF</span></div>
+        <div class="logo">SISTEMA<span>IF</span> v3.0</div>
       </div>
       <nav class="sidebar-nav">
         <button 
