@@ -10,26 +10,26 @@
       </div>
       <nav class="sidebar-nav">
         <button 
-          @click="currentTab = 'validacao'; isSidebarOpen = false" 
+          @click="changeTab('validacao')" 
           :class="{ active: currentTab === 'validacao' }"
         >
           <span class="icon">📷</span> Validação
         </button>
         <button 
-          @click="currentTab = 'estoque'; isSidebarOpen = false" 
+          @click="changeTab('estoque')" 
           :class="{ active: currentTab === 'estoque' }"
         >
           <span class="icon">📦</span> Estoque
         </button>
         <button 
-          @click="currentTab = 'geracao'; isSidebarOpen = false" 
+          @click="changeTab('geracao')" 
           :class="{ active: currentTab === 'geracao' }"
         >
           <span class="icon">🎟️</span> Gerar Fichas
         </button>
       </nav>
       <div class="sidebar-footer">
-        <p>v2.0 - Nuvem</p>
+        <p>v2.1 - Custom Scan</p>
       </div>
     </aside>
 
@@ -38,45 +38,61 @@
       <header class="top-bar">
         <button class="menu-toggle" @click="isSidebarOpen = true">☰</button>
         <h1>{{ tabTitles[currentTab] }}</h1>
-        <div class="user-status">Online</div>
+        <div class="user-status" :class="{ online: isOnline }">
+          {{ isOnline ? 'Online' : 'Offline' }}
+        </div>
       </header>
 
       <div class="content-area">
-        <!-- TELA DE VALIDAÇÃO (QR CODE) -->
+        <!-- TELA DE VALIDAÇÃO -->
         <div v-if="currentTab === 'validacao'" class="tab-pane">
-          <div class="scanner-container card glass-effect">
-            <div id="reader" class="scanner-preview"></div>
-            
-            <!-- Botão de Validação que aparece após o Scan -->
-            <div v-if="matriculaLida" class="validation-confirm-overlay">
-              <div class="confirm-card">
-                <h3>Estudante Detectado!</h3>
-                <div class="matricula-badge">{{ matriculaLida }}</div>
-                <button @click="confirmarValidacao" class="btn btn-validate pulse">VALIDAR ACESSO</button>
-                <button @click="cancelarLeitura" class="btn-cancel">Cancelar</button>
+          <div class="scanner-wrapper card glass-effect">
+            <div class="scanner-header">
+              <p v-if="!isCameraActive" class="camera-info">A câmera está desligada</p>
+              <p v-else class="camera-info active">Buscando QR Code...</p>
+            </div>
+
+            <div class="preview-container">
+              <div id="reader"></div>
+              
+              <!-- Overlay de Detecção -->
+              <div v-if="matriculaLida" class="scan-success-overlay">
+                <div class="success-card">
+                  <div class="success-icon">✅</div>
+                  <h3>Estudante Identificado</h3>
+                  <div class="id-display">{{ matriculaLida }}</div>
+                  <button @click="confirmarValidacao" class="btn btn-validate pulse">CONFIRMAR ACESSO</button>
+                  <button @click="resetScan" class="btn-link">Tentar novamente</button>
+                </div>
+              </div>
+
+              <!-- Placeholder quando câmera está desligada -->
+              <div v-if="!isCameraActive && !matriculaLida" class="camera-placeholder" @click="toggleCamera">
+                <span class="icon-large">📷</span>
+                <p>Clique para ligar a câmera</p>
               </div>
             </div>
 
-            <div v-if="!matriculaLida" class="scanner-instructions">
-              <div class="scan-target"></div>
-              <p>Posicione o QR Code no centro</p>
+            <div class="scanner-controls">
+              <button @click="toggleCamera" :class="['btn', isCameraActive ? 'btn-danger' : 'btn-success']">
+                {{ isCameraActive ? 'Desligar Câmera' : 'Ligar Câmera' }}
+              </button>
+              <button v-if="isCameraActive" @click="switchCamera" class="btn btn-secondary">
+                Inverter Câmera
+              </button>
             </div>
           </div>
 
-          <div class="manual-input-card card glass-effect">
+          <div class="card glass-effect">
             <h3>Entrada Manual</h3>
             <div class="input-group-row">
-              <input type="text" v-model="matriculaParaValidar" placeholder="Digite a matrícula" />
+              <input type="text" v-model="matriculaParaValidar" placeholder="Número da matrícula" @keyup.enter="validarFicha(matriculaParaValidar)" />
               <button @click="validarFicha(matriculaParaValidar)" class="btn btn-primary">Validar</button>
             </div>
           </div>
-
-          <div v-if="mensagem" :class="['alert-toast', mensagemTipo]">
-            {{ mensagem }}
-          </div>
         </div>
 
-        <!-- TELA DE ESTOQUE -->
+        <!-- TELA DE ESTOQUE (MESMA LÓGICA ANTERIOR) -->
         <div v-if="currentTab === 'estoque'" class="tab-pane">
           <div class="estoque-grid">
             <div v-for="item in estoqueList" :key="item.id" class="estoque-card glass-effect">
@@ -98,22 +114,29 @@
         <!-- TELA DE GERAÇÃO -->
         <div v-if="currentTab === 'geracao'" class="tab-pane">
           <div class="card glass-effect">
+            <h3>Gerar Nova Ficha</h3>
             <div class="input-group">
-              <label>Número de Matrícula</label>
-              <input type="text" v-model="matriculaParaGerar" placeholder="Ex: 202410099" />
+              <input type="text" v-model="matriculaParaGerar" placeholder="Matrícula do estudante" />
               <button @click="gerarQrCode" class="btn btn-primary mt-1">Gerar QR Code</button>
             </div>
             
             <div v-if="qrCodeGerado" class="qr-result">
-              <qrcode-vue :value="matriculaParaGerar" :size="200" level="H" class="qr-code-img" />
-              <div class="qr-info">
-                <strong>Matrícula:</strong> {{ matriculaParaGerar }}
+              <div class="printable-area">
+                <qrcode-vue :value="matriculaParaGerar" :size="220" level="H" />
+                <p>ESTUDANTE: {{ matriculaParaGerar }}</p>
               </div>
-              <button @click="imprimirFicha" class="btn btn-secondary">Imprimir Ficha</button>
+              <button @click="imprimirFicha" class="btn btn-secondary">Imprimir Agora</button>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Toast de Notificação -->
+      <Transition name="slide-fade">
+        <div v-if="mensagem" :class="['toast', mensagemTipo]">
+          {{ mensagem }}
+        </div>
+      </Transition>
     </main>
   </div>
 </template>
@@ -122,20 +145,23 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import axios from 'axios';
 import QrcodeVue from 'qrcode.vue';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Estado da UI
+// Estados
 const currentTab = ref('validacao');
 const isSidebarOpen = ref(false);
+const isOnline = ref(true);
+const isCameraActive = ref(false);
+const currentCameraId = ref('environment'); // 'environment' = traseira, 'user' = frontal
+
 const tabTitles = {
-  validacao: 'Validar Estudante',
-  estoque: 'Gerenciar Estoque',
-  geracao: 'Emitir Fichas'
+  validacao: 'Validação de Acesso',
+  estoque: 'Estoque de Alimentos',
+  geracao: 'Geração de Fichas'
 };
 
-// Dados
 const estoqueList = ref([]);
 const matriculaLida = ref(null);
 const matriculaParaValidar = ref('');
@@ -144,36 +170,24 @@ const qrCodeGerado = ref(false);
 const mensagem = ref('');
 const mensagemTipo = ref('');
 
-let scanner = null;
+let html5QrCode = null;
 
+// Lógica de Negócio
 const carregarEstoque = async () => {
   try {
     const res = await axios.get(`${API_URL}/estoque`);
     estoqueList.value = res.data;
-  } catch (err) { console.error(err); }
+    isOnline.value = true;
+  } catch (err) { 
+    isOnline.value = false;
+  }
 };
 
 const ajustarEstoque = async (id, delta) => {
   try {
     await axios.post(`${API_URL}/estoque/${id}/ajustar?variacao=${delta}`);
     await carregarEstoque();
-  } catch (err) { console.error(err); }
-};
-
-const onScanSuccess = (decodedText) => {
-  if (matriculaLida.value) return; // Evita scans múltiplos
-  matriculaLida.value = decodedText;
-  // Feedback tátil no celular
-  if (navigator.vibrate) navigator.vibrate(100);
-};
-
-const confirmarValidacao = async () => {
-  await validarFicha(matriculaLida.value);
-  matriculaLida.value = null;
-};
-
-const cancelarLeitura = () => {
-  matriculaLida.value = null;
+  } catch (err) { mostrarMensagem("Erro ao atualizar estoque", "error"); }
 };
 
 const validarFicha = async (matricula) => {
@@ -182,10 +196,20 @@ const validarFicha = async (matricula) => {
     const res = await axios.post(`${API_URL}/validar?matricula=${matricula}`);
     mostrarMensagem(res.data.message, 'success');
     matriculaParaValidar.value = '';
-    carregarEstoque(); // Atualiza estoque se houver baixa automática
+    carregarEstoque();
   } catch (err) {
     mostrarMensagem(err.response?.data?.error || "Erro na validação", 'error');
   }
+};
+
+const confirmarValidacao = async () => {
+  await validarFicha(matriculaLida.value);
+  resetScan();
+};
+
+const resetScan = () => {
+  matriculaLida.value = null;
+  if (isCameraActive.value) startCamera();
 };
 
 const mostrarMensagem = (txt, tipo) => {
@@ -194,344 +218,266 @@ const mostrarMensagem = (txt, tipo) => {
   setTimeout(() => mensagem.value = '', 4000);
 };
 
+// Lógica do Scanner
+const toggleCamera = async () => {
+  if (isCameraActive.value) {
+    await stopCamera();
+  } else {
+    await startCamera();
+  }
+};
+
+const startCamera = async () => {
+  if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+  
+  const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+  
+  try {
+    await html5QrCode.start(
+      { facingMode: currentCameraId.value }, 
+      config, 
+      (decodedText) => {
+        matriculaLida.value = decodedText;
+        html5QrCode.stop(); // Para a câmera ao ler
+        isCameraActive.value = false;
+        if (navigator.vibrate) navigator.vibrate(200);
+      }
+    );
+    isCameraActive.value = true;
+  } catch (err) {
+    console.error(err);
+    mostrarMensagem("Câmera bloqueada ou não encontrada. Use HTTPS.", "error");
+  }
+};
+
+const stopCamera = async () => {
+  if (html5QrCode && isCameraActive.value) {
+    await html5QrCode.stop();
+    isCameraActive.value = false;
+  }
+};
+
+const switchCamera = async () => {
+  await stopCamera();
+  currentCameraId.value = currentCameraId.value === 'environment' ? 'user' : 'environment';
+  await startCamera();
+};
+
+const changeTab = async (tab) => {
+  if (isCameraActive.value) await stopCamera();
+  currentTab.value = tab;
+  isSidebarOpen.value = false;
+};
+
 const gerarQrCode = () => {
-  if (!matriculaParaGerar.value) return;
-  qrCodeGerado.value = true;
+  if (matriculaParaGerar.value) qrCodeGerado.value = true;
 };
 
 const imprimirFicha = () => window.print();
-
 const formatarQuantidade = (q) => Number.isInteger(q) ? q : q.toFixed(1);
 
-const initScanner = () => {
-  if (scanner) scanner.clear();
-  scanner = new Html5QrcodeScanner("reader", { 
-    fps: 15, 
-    qrbox: { width: 250, height: 250 },
-    aspectRatio: 1.0,
-    showTorchButtonIfSupported: true
-  }, false);
-  scanner.render(onScanSuccess, () => {});
-};
-
-onMounted(() => {
-  carregarEstoque();
-  if (currentTab.value === 'validacao') initScanner();
-});
-
-watch(currentTab, (newTab) => {
-  if (newTab === 'validacao') {
-    setTimeout(initScanner, 100);
-  } else if (scanner) {
-    scanner.clear();
-  }
-});
-
-onUnmounted(() => {
-  if (scanner) scanner.clear();
-});
+onMounted(carregarEstoque);
+onUnmounted(stopCamera);
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
 
 :root {
-  --sidebar-width: 280px;
-  --primary: #3b82f6;
+  --primary: #4f46e5;
   --success: #10b981;
-  --danger: #ef4444;
-  --bg-dark: #0f172a;
-  --card-glass: rgba(30, 41, 59, 0.7);
-  --border-glass: rgba(255, 255, 255, 0.1);
+  --danger: #f43f5e;
+  --bg-dark: #020617;
+  --sidebar-bg: #0f172a;
+  --glass: rgba(30, 41, 59, 0.6);
+  --border: rgba(255, 255, 255, 0.08);
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Outfit', sans-serif;
   background-color: var(--bg-dark);
   color: #f8fafc;
-  margin: 0;
   overflow-x: hidden;
 }
 
-.app-layout {
-  display: flex;
-  min-height: 100vh;
-}
+.app-layout { display: flex; min-height: 100vh; }
 
-/* SIDEBAR STYLES */
+/* SIDEBAR */
 .sidebar {
-  width: var(--sidebar-width);
-  background: #1e293b;
-  border-right: 1px solid var(--border-glass);
+  width: 280px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   position: fixed;
   height: 100vh;
   z-index: 100;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar-header {
-  padding: 2rem;
-  text-align: center;
-}
-
-.logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-
+.sidebar-header { padding: 3rem 2rem; text-align: center; }
+.logo { font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; }
 .logo span { color: var(--primary); }
 
-.sidebar-nav {
-  padding: 1rem;
-  flex: 1;
-}
-
+.sidebar-nav { padding: 1rem; flex: 1; }
 .sidebar-nav button {
   width: 100%;
-  padding: 1rem;
-  margin-bottom: 0.5rem;
+  padding: 1.2rem;
+  margin-bottom: 0.8rem;
   background: transparent;
   border: none;
   color: #94a3b8;
-  text-align: left;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 12px;
-  transition: all 0.2s;
+  gap: 15px;
+  transition: all 0.3s;
 }
 
 .sidebar-nav button.active {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), #818cf8);
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
 }
 
-.sidebar-nav button:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-}
+.sidebar-nav button:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
 
-/* MAIN CONTENT STYLES */
-.main-content {
-  flex: 1;
-  margin-left: var(--sidebar-width);
-  min-width: 0;
-}
+/* MAIN */
+.main-content { flex: 1; margin-left: 280px; min-width: 0; }
 
 .top-bar {
-  height: 70px;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(10px);
+  height: 80px;
+  background: rgba(2, 6, 23, 0.8);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
-  border-bottom: 1px solid var(--border-glass);
+  padding: 0 3rem;
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 90;
 }
 
-.top-bar h1 { font-size: 1.25rem; margin: 0; }
+.user-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: rgba(244, 63, 94, 0.2); color: var(--danger); }
+.user-status.online { background: rgba(16, 185, 129, 0.2); color: var(--success); }
 
-.menu-toggle {
-  display: none;
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.content-area {
-  padding: 2rem;
-  max-width: 1000px;
-  margin: 0 auto;
-}
+.content-area { padding: 3rem 2rem; max-width: 1200px; margin: 0 auto; }
 
 .card {
-  background: var(--card-glass);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-glass);
-  border-radius: 20px;
-  padding: 1.5rem;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 2rem;
   margin-bottom: 2rem;
 }
 
-/* SCANNER STYLES */
-.scanner-container {
+/* CUSTOM SCANNER */
+.scanner-wrapper { text-align: center; max-width: 600px; margin: 0 auto 2rem; padding: 1rem; }
+.scanner-header { margin-bottom: 1rem; }
+.camera-info { font-size: 0.9rem; color: #94a3b8; }
+.camera-info.active { color: var(--success); font-weight: 600; }
+
+.preview-container {
   position: relative;
-  overflow: hidden;
-  padding: 0;
-  aspect-ratio: 1;
-  max-width: 500px;
-  margin: 0 auto 2rem;
-}
-
-.scanner-preview {
-  width: 100% !important;
-  height: 100% !important;
-  border: none !important;
-}
-
-#reader__dashboard_section_csr button {
-  background: var(--primary) !important;
-  color: white !important;
-  border-radius: 8px !important;
-  padding: 8px 16px !important;
-  cursor: pointer;
-}
-
-.validation-confirm-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  animation: fadeIn 0.2s ease;
-}
-
-.confirm-card {
-  text-align: center;
-  padding: 2rem;
-}
-
-.matricula-badge {
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--primary);
-  margin: 1rem 0 2rem;
-}
-
-.btn-validate {
-  background: var(--success);
-  color: white;
-  font-size: 1.25rem;
-  padding: 1.5rem 2.5rem;
   width: 100%;
-  border-radius: 16px;
-  border: none;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-}
-
-.pulse { animation: pulseAnim 1.5s infinite; }
-
-.btn-cancel {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  margin-top: 1.5rem;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-/* ESTOQUE GRID */
-.estoque-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.estoque-card {
-  padding: 1.5rem;
-  border-radius: 16px;
-}
-
-.item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  aspect-ratio: 1;
+  background: #000;
+  border-radius: 20px;
+  overflow: hidden;
   margin-bottom: 1.5rem;
+  border: 2px solid var(--border);
 }
 
-.unit-tag {
-  background: rgba(255,255,255,0.1);
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
+#reader { width: 100%; height: 100%; }
+
+.camera-placeholder {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
 }
 
-.item-body {
+.icon-large { font-size: 4rem; margin-bottom: 1rem; }
+
+.scan-success-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(2, 6, 23, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
+  z-index: 50;
 }
 
-.adjust-btn {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: white;
-  transition: transform 0.1s;
-}
+.success-card { padding: 2rem; width: 80%; }
+.success-icon { font-size: 3rem; margin-bottom: 1rem; }
+.id-display { font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 1rem 0 2rem; }
 
-.adjust-btn:active { transform: scale(0.9); }
-.adjust-btn.minus { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
-.adjust-btn.plus { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+.scanner-controls { display: flex; gap: 1rem; justify-content: center; }
 
-.qty-display {
-  font-size: 1.5rem;
-  font-weight: 700;
-  min-width: 80px;
-  text-align: center;
-}
-
-/* UTILS */
-.btn-primary { background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; }
-.alert-toast {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
+/* BUTTONS */
+.btn {
   padding: 1rem 2rem;
-  border-radius: 12px;
-  z-index: 1000;
-  animation: slideUp 0.3s ease;
-}
-.alert-toast.success { background: var(--success); color: white; }
-.alert-toast.error { background: var(--danger); color: white; }
-
-@keyframes pulseAnim {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  font-size: 1rem;
 }
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: var(--primary); color: white; }
+.btn-success { background: var(--success); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-secondary { background: #334155; color: white; }
+.btn-validate { background: var(--success); color: white; width: 100%; font-size: 1.2rem; margin-bottom: 1rem; }
+.btn-link { background: transparent; color: #94a3b8; text-decoration: underline; border: none; cursor: pointer; }
 
-/* MOBILE RESPONSIVE */
+/* ESTOQUE */
+.estoque-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+.qty-value { font-size: 2rem; font-weight: 800; color: white; }
+
+/* ANIMATIONS */
+.slide-fade-enter-active { transition: all 0.3s ease-out; }
+.slide-fade-leave-active { transition: all 0.4s cubic-bezier(1, 0.5, 0.8, 1); }
+.slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(20px); opacity: 0; }
+
+.pulse { animation: pulse 2s infinite; }
+@keyframes pulse { 
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 
+  70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); } 
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } 
+}
+
+/* MOBILE */
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  .sidebar-open .sidebar {
-    transform: translateX(0);
-  }
+  .sidebar { transform: translateX(-100%); }
+  .sidebar-open .sidebar { transform: translateX(0); }
   .main-content { margin-left: 0; }
-  .menu-toggle { display: block; }
-  .top-bar { padding: 0 1rem; }
-  .sidebar-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
+  .top-bar { padding: 0 1.5rem; }
+  .menu-toggle { display: block; background: transparent; border: none; color: white; font-size: 1.8rem; }
+  .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
+  .content-area { padding: 1.5rem 1rem; }
+}
+
+@media print {
+  body * { display: none; }
+  .printable-area, .printable-area * { display: block; }
+  .printable-area { position: absolute; top: 0; left: 0; width: 100%; text-align: center; color: black; }
+}
+</style>
     z-index: 95;
   }
 }
