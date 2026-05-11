@@ -232,9 +232,30 @@ const qrCodeGerado = ref(false);
 const mensagem = ref('');
 const mensagemTipo = ref('');
 const statusValidacao = ref(null);
+const countdownTimer = ref(null);
 
 const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
 const novoAluno = ref({ nome: '', matricula: '' });
+
+const iniciarContagemRegressiva = (minutosRestantes) => {
+  if (countdownTimer.value) clearInterval(countdownTimer.value);
+  
+  let segundosTotais = minutosRestantes * 60;
+  
+  countdownTimer.value = setInterval(() => {
+    if (segundosTotais <= 0) {
+      clearInterval(countdownTimer.value);
+      statusValidacao.value.espera = "Pode comer agora!";
+      return;
+    }
+    segundosTotais--;
+    const h = Math.floor(segundosTotais / 3600);
+    const m = Math.floor((segundosTotais % 3600) / 60);
+    const s = segundosTotais % 60;
+    
+    statusValidacao.value.espera = `Aguarde mais ${h}h ${m}m ${s}s`;
+  }, 1000);
+};
 
 let html5QrCode = null;
 
@@ -330,6 +351,11 @@ const validarFicha = async (matricula) => {
       msg: errorData?.error || "Erro na validação",
       espera: errorData?.espera
     };
+    
+    if (errorData?.minutosFaltando) {
+      iniciarContagemRegressiva(errorData.minutosFaltando);
+    }
+    
     mostrarMensagem(errorData?.error || "Erro", 'error');
   }
 };
