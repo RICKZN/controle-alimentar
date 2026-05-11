@@ -155,6 +155,16 @@
             </div>
           </div>
 
+          <div class="card glass-effect">
+            <h3>Adicionar Novo Alimento</h3>
+            <div class="input-group-row">
+              <input type="text" v-model="novoItem.nome" placeholder="Nome do alimento (Ex: Arroz)" />
+              <input type="text" v-model="novoItem.unidade" placeholder="Unidade (Ex: kg)" style="width: 100px" />
+              <input type="number" v-model="novoItem.quantidade" placeholder="Qtd" style="width: 80px" />
+              <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar</button>
+            </div>
+          </div>
+
           <div v-if="estoqueList.length === 0" class="empty-state card">
             <p>O estoque está vazio. Adicione alimentos no formulário acima.</p>
           </div>
@@ -240,6 +250,10 @@ const mensagemTipo = ref('');
 const statusValidacao = ref(null);
 const tempoEsperaReal = ref("");
 const countdownTimer = ref(null);
+
+// Campos de Formulário (O que estava faltando!)
+const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
+const novoAluno = ref({ nome: '', matricula: '' });
 
 const iniciarContagemRegressiva = (minutosRestantes) => {
   if (countdownTimer.value) clearInterval(countdownTimer.value);
