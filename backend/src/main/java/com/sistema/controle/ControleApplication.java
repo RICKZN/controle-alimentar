@@ -3,35 +3,50 @@ package com.sistema.controle;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-
 @SpringBootApplication
 public class ControleApplication {
+
 	public static void main(String[] args) {
-		// Auto-fix para URL do Render (converte usuario:senha@host para o formato que o Java aceita)
 		String dbUrl = System.getenv("SPRING_DATASOURCE_URL");
+		
+		System.out.println("🔍 Verificando configuração de banco...");
+
 		if (dbUrl != null && dbUrl.contains("@")) {
 			try {
-				// Remove o "jdbc:" se existir para facilitar o parse
+				// Formato esperado: postgres://user:pass@host:port/db
 				String cleanUrl = dbUrl.replace("jdbc:", "");
-				String userPass = cleanUrl.substring(cleanUrl.indexOf("//") + 2, cleanUrl.indexOf("@"));
-				String hostPart = cleanUrl.substring(cleanUrl.indexOf("@") + 1);
+				int doubleSlash = cleanUrl.indexOf("//");
+				int atSymbol = cleanUrl.indexOf("@");
 				
-				String user = userPass.split(":")[0];
-				String pass = userPass.split(":")[1];
-				
-				System.setProperty("spring.datasource.url", "jdbc:postgresql://" + hostPart);
-				System.setProperty("spring.datasource.username", user);
-				System.setProperty("spring.datasource.password", pass);
-				
-				System.out.println("✅ Database URL auto-configurada com sucesso!");
+				if (doubleSlash != -1 && atSymbol != -1) {
+					String userPass = cleanUrl.substring(doubleSlash + 2, atSymbol);
+					String hostPart = cleanUrl.substring(atSymbol + 1);
+					
+					if (userPass.contains(":")) {
+						String user = userPass.split(":")[0];
+						String pass = userPass.split(":")[1];
+						
+						System.setProperty("spring.datasource.url", "jdbc:postgresql://" + hostPart);
+						System.setProperty("spring.datasource.username", user);
+						System.setProperty("spring.datasource.password", pass);
+						System.out.println("✅ Configuração extraída: Host=" + hostPart.split("/")[0] + ", User=" + user);
+					}
+				}
 			} catch (Exception e) {
-				System.out.println("⚠️ Falha ao limpar URL: " + e.getMessage());
+				System.out.println("⚠️ Aviso: Erro ao processar URL do banco: " + e.getMessage());
 			}
+		} else {
+			System.out.println("ℹ️ Usando URL direta (sem arroba ou vazia)");
 		}
 
-		SpringApplication.run(ControleApplication.class, args);
-		System.out.println("==========================================");
-		System.out.println("🚀 SISTEMA ONLINE E CONECTADO AO BANCO!");
-		System.out.println("==========================================");
+		try {
+			SpringApplication.run(ControleApplication.class, args);
+			System.out.println("\n==========================================");
+			System.out.println("🚀 SISTEMA ONLINE NO RENDER!");
+			System.out.println("==========================================");
+		} catch (Exception e) {
+			System.err.println("❌ ERRO CRÍTICO NA INICIALIZAÇÃO:");
+			e.printStackTrace();
+		}
 	}
 }
