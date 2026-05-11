@@ -107,7 +107,10 @@
           <div class="card glass-effect">
             <div class="table-header">
               <h3>Listagem de Estudantes</h3>
-              <input type="text" v-model="filtroAluno" placeholder="Pesquisar por nome ou matrícula..." class="search-input" />
+              <div class="actions">
+                <button @click="carregarAlunos" class="btn-refresh">🔄 Atualizar</button>
+                <input type="text" v-model="filtroAluno" placeholder="Pesquisar..." class="search-input" />
+              </div>
             </div>
             <div class="table-wrapper">
               <div v-if="alunosFiltrados.length === 0" class="empty-state">
@@ -146,12 +149,9 @@
         <!-- TELA DE ESTOQUE -->
         <div v-if="currentTab === 'estoque'" class="tab-pane">
           <div class="card glass-effect">
-            <h3>Adicionar Novo Alimento</h3>
-            <div class="input-group-row">
-              <input type="text" v-model="novoItem.nome" placeholder="Nome do alimento (Ex: Arroz)" />
-              <input type="text" v-model="novoItem.unidade" placeholder="Unidade (Ex: kg)" style="width: 100px" />
-              <input type="number" v-model="novoItem.quantidade" placeholder="Qtd" style="width: 80px" />
-              <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar</button>
+            <div class="table-header">
+              <h3>Estoque Atual</h3>
+              <button @click="carregarEstoque" class="btn-refresh">🔄 Atualizar</button>
             </div>
           </div>
 
@@ -285,10 +285,12 @@ const carregarAlunos = async () => {
 };
 
 const alunosFiltrados = computed(() => {
-  if (!filtroAluno.value) return alunosList.value;
+  const lista = alunosList.value || [];
+  if (!filtroAluno.value) return lista;
   const f = filtroAluno.value.toLowerCase();
-  return alunosList.value.filter(a => 
-    a.nome.toLowerCase().includes(f) || a.matricula.includes(f)
+  return lista.filter(a => 
+    (a.nome && a.nome.toLowerCase().includes(f)) || 
+    (a.matricula && a.matricula.includes(f))
   );
 });
 
@@ -552,8 +554,18 @@ body { font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); colo
 
 /* FORM & BUTTONS */
 .input-group-row { display: flex; gap: 10px; flex-wrap: wrap; }
-.input-group-row input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 0.8rem 1rem; border-radius: 12px; color: white; min-width: 150px; }
-.btn { padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; }
+.btn-refresh {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--border);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-right: 10px;
+}
+.btn-refresh:hover { background: var(--primary); }
+.actions { display: flex; align-items: center; flex: 1; justify-content: flex-end; }
 .btn:active { transform: scale(0.95); }
 .btn-primary { background: var(--primary); color: white; }
 .btn-success { background: var(--success); color: white; }
