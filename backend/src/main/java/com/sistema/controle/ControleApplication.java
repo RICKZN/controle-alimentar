@@ -30,5 +30,8 @@ public class ControleApplication {
 		}
 
 		SpringApplication.run(ControleApplication.class, args);
+		System.out.println("==========================================");
+		System.out.println("🚀 SISTEMA ONLINE E CONECTADO AO BANCO!");
+		System.out.println("==========================================");
 	}
 }
