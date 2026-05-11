@@ -98,6 +98,22 @@ public class ControleController {
         return alunoRepo.findAll();
     }
 
+    @PostMapping("/alunos")
+    public ResponseEntity<?> cadastrarAluno(@RequestBody Aluno novoAluno) {
+        if (alunoRepo.findByMatricula(novoAluno.getMatricula()).isPresent()) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Matrícula já cadastrada!");
+            return ResponseEntity.badRequest().body(response);
+        }
+        return ResponseEntity.ok(alunoRepo.save(novoAluno));
+    }
+
+    @DeleteMapping("/alunos/{id}")
+    public ResponseEntity<?> excluirAluno(@PathVariable Long id) {
+        alunoRepo.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/validar")
     public ResponseEntity<?> validarFicha(@RequestParam String matricula) {
         Map<String, Object> response = new HashMap<>();
