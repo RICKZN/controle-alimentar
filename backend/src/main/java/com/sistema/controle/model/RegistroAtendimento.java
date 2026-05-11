@@ -5,7 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 public class RegistroAtendimento {
@@ -13,7 +13,7 @@ public class RegistroAtendimento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String matricula;
-    private LocalDate dataAtendimento;
+    private LocalDateTime dataHoraAtendimento;
 
     public Long getId() {
         return id;
@@ -31,11 +31,11 @@ public class RegistroAtendimento {
         this.matricula = matricula;
     }
 
-    public LocalDate getDataAtendimento() {
-        return dataAtendimento;
+    public LocalDateTime getDataHoraAtendimento() {
+        return dataHoraAtendimento;
     }
 
-    public void setDataAtendimento(LocalDate dataAtendimento) {
-        this.dataAtendimento = dataAtendimento;
+    public void setDataHoraAtendimento(LocalDateTime dataHoraAtendimento) {
+        this.dataHoraAtendimento = dataHoraAtendimento;
     }
 }

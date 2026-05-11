@@ -6,30 +6,24 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo">SISTEMA<span>IF</span> v3.0</div>
+        <div class="logo">SISTEMA<span>IF</span> v3.5</div>
       </div>
       <nav class="sidebar-nav">
-        <button 
-          @click="changeTab('validacao')" 
-          :class="{ active: currentTab === 'validacao' }"
-        >
+        <button @click="changeTab('validacao')" :class="{ active: currentTab === 'validacao' }">
           <span class="icon">📷</span> Validação
         </button>
-        <button 
-          @click="changeTab('estoque')" 
-          :class="{ active: currentTab === 'estoque' }"
-        >
+        <button @click="changeTab('alunos')" :class="{ active: currentTab === 'alunos' }">
+          <span class="icon">👥</span> Alunos
+        </button>
+        <button @click="changeTab('estoque')" :class="{ active: currentTab === 'estoque' }">
           <span class="icon">📦</span> Estoque
         </button>
-        <button 
-          @click="changeTab('geracao')" 
-          :class="{ active: currentTab === 'geracao' }"
-        >
+        <button @click="changeTab('geracao')" :class="{ active: currentTab === 'geracao' }">
           <span class="icon">🎟️</span> Gerar Fichas
         </button>
       </nav>
       <div class="sidebar-footer">
-        <p>v2.1 - Custom Scan</p>
+        <p>Controle de Refeições</p>
       </div>
     </aside>
 
@@ -59,10 +53,10 @@
               <div v-if="matriculaLida" class="scan-success-overlay">
                 <div class="success-card">
                   <div class="success-icon">✅</div>
-                  <h3>Estudante Identificado</h3>
+                  <h3>QR Code Detectado</h3>
                   <div class="id-display">{{ matriculaLida }}</div>
-                  <button @click="confirmarValidacao" class="btn btn-validate pulse">CONFIRMAR ACESSO</button>
-                  <button @click="resetScan" class="btn-link">Tentar novamente</button>
+                  <button @click="confirmarValidacao" class="btn btn-validate pulse">LIBERAR ACESSO</button>
+                  <button @click="resetScan" class="btn-link">Cancelar</button>
                 </div>
               </div>
 
@@ -78,28 +72,80 @@
                 {{ isCameraActive ? 'Desligar Câmera' : 'Ligar Câmera' }}
               </button>
               <button v-if="isCameraActive" @click="switchCamera" class="btn btn-secondary">
-                Inverter Câmera
+                Trocar Câmera
               </button>
             </div>
+          </div>
+
+          <!-- Mensagem de bloqueio de 6h -->
+          <div v-if="statusValidacao" class="card status-card" :class="statusValidacao.tipo">
+            <h3>{{ statusValidacao.titulo }}</h3>
+            <p>{{ statusValidacao.msg }}</p>
+            <p v-if="statusValidacao.espera" class="wait-time">⏳ {{ statusValidacao.espera }}</p>
           </div>
 
           <div class="card glass-effect">
             <h3>Entrada Manual</h3>
             <div class="input-group-row">
-              <input type="text" v-model="matriculaParaValidar" placeholder="Número da matrícula" @keyup.enter="validarFicha(matriculaParaValidar)" />
+              <input type="text" v-model="matriculaParaValidar" placeholder="Matrícula" @keyup.enter="validarFicha(matriculaParaValidar)" />
               <button @click="validarFicha(matriculaParaValidar)" class="btn btn-primary">Validar</button>
             </div>
           </div>
         </div>
 
-        <!-- TELA DE ESTOQUE (MESMA LÓGICA ANTERIOR) -->
+        <!-- TELA DE ALUNOS -->
+        <div v-if="currentTab === 'alunos'" class="tab-pane">
+          <div class="card glass-effect">
+            <div class="table-header">
+              <h3>Listagem de Estudantes</h3>
+              <input type="text" v-model="filtroAluno" placeholder="Pesquisar por nome ou matrícula..." class="search-input" />
+            </div>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Matrícula</th>
+                    <th>Último Acesso</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="aluno in alunosFiltrados" :key="aluno.id">
+                    <td>{{ aluno.nome }}</td>
+                    <td><code>{{ aluno.matricula }}</code></td>
+                    <td>{{ formatarData(aluno.ultimaRefeicao) }}</td>
+                    <td>
+                      <span :class="['status-badge', podeComer(aluno.ultimaRefeicao) ? 'can-eat' : 'must-wait']">
+                        {{ podeComer(aluno.ultimaRefeicao) ? 'Pode comer' : 'Aguardar' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TELA DE ESTOQUE -->
         <div v-if="currentTab === 'estoque'" class="tab-pane">
+          <div class="card glass-effect">
+            <h3>Adicionar Novo Alimento</h3>
+            <div class="input-group-row">
+              <input type="text" v-model="novoItem.nome" placeholder="Nome do alimento (Ex: Arroz)" />
+              <input type="text" v-model="novoItem.unidade" placeholder="Unidade (Ex: kg)" style="width: 100px" />
+              <input type="number" v-model="novoItem.quantidade" placeholder="Qtd" style="width: 80px" />
+              <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar</button>
+            </div>
+          </div>
+
           <div class="estoque-grid">
             <div v-for="item in estoqueList" :key="item.id" class="estoque-card glass-effect">
               <div class="item-header">
                 <h3>{{ item.nome }}</h3>
-                <span class="unit-tag">{{ item.unidade }}</span>
+                <button @click="excluirAlimento(item.id)" class="btn-delete">×</button>
               </div>
+              <p class="unit-label">{{ item.unidade }}</p>
               <div class="item-body">
                 <button @click="ajustarEstoque(item.id, -1)" class="adjust-btn minus">-</button>
                 <div class="qty-display">
@@ -114,18 +160,18 @@
         <!-- TELA DE GERAÇÃO -->
         <div v-if="currentTab === 'geracao'" class="tab-pane">
           <div class="card glass-effect">
-            <h3>Gerar Nova Ficha</h3>
+            <h3>Gerar Ficha QR Code</h3>
             <div class="input-group">
-              <input type="text" v-model="matriculaParaGerar" placeholder="Matrícula do estudante" />
-              <button @click="gerarQrCode" class="btn btn-primary mt-1">Gerar QR Code</button>
+              <input type="text" v-model="matriculaParaGerar" placeholder="Matrícula do aluno" />
+              <button @click="gerarQrCode" class="btn btn-primary mt-1">Gerar Agora</button>
             </div>
             
             <div v-if="qrCodeGerado" class="qr-result">
               <div class="printable-area">
-                <qrcode-vue :value="matriculaParaGerar" :size="220" level="H" />
-                <p>ESTUDANTE: {{ matriculaParaGerar }}</p>
+                <qrcode-vue :value="matriculaParaGerar" :size="200" level="H" />
+                <p class="qr-label">ALUNO: {{ matriculaParaGerar }}</p>
               </div>
-              <button @click="imprimirFicha" class="btn btn-secondary">Imprimir Agora</button>
+              <button @click="imprimirFicha" class="btn btn-secondary">Imprimir</button>
             </div>
           </div>
         </div>
@@ -142,7 +188,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';
 import QrcodeVue from 'qrcode.vue';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -154,21 +200,27 @@ const currentTab = ref('validacao');
 const isSidebarOpen = ref(false);
 const isOnline = ref(true);
 const isCameraActive = ref(false);
-const currentCameraId = ref('environment'); // 'environment' = traseira, 'user' = frontal
+const currentCameraId = ref('environment');
 
 const tabTitles = {
   validacao: 'Validação de Acesso',
-  estoque: 'Estoque de Alimentos',
+  alunos: 'Banco de Estudantes',
+  estoque: 'Gestão de Estoque',
   geracao: 'Geração de Fichas'
 };
 
 const estoqueList = ref([]);
+const alunosList = ref([]);
+const filtroAluno = ref('');
 const matriculaLida = ref(null);
 const matriculaParaValidar = ref('');
 const matriculaParaGerar = ref('');
 const qrCodeGerado = ref(false);
 const mensagem = ref('');
 const mensagemTipo = ref('');
+const statusValidacao = ref(null);
+
+const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
 
 let html5QrCode = null;
 
@@ -178,27 +230,72 @@ const carregarEstoque = async () => {
     const res = await axios.get(`${API_URL}/estoque`);
     estoqueList.value = res.data;
     isOnline.value = true;
-  } catch (err) { 
-    isOnline.value = false;
-  }
+  } catch (err) { isOnline.value = false; }
 };
+
+const carregarAlunos = async () => {
+  try {
+    const res = await axios.get(`${API_URL}/alunos`);
+    alunosList.value = res.data;
+  } catch (err) { console.error("Erro ao carregar alunos"); }
+};
+
+const alunosFiltrados = computed(() => {
+  if (!filtroAluno.value) return alunosList.value;
+  const f = filtroAluno.value.toLowerCase();
+  return alunosList.value.filter(a => 
+    a.nome.toLowerCase().includes(f) || a.matricula.includes(f)
+  );
+});
 
 const ajustarEstoque = async (id, delta) => {
   try {
     await axios.post(`${API_URL}/estoque/${id}/ajustar?variacao=${delta}`);
     await carregarEstoque();
-  } catch (err) { mostrarMensagem("Erro ao atualizar estoque", "error"); }
+  } catch (err) { mostrarMensagem("Erro ao atualizar", "error"); }
+};
+
+const cadastrarNovoAlimento = async () => {
+  if (!novoItem.value.nome || !novoItem.value.unidade) return;
+  try {
+    await axios.post(`${API_URL}/estoque`, novoItem.value);
+    novoItem.value = { nome: '', unidade: '', quantidade: 0 };
+    await carregarEstoque();
+    mostrarMensagem("Item adicionado!", "success");
+  } catch (err) { mostrarMensagem("Erro ao cadastrar", "error"); }
+};
+
+const excluirAlimento = async (id) => {
+  if (!confirm("Excluir este alimento?")) return;
+  try {
+    await axios.delete(`${API_URL}/estoque/${id}`);
+    await carregarEstoque();
+  } catch (err) { mostrarMensagem("Erro ao excluir", "error"); }
 };
 
 const validarFicha = async (matricula) => {
   if (!matricula) return;
+  statusValidacao.value = null;
   try {
     const res = await axios.post(`${API_URL}/validar?matricula=${matricula}`);
     mostrarMensagem(res.data.message, 'success');
+    statusValidacao.value = {
+      tipo: 'success',
+      titulo: 'Acesso Liberado',
+      msg: res.data.message
+    };
     matriculaParaValidar.value = '';
     carregarEstoque();
+    carregarAlunos();
   } catch (err) {
-    mostrarMensagem(err.response?.data?.error || "Erro na validação", 'error');
+    const errorData = err.response?.data;
+    statusValidacao.value = {
+      tipo: 'error',
+      titulo: 'Acesso Negado',
+      msg: errorData?.error || "Erro na validação",
+      espera: errorData?.espera
+    };
+    mostrarMensagem(errorData?.error || "Erro", 'error');
   }
 };
 
@@ -212,6 +309,21 @@ const resetScan = () => {
   if (isCameraActive.value) startCamera();
 };
 
+// Utils
+const formatarData = (dateStr) => {
+  if (!dateStr) return 'Nunca';
+  const d = new Date(dateStr);
+  return d.toLocaleString('pt-BR');
+};
+
+const podeComer = (dateStr) => {
+  if (!dateStr) return true;
+  const ultima = new Date(dateStr);
+  const agora = new Date();
+  const diffHoras = (agora - ultima) / (1000 * 60 * 60);
+  return diffHoras >= 6;
+};
+
 const mostrarMensagem = (txt, tipo) => {
   mensagem.value = txt;
   mensagemTipo.value = tipo;
@@ -220,33 +332,27 @@ const mostrarMensagem = (txt, tipo) => {
 
 // Lógica do Scanner
 const toggleCamera = async () => {
-  if (isCameraActive.value) {
-    await stopCamera();
-  } else {
-    await startCamera();
-  }
+  if (isCameraActive.value) await stopCamera();
+  else await startCamera();
 };
 
 const startCamera = async () => {
   if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-  
   const config = { fps: 15, qrbox: { width: 250, height: 250 } };
-  
   try {
     await html5QrCode.start(
       { facingMode: currentCameraId.value }, 
       config, 
       (decodedText) => {
         matriculaLida.value = decodedText;
-        html5QrCode.stop(); // Para a câmera ao ler
+        html5QrCode.stop();
         isCameraActive.value = false;
         if (navigator.vibrate) navigator.vibrate(200);
       }
     );
     isCameraActive.value = true;
   } catch (err) {
-    console.error(err);
-    mostrarMensagem("Câmera bloqueada ou não encontrada. Use HTTPS.", "error");
+    mostrarMensagem("Câmera bloqueada ou não encontrada.", "error");
   }
 };
 
@@ -267,16 +373,17 @@ const changeTab = async (tab) => {
   if (isCameraActive.value) await stopCamera();
   currentTab.value = tab;
   isSidebarOpen.value = false;
+  if (tab === 'alunos') carregarAlunos();
 };
 
-const gerarQrCode = () => {
-  if (matriculaParaGerar.value) qrCodeGerado.value = true;
-};
-
+const gerarQrCode = () => { if (matriculaParaGerar.value) qrCodeGerado.value = true; };
 const imprimirFicha = () => window.print();
 const formatarQuantidade = (q) => Number.isInteger(q) ? q : q.toFixed(1);
 
-onMounted(carregarEstoque);
+onMounted(() => {
+  carregarEstoque();
+  carregarAlunos();
+});
 onUnmounted(stopCamera);
 </script>
 
@@ -287,6 +394,7 @@ onUnmounted(stopCamera);
   --primary: #4f46e5;
   --success: #10b981;
   --danger: #f43f5e;
+  --warning: #f59e0b;
   --bg-dark: #020617;
   --sidebar-bg: #0f172a;
   --glass: rgba(30, 41, 59, 0.6);
@@ -294,187 +402,90 @@ onUnmounted(stopCamera);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Outfit', sans-serif;
-  background-color: var(--bg-dark);
-  color: #f8fafc;
-  overflow-x: hidden;
-}
-
+body { font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); color: #f8fafc; overflow-x: hidden; }
 .app-layout { display: flex; min-height: 100vh; }
 
 /* SIDEBAR */
-.sidebar {
-  width: 280px;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  height: 100vh;
-  z-index: 100;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebar-header { padding: 3rem 2rem; text-align: center; }
-.logo { font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; }
+.sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); position: fixed; height: 100vh; z-index: 100; transition: transform 0.3s; }
+.sidebar-header { padding: 2rem; text-align: center; }
+.logo { font-size: 1.5rem; font-weight: 800; }
 .logo span { color: var(--primary); }
-
 .sidebar-nav { padding: 1rem; flex: 1; }
-.sidebar-nav button {
-  width: 100%;
-  padding: 1.2rem;
-  margin-bottom: 0.8rem;
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  transition: all 0.3s;
-}
-
-.sidebar-nav button.active {
-  background: linear-gradient(135deg, var(--primary), #818cf8);
-  color: white;
-  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
-}
-
-.sidebar-nav button:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
+.sidebar-nav button { width: 100%; padding: 1rem; margin-bottom: 0.5rem; background: transparent; border: none; color: #94a3b8; font-size: 1rem; font-weight: 600; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
+.sidebar-nav button.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
 
 /* MAIN */
 .main-content { flex: 1; margin-left: 280px; min-width: 0; }
+.top-bar { height: 70px; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 90; }
+.content-area { padding: 2rem; max-width: 1200px; margin: 0 auto; }
 
-.top-bar {
-  height: 80px;
-  background: rgba(2, 6, 23, 0.8);
-  backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 3rem;
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 90;
-}
+/* CARDS */
+.card { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.glass-effect { box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
 
-.user-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: rgba(244, 63, 94, 0.2); color: var(--danger); }
-.user-status.online { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+/* TABLES */
+.table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem; }
+.search-input { background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 0.6rem 1rem; border-radius: 10px; color: white; flex: 1; max-width: 400px; }
+.table-wrapper { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+.data-table th { padding: 1rem; color: #94a3b8; border-bottom: 1px solid var(--border); font-weight: 600; }
+.data-table td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+.status-badge.can-eat { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+.status-badge.must-wait { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
 
-.content-area { padding: 3rem 2rem; max-width: 1200px; margin: 0 auto; }
-
-.card {
-  background: var(--glass);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
-
-/* CUSTOM SCANNER */
-.scanner-wrapper { text-align: center; max-width: 600px; margin: 0 auto 2rem; padding: 1rem; }
-.scanner-header { margin-bottom: 1rem; }
-.camera-info { font-size: 0.9rem; color: #94a3b8; }
-.camera-info.active { color: var(--success); font-weight: 600; }
-
-.preview-container {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  background: #000;
-  border-radius: 20px;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-  border: 2px solid var(--border);
-}
-
+/* SCANNER UI */
+.scanner-wrapper { max-width: 450px; margin: 0 auto 1.5rem; text-align: center; }
+.preview-container { position: relative; aspect-ratio: 1; background: #000; border-radius: 15px; overflow: hidden; margin-bottom: 1rem; border: 2px solid var(--border); }
 #reader { width: 100%; height: 100%; }
+.camera-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: #475569; }
+.scan-success-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.95); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.status-card { text-align: center; border-left: 6px solid var(--primary); }
+.status-card.success { border-color: var(--success); background: rgba(16, 185, 129, 0.1); }
+.status-card.error { border-color: var(--danger); background: rgba(244, 63, 94, 0.1); }
+.wait-time { font-weight: 800; color: var(--warning); font-size: 1.1rem; margin-top: 0.5rem; }
 
-.camera-placeholder {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #475569;
-}
+/* ESTOQUE UI */
+.estoque-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.estoque-card { padding: 1.2rem; position: relative; }
+.btn-delete { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #64748b; font-size: 1.5rem; cursor: pointer; line-height: 1; }
+.btn-delete:hover { color: var(--danger); }
+.unit-label { font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; }
+.item-body { display: flex; align-items: center; justify-content: space-between; }
+.adjust-btn { width: 36px; height: 36px; border-radius: 50%; border: none; color: white; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+.adjust-btn.minus { background: #334155; }
+.adjust-btn.plus { background: var(--primary); }
+.qty-value { font-size: 1.5rem; font-weight: 800; }
 
-.icon-large { font-size: 4rem; margin-bottom: 1rem; }
-
-.scan-success-overlay {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(2, 6, 23, 0.95);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-}
-
-.success-card { padding: 2rem; width: 80%; }
-.success-icon { font-size: 3rem; margin-bottom: 1rem; }
-.id-display { font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 1rem 0 2rem; }
-
-.scanner-controls { display: flex; gap: 1rem; justify-content: center; }
-
-/* BUTTONS */
-.btn {
-  padding: 1rem 2rem;
-  border-radius: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-  font-size: 1rem;
-}
-
-.btn:active { transform: scale(0.96); }
+/* FORM & BUTTONS */
+.input-group-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.input-group-row input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 0.8rem 1rem; border-radius: 12px; color: white; min-width: 150px; }
+.btn { padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; }
+.btn:active { transform: scale(0.95); }
 .btn-primary { background: var(--primary); color: white; }
 .btn-success { background: var(--success); color: white; }
 .btn-danger { background: var(--danger); color: white; }
 .btn-secondary { background: #334155; color: white; }
-.btn-validate { background: var(--success); color: white; width: 100%; font-size: 1.2rem; margin-bottom: 1rem; }
-.btn-link { background: transparent; color: #94a3b8; text-decoration: underline; border: none; cursor: pointer; }
+.btn-validate { background: var(--success); color: white; width: 100%; margin-top: 1rem; }
 
-/* ESTOQUE */
-.estoque-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-.qty-value { font-size: 2rem; font-weight: 800; color: white; }
-
-/* ANIMATIONS */
-.slide-fade-enter-active { transition: all 0.3s ease-out; }
-.slide-fade-leave-active { transition: all 0.4s cubic-bezier(1, 0.5, 0.8, 1); }
-.slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(20px); opacity: 0; }
-
-.pulse { animation: pulse 2s infinite; }
-@keyframes pulse { 
-  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 
-  70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); } 
-  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } 
-}
+/* NOTIFICATIONS */
+.toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 2rem; border-radius: 12px; z-index: 200; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+.toast.success { background: var(--success); color: white; }
+.toast.error { background: var(--danger); color: white; }
 
 /* MOBILE */
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar-open .sidebar { transform: translateX(0); }
   .main-content { margin-left: 0; }
-  .top-bar { padding: 0 1.5rem; }
-  .menu-toggle { display: block; background: transparent; border: none; color: white; font-size: 1.8rem; }
+  .menu-toggle { display: block; background: transparent; border: none; color: white; font-size: 1.5rem; }
   .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
-  .content-area { padding: 1.5rem 1rem; }
+  .content-area { padding: 1rem; }
 }
 
 @media print {
-  body * { display: none; }
-  .printable-area, .printable-area * { display: block; }
-  .printable-area { position: absolute; top: 0; left: 0; width: 100%; text-align: center; color: black; }
+  body * { display: none !important; }
+  .printable-area, .printable-area * { display: block !important; }
+  .printable-area { position: absolute; top: 0; width: 100%; text-align: center; }
 }
 </style>

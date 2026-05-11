@@ -1,7 +1,9 @@
 package com.sistema.controle.controller;
 
+import com.sistema.controle.model.Aluno;
 import com.sistema.controle.model.Estoque;
 import com.sistema.controle.model.RegistroAtendimento;
+import com.sistema.controle.repository.AlunoRepository;
 import com.sistema.controle.repository.EstoqueRepository;
 import com.sistema.controle.repository.RegistroAtendimentoRepository;
 import jakarta.annotation.PostConstruct;
@@ -9,11 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.time.Duration;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -26,9 +26,12 @@ public class ControleController {
     @Autowired
     private RegistroAtendimentoRepository registroRepo;
 
-    // Inicializa o estoque com itens reais caso o banco esteja vazio
+    @Autowired
+    private AlunoRepository alunoRepo;
+
     @PostConstruct
-    public void initEstoque() {
+    public void initData() {
+        // Inicializa estoque
         if (estoqueRepo.count() == 0) {
             adicionarItemInicial("Arroz", "kg", 50.0);
             adicionarItemInicial("Feijão", "kg", 30.0);
@@ -36,6 +39,20 @@ public class ControleController {
             adicionarItemInicial("Frango", "kg", 25.0);
             adicionarItemInicial("Óleo", "litros", 10.0);
         }
+
+        // Inicializa alguns alunos de teste
+        if (alunoRepo.count() == 0) {
+            cadastrarAlunoInicial("2023001", "João Silva");
+            cadastrarAlunoInicial("2023002", "Maria Oliveira");
+            cadastrarAlunoInicial("2023003", "Pedro Santos");
+        }
+    }
+
+    private void cadastrarAlunoInicial(String matricula, String nome) {
+        Aluno a = new Aluno();
+        a.setMatricula(matricula);
+        a.setNome(nome);
+        alunoRepo.save(a);
     }
 
     private void adicionarItemInicial(String nome, String unidade, Double quantidade) {
@@ -65,24 +82,60 @@ public class ControleController {
         return ResponseEntity.badRequest().body("Item não encontrado.");
     }
 
+    @DeleteMapping("/estoque/{id}")
+    public ResponseEntity<?> excluirItemEstoque(@PathVariable Long id) {
+        estoqueRepo.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/estoque")
+    public ResponseEntity<?> adicionarNovoItem(@RequestBody Estoque novoItem) {
+        return ResponseEntity.ok(estoqueRepo.save(novoItem));
+    }
+
+    @GetMapping("/alunos")
+    public List<Aluno> listarAlunos() {
+        return alunoRepo.findAll();
+    }
+
     @PostMapping("/validar")
     public ResponseEntity<?> validarFicha(@RequestParam String matricula) {
-        Map<String, String> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         
-        LocalDate hoje = LocalDate.now();
-        boolean jaAtendido = registroRepo.existsByMatriculaAndDataAtendimento(matricula, hoje);
-        if (jaAtendido) {
-            response.put("error", "Estudante já recebeu refeição hoje.");
+        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime limite6Horas = agora.minusHours(6);
+
+        // Busca o aluno
+        Optional<Aluno> alunoOpt = alunoRepo.findByMatricula(matricula);
+        if (alunoOpt.isEmpty()) {
+            response.put("error", "Estudante não cadastrado no sistema.");
+            return ResponseEntity.status(404).body(response);
+        }
+
+        Aluno aluno = alunoOpt.get();
+
+        // Verifica intervalo de 6 horas
+        if (aluno.getUltimaRefeicao() != null && aluno.getUltimaRefeicao().isAfter(limite6Horas)) {
+            Duration restante = Duration.between(aluno.getUltimaRefeicao(), agora);
+            long minutosFaltando = 360 - restante.toMinutes();
+            
+            response.put("error", "Já recebeu refeição recentemente.");
+            response.put("espera", String.format("Aguarde mais %d horas e %d minutos.", 
+                         minutosFaltando / 60, minutosFaltando % 60));
             return ResponseEntity.badRequest().body(response);
         }
 
-        // Registra atendimento (separado do estoque físico de ingredientes)
+        // Registra atendimento
         RegistroAtendimento reg = new RegistroAtendimento();
         reg.setMatricula(matricula);
-        reg.setDataAtendimento(hoje);
+        reg.setDataHoraAtendimento(agora);
         registroRepo.save(reg);
 
-        response.put("message", "Refeição liberada para a matrícula " + matricula);
+        // Atualiza aluno
+        aluno.setUltimaRefeicao(agora);
+        alunoRepo.save(aluno);
+
+        response.put("message", "Refeição liberada para " + aluno.getNome());
         return ResponseEntity.ok(response);
     }
 }
