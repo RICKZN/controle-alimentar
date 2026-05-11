@@ -136,6 +136,7 @@ public class ControleController {
             long minutosFaltando = 360 - restante.toMinutes();
             
             response.put("error", "Já recebeu refeição recentemente.");
+            response.put("minutosFaltando", minutosFaltando);
             response.put("espera", String.format("Aguarde mais %d horas e %d minutos.", 
                          minutosFaltando / 60, minutosFaltando % 60));
             return ResponseEntity.badRequest().body(response);

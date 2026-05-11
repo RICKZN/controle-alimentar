@@ -26,10 +26,16 @@ public class ControleApplication {
 						String user = userPass.split(":")[0];
 						String pass = userPass.split(":")[1];
 						
-						System.setProperty("spring.datasource.url", "jdbc:postgresql://" + hostPart);
+						// Neon e Supabase funcionam melhor com sslmode=require
+						String finalUrl = "jdbc:postgresql://" + hostPart;
+						if (!finalUrl.contains("sslmode")) {
+							finalUrl += (finalUrl.contains("?") ? "&" : "?") + "sslmode=require";
+						}
+						
+						System.setProperty("spring.datasource.url", finalUrl);
 						System.setProperty("spring.datasource.username", user);
 						System.setProperty("spring.datasource.password", pass);
-						System.out.println("✅ Configuração extraída: Host=" + hostPart.split("/")[0] + ", User=" + user);
+						System.out.println("🚀 Conectando ao Banco de Dados de Alta Performance: " + hostPart.split(":")[0]);
 					}
 				}
 			} catch (Exception e) {
