@@ -96,6 +96,15 @@
         <!-- TELA DE ALUNOS -->
         <div v-if="currentTab === 'alunos'" class="tab-pane">
           <div class="card glass-effect">
+            <h3>Cadastrar Novo Aluno</h3>
+            <div class="input-group-row">
+              <input type="text" v-model="novoAluno.nome" placeholder="Nome completo do aluno" />
+              <input type="text" v-model="novoAluno.matricula" placeholder="Número da matrícula" style="width: 180px" />
+              <button @click="cadastrarAluno" class="btn btn-success">Cadastrar</button>
+            </div>
+          </div>
+
+          <div class="card glass-effect">
             <div class="table-header">
               <h3>Listagem de Estudantes</h3>
               <input type="text" v-model="filtroAluno" placeholder="Pesquisar por nome ou matrícula..." class="search-input" />
@@ -108,6 +117,7 @@
                     <th>Matrícula</th>
                     <th>Último Acesso</th>
                     <th>Status</th>
+                    <th>Ação</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -119,6 +129,9 @@
                       <span :class="['status-badge', podeComer(aluno.ultimaRefeicao) ? 'can-eat' : 'must-wait']">
                         {{ podeComer(aluno.ultimaRefeicao) ? 'Pode comer' : 'Aguardar' }}
                       </span>
+                    </td>
+                    <td>
+                      <button @click="excluirAluno(aluno.id)" class="btn-icon-delete">🗑️</button>
                     </td>
                   </tr>
                 </tbody>
@@ -221,6 +234,7 @@ const mensagemTipo = ref('');
 const statusValidacao = ref(null);
 
 const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
+const novoAluno = ref({ nome: '', matricula: '' });
 
 let html5QrCode = null;
 
@@ -265,11 +279,32 @@ const cadastrarNovoAlimento = async () => {
   } catch (err) { mostrarMensagem("Erro ao cadastrar", "error"); }
 };
 
+const cadastrarAluno = async () => {
+  if (!novoAluno.value.nome || !novoAluno.value.matricula) return;
+  try {
+    await axios.post(`${API_URL}/alunos`, novoAluno.value);
+    novoAluno.value = { nome: '', matricula: '' };
+    await carregarAlunos();
+    mostrarMensagem("Aluno cadastrado!", "success");
+  } catch (err) { 
+    mostrarMensagem(err.response?.data?.error || "Erro ao cadastrar", "error"); 
+  }
+};
+
 const excluirAlimento = async (id) => {
   if (!confirm("Excluir este alimento?")) return;
   try {
     await axios.delete(`${API_URL}/estoque/${id}`);
     await carregarEstoque();
+  } catch (err) { mostrarMensagem("Erro ao excluir", "error"); }
+};
+
+const excluirAluno = async (id) => {
+  if (!confirm("Excluir este aluno do sistema?")) return;
+  try {
+    await axios.delete(`${API_URL}/alunos/${id}`);
+    await carregarAlunos();
+    mostrarMensagem("Aluno removido", "success");
   } catch (err) { mostrarMensagem("Erro ao excluir", "error"); }
 };
 
@@ -456,6 +491,20 @@ body { font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); colo
 .adjust-btn.minus { background: #334155; }
 .adjust-btn.plus { background: var(--primary); }
 .qty-value { font-size: 1.5rem; font-weight: 800; }
+
+.btn-icon-delete {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.btn-icon-delete:hover {
+  background: rgba(244, 63, 94, 0.1);
+}
 
 /* FORM & BUTTONS */
 .input-group-row { display: flex; gap: 10px; flex-wrap: wrap; }
