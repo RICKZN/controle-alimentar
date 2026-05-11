@@ -110,7 +110,10 @@
               <input type="text" v-model="filtroAluno" placeholder="Pesquisar por nome ou matrícula..." class="search-input" />
             </div>
             <div class="table-wrapper">
-              <table class="data-table">
+              <div v-if="alunosFiltrados.length === 0" class="empty-state">
+                <p>Nenhum aluno encontrado. Cadastre o primeiro aluno no formulário acima!</p>
+              </div>
+              <table v-else class="data-table">
                 <thead>
                   <tr>
                     <th>Nome</th>
@@ -152,7 +155,10 @@
             </div>
           </div>
 
-          <div class="estoque-grid">
+          <div v-if="estoqueList.length === 0" class="empty-state card">
+            <p>O estoque está vazio. Adicione alimentos no formulário acima.</p>
+          </div>
+          <div v-else class="estoque-grid">
             <div v-for="item in estoqueList" :key="item.id" class="estoque-card glass-effect">
               <div class="item-header">
                 <h3>{{ item.nome }}</h3>
@@ -535,6 +541,13 @@ body { font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); colo
 
 .btn-icon-delete:hover {
   background: rgba(244, 63, 94, 0.1);
+}
+
+.empty-state {
+  padding: 3rem;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
 }
 
 /* FORM & BUTTONS */
