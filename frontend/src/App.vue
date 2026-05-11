@@ -81,7 +81,7 @@
           <div v-if="statusValidacao" class="card status-card" :class="statusValidacao.tipo">
             <h3>{{ statusValidacao.titulo }}</h3>
             <p>{{ statusValidacao.msg }}</p>
-            <p v-if="statusValidacao.espera" class="wait-time">⏳ {{ statusValidacao.espera }}</p>
+            <p v-if="tempoEsperaReal" class="wait-time">⏳ {{ tempoEsperaReal }}</p>
           </div>
 
           <div class="card glass-effect">
@@ -232,28 +232,31 @@ const qrCodeGerado = ref(false);
 const mensagem = ref('');
 const mensagemTipo = ref('');
 const statusValidacao = ref(null);
+const tempoEsperaReal = ref("");
 const countdownTimer = ref(null);
-
-const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
-const novoAluno = ref({ nome: '', matricula: '' });
 
 const iniciarContagemRegressiva = (minutosRestantes) => {
   if (countdownTimer.value) clearInterval(countdownTimer.value);
   
-  let segundosTotais = minutosRestantes * 60;
+  let segundosTotais = Math.floor(minutosRestantes * 60);
   
-  countdownTimer.value = setInterval(() => {
-    if (segundosTotais <= 0) {
-      clearInterval(countdownTimer.value);
-      statusValidacao.value.espera = "Pode comer agora!";
-      return;
-    }
-    segundosTotais--;
+  const atualizarTexto = () => {
     const h = Math.floor(segundosTotais / 3600);
     const m = Math.floor((segundosTotais % 3600) / 60);
     const s = segundosTotais % 60;
-    
-    statusValidacao.value.espera = `Aguarde mais ${h}h ${m}m ${s}s`;
+    tempoEsperaReal.value = `Aguarde mais ${h}h ${m}m ${s}s`;
+  };
+
+  atualizarTexto(); // Atualiza na hora
+
+  countdownTimer.value = setInterval(() => {
+    if (segundosTotais <= 0) {
+      clearInterval(countdownTimer.value);
+      tempoEsperaReal.value = "Pode comer agora!";
+      return;
+    }
+    segundosTotais--;
+    atualizarTexto();
   }, 1000);
 };
 
@@ -332,6 +335,8 @@ const excluirAluno = async (id) => {
 const validarFicha = async (matricula) => {
   if (!matricula) return;
   statusValidacao.value = null;
+  tempoEsperaReal.value = "";
+  if (countdownTimer.value) clearInterval(countdownTimer.value);
   try {
     const res = await axios.post(`${API_URL}/validar?matricula=${matricula}`);
     mostrarMensagem(res.data.message, 'success');
