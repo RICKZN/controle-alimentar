@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "public": false,
+  "name": "controle-alimentar-if",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://controle-alimentar-spring-vue.onrender.com/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
