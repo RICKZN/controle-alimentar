@@ -133,10 +133,19 @@
                 </thead>
                 <tbody>
                   <tr v-for="aluno in alunosFiltrados" :key="aluno.id">
-                    <td>{{ aluno.nome }}</td>
-                    <td><code>{{ aluno.matricula }}</code></td>
-                    <td>{{ formatarData(aluno.ultimaRefeicao) }}</td>
-                    <td>
+                                  <td>{{ formatarData(aluno.ultimaRefeicao) }}</td>
+                          <td>{{ aluno.ultimaRefeicao ? formatarData(new Date(new Date(aluno.ultimaRefeicao).getTime() + 6*60*60*1000)) : '—' }}</td>
+                          <td>
+                            <span v-if="!podeComer(aluno.ultimaRefeicao)" style="color:#f59e0b; font-weight:700">
+                              {{ tempoRestanteAluno(aluno.ultimaRefeicao) }}
+                            </span>
+                            <span v-else style="color:#10b981">—</span>
+                          </td>
+                          <td>
+                            <span :class="['status-badge', podeComer(aluno.ultimaRefeicao) ? 'can-eat' : 'must-wait']">
+                              {{ podeComer(aluno.ultimaRefeicao) ? 'Pode comer' : 'Aguardar' }}
+                            </span>
+                          </td>
                       <span :class="['status-badge', podeComer(aluno.ultimaRefeicao) ? 'can-eat' : 'must-wait']">
                         {{ podeComer(aluno.ultimaRefeicao) ? 'Pode comer' : 'Aguardar' }}
                       </span>
@@ -271,6 +280,7 @@ const iniciarContagemRegressiva = (minutosRestantes) => {
     const s = segundosTotais % 60;
     tempoEsperaReal.value = `Aguarde mais ${h}h ${m}m ${s}s`;
   };
+  
 
   atualizarTexto(); // Atualiza na hora
 
@@ -413,6 +423,7 @@ const formatarData = (dateStr) => {
   const d = new Date(dateStr);
   return d.toLocaleString('pt-BR');
 };
+  
 
 const podeComer = (dateStr) => {
   if (!dateStr) return true;
@@ -477,6 +488,15 @@ const changeTab = async (tab) => {
 const gerarQrCode = () => { if (matriculaParaGerar.value) qrCodeGerado.value = true; };
 const imprimirFicha = () => window.print();
 const formatarQuantidade = (q) => Number.isInteger(q) ? q : q.toFixed(1);
+  const tempoRestanteAluno = (dateStr) => {
+  if (!dateStr) return '—';
+  const proxima = new Date(new Date(dateStr).getTime() + 6*60*60*1000);
+  const diff = Math.max(0, Math.floor((proxima - new Date()) / 1000));
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  return `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+};
 
 onMounted(() => {
   carregarEstoque();
