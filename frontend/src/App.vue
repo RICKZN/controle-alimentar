@@ -79,9 +79,14 @@
 
           <!-- Mensagem de bloqueio de 6h -->
           <div v-if="statusValidacao" class="card status-card" :class="statusValidacao.tipo">
-            <h3>{{ statusValidacao.titulo }}</h3>
-            <p>{{ statusValidacao.msg }}</p>
-            <p v-if="tempoEsperaReal" class="wait-time">⏳ {{ tempoEsperaReal }}</p>
+           <p>{{ statusValidacao.msg }}</p>
+          <p v-if="statusValidacao.ultimaRefeicao" style="color:#94a3b8; margin-top:0.5rem">
+            🍽️ Última refeição: {{ formatarData(statusValidacao.ultimaRefeicao) }}
+          </p>
+          <p v-if="statusValidacao.proximaRefeicao" style="color:#94a3b8">
+            🔓 Próxima liberação: {{ formatarData(statusValidacao.proximaRefeicao) }}
+          </p>
+          <p v-if="tempoEsperaReal" class="wait-time">⏳ {{ tempoEsperaReal }}</p>
           </div>
 
           <div class="card glass-effect">
@@ -258,7 +263,7 @@ const novoAluno = ref({ nome: '', matricula: '' });
 const iniciarContagemRegressiva = (minutosRestantes) => {
   if (countdownTimer.value) clearInterval(countdownTimer.value);
   
-  let segundosTotais = Math.floor(minutosRestantes * 60);
+ let segundosTotais = Math.floor(minutosRestantes);
   
   const atualizarTexto = () => {
     const h = Math.floor(segundosTotais / 3600);
@@ -373,15 +378,20 @@ const validarFicha = async (matricula) => {
   } catch (err) {
     const errorData = err.response?.data;
     statusValidacao.value = {
-      tipo: 'error',
-      titulo: 'Acesso Negado',
-      msg: errorData?.error || "Erro na validação",
-      espera: errorData?.espera
-    };
+    tipo: 'error',
+    titulo: 'Acesso Negado',
+    msg: errorData?.error || "Erro na validação",
+    espera: errorData?.espera,
+    ultimaRefeicao: errorData?.horaUltimaRefeicao,
+    proximaRefeicao: errorData?.proximaRefeicao
+};
     
-    if (errorData?.minutosFaltando) {
-      iniciarContagemRegressiva(errorData.minutosFaltando);
-    }
+    
+if (errorData?.segundosFaltando) {
+  iniciarContagemRegressiva(errorData.segundosFaltando);
+}
+
+    
     
     mostrarMensagem(errorData?.error || "Erro", 'error');
   }
