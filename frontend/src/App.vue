@@ -373,14 +373,18 @@ const validarFicha = async (matricula) => {
   } catch (err) {
     const errorData = err.response?.data;
     statusValidacao.value = {
-      tipo: 'error',
-      titulo: 'Acesso Negado',
-      msg: errorData?.error || "Erro na validação",
-      espera: errorData?.espera
+    tipo: 'error',
+    titulo: 'Acesso Negado',
+    msg: errorData?.error || "Erro na validação",
+    espera: errorData?.espera,
+    ultimaRefeicao: errorData?.horaUltimaRefeicao,
+    proximaRefeicao: errorData?.proximaRefeicao
+};
     };
     
-    if (errorData?.minutosFaltando) {
-      iniciarContagemRegressiva(errorData.minutosFaltando);
+    if (errorData?.segundosFaltando) {
+  iniciarContagemRegressiva(errorData.segundosFaltando / 60);
+
     }
     
     mostrarMensagem(errorData?.error || "Erro", 'error');
