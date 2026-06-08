@@ -119,7 +119,7 @@ public class ControleController {
         Map<String, Object> response = new HashMap<>();
         
         LocalDateTime agora = LocalDateTime.now();
-        LocalDateTime limite6Horas = agora.minusHours(6);
+        LocalDateTime limite6Horas = agora.minusHours(210);
 
         // Busca o aluno
         Optional<Aluno> alunoOpt = alunoRepo.findByMatricula(matricula);
