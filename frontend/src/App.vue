@@ -501,6 +501,9 @@ const formatarQuantidade = (q) => Number.isInteger(q) ? q : q.toFixed(1);
 onMounted(() => {
   carregarEstoque();
   carregarAlunos();
+  setInterval(() => {
+    alunosList.value = [...alunosList.value];
+  }, 1000);
 });
 onUnmounted(stopCamera);
 </script>
