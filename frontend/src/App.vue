@@ -132,25 +132,26 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="aluno in alunosFiltrados" :key="aluno.id">
-                                  <td>{{ formatarData(aluno.ultimaRefeicao) }}</td>
-                          <td>{{ aluno.ultimaRefeicao ? formatarData(new Date(new Date(aluno.ultimaRefeicao).getTime() + 6*60*60*1000)) : '—' }}</td>
-                          <td>
-                            <span v-if="!podeComer(aluno.ultimaRefeicao)" style="color:#f59e0b; font-weight:700">
-                              {{ tempoRestanteAluno(aluno.ultimaRefeicao) }}
-                            </span>
-                            <span v-else style="color:#10b981">—</span>
-                          </td>
-                          <td>
-                            <span :class="['status-badge', podeComer(aluno.ultimaRefeicao) ? 'can-eat' : 'must-wait']">
-                              {{ podeComer(aluno.ultimaRefeicao) ? 'Pode comer' : 'Aguardar' }}
-                            </span>
-                          </td>
+                    <tr v-for="aluno in alunosFiltrados" :key="aluno.id">
+                    <td>{{ aluno.nome }}</td>
+                    <td><code>{{ aluno.matricula }}</code></td>
+                    <td>{{ formatarData(aluno.ultimaRefeicao) }}</td>
+                    <td>{{ aluno.ultimaRefeicao ? formatarData(new Date(new Date(aluno.ultimaRefeicao).getTime() + 6*60*60*1000)) : '—' }}</td>
+                    <td>
+                      <span v-if="!podeComer(aluno.ultimaRefeicao)" style="color:#f59e0b; font-weight:700">
+                        {{ tempoRestanteAluno(aluno.ultimaRefeicao) }}
+                      </span>
+                      <span v-else style="color:#10b981">—</span>
+                    </td>
+                    <td>
                       <span :class="['status-badge', podeComer(aluno.ultimaRefeicao) ? 'can-eat' : 'must-wait']">
                         {{ podeComer(aluno.ultimaRefeicao) ? 'Pode comer' : 'Aguardar' }}
                       </span>
                     </td>
                     <td>
+                      <button @click="excluirAluno(aluno.id)" class="btn-icon-delete">🗑️</button>
+                    </td>
+                  </tr>
                       <button @click="excluirAluno(aluno.id)" class="btn-icon-delete">🗑️</button>
                     </td>
                   </tr>
