@@ -79,9 +79,14 @@
 
           <!-- Mensagem de bloqueio de 6h -->
           <div v-if="statusValidacao" class="card status-card" :class="statusValidacao.tipo">
-            <h3>{{ statusValidacao.titulo }}</h3>
-            <p>{{ statusValidacao.msg }}</p>
-            <p v-if="tempoEsperaReal" class="wait-time">⏳ {{ tempoEsperaReal }}</p>
+           <p>{{ statusValidacao.msg }}</p>
+          <p v-if="statusValidacao.ultimaRefeicao" style="color:#94a3b8; margin-top:0.5rem">
+            🍽️ Última refeição: {{ formatarData(statusValidacao.ultimaRefeicao) }}
+          </p>
+          <p v-if="statusValidacao.proximaRefeicao" style="color:#94a3b8">
+            🔓 Próxima liberação: {{ formatarData(statusValidacao.proximaRefeicao) }}
+          </p>
+          <p v-if="tempoEsperaReal" class="wait-time">⏳ {{ tempoEsperaReal }}</p>
           </div>
 
           <div class="card glass-effect">
