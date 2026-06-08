@@ -132,11 +132,13 @@ public class ControleController {
 
         // Verifica intervalo de 6 horas
         if (aluno.getUltimaRefeicao() != null && aluno.getUltimaRefeicao().isAfter(limite6Horas)) {
-            Duration restante = Duration.between(agora, aluno.getUltimaRefeicao().plusHours(6));
+                      Duration restante = Duration.between(agora, aluno.getUltimaRefeicao().plusHours(6));
             long minutosFaltando = restante.toMinutes();
             long segundosFaltando = restante.toSeconds();
             
             response.put("error", "Já recebeu refeição recentemente.");
+            response.put("horaUltimaRefeicao", aluno.getUltimaRefeicao().toString());
+            response.put("proximaRefeicao", aluno.getUltimaRefeicao().plusHours(6).toString());
             response.put("minutosFaltando", minutosFaltando);
             response.put("segundosFaltando", segundosFaltando);
             response.put("espera", String.format("Aguarde mais %d horas e %d minutos.",
