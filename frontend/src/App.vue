@@ -263,7 +263,7 @@ const novoAluno = ref({ nome: '', matricula: '' });
 const iniciarContagemRegressiva = (minutosRestantes) => {
   if (countdownTimer.value) clearInterval(countdownTimer.value);
   
-  let segundosTotais = Math.floor(minutosRestantes * 60);
+ let segundosTotais = Math.floor(minutosRestantes);
   
   const atualizarTexto = () => {
     const h = Math.floor(segundosTotais / 3600);
@@ -387,10 +387,11 @@ const validarFicha = async (matricula) => {
 };
     
     
-    if (errorData?.segundosFaltando) {
-  iniciarContagemRegressiva(errorData.segundosFaltando / 60);
+if (errorData?.segundosFaltando) {
+  iniciarContagemRegressiva(errorData.segundosFaltando);
+}
 
-    }
+    
     
     mostrarMensagem(errorData?.error || "Erro", 'error');
   }
