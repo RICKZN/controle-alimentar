@@ -123,10 +123,12 @@
               </div>
               <table v-else class="data-table">
                 <thead>
-                  <tr>
+   <tr>
                     <th>Nome</th>
                     <th>Matrícula</th>
                     <th>Último Acesso</th>
+                    <th>Próxima Liberação</th>
+                    <th>Tempo Restante</th>
                     <th>Status</th>
                     <th>Ação</th>
                   </tr>
@@ -149,9 +151,6 @@
                       </span>
                     </td>
                     <td>
-                      <button @click="excluirAluno(aluno.id)" class="btn-icon-delete">🗑️</button>
-                    </td>
-             
                       <button @click="excluirAluno(aluno.id)" class="btn-icon-delete">🗑️</button>
                     </td>
                   </tr>
