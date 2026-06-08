@@ -151,7 +151,7 @@
                     <td>
                       <button @click="excluirAluno(aluno.id)" class="btn-icon-delete">🗑️</button>
                     </td>
-                  </tr>
+             
                       <button @click="excluirAluno(aluno.id)" class="btn-icon-delete">🗑️</button>
                     </td>
                   </tr>
