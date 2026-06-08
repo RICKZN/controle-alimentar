@@ -380,7 +380,7 @@ const validarFicha = async (matricula) => {
     ultimaRefeicao: errorData?.horaUltimaRefeicao,
     proximaRefeicao: errorData?.proximaRefeicao
 };
-    };
+    
     
     if (errorData?.segundosFaltando) {
   iniciarContagemRegressiva(errorData.segundosFaltando / 60);
