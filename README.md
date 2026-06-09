@@ -1,57 +1,328 @@
- O que é o projeto?
+# 🍽️ Sistema de Controle Alimentar — SISTEMÁIF v3.5
 
-É um *sistema de controle de refeições* para uma instituição de ensino (aparentemente um IF — Instituto Federal). Ele controla quem pode comer no refeitório, gerencia o estoque de alimentos e gera fichas com QR Code para os alunos.
-
----
-
- Backend — Java com Spring Boot
-
-*pom.xml* é o arquivo de configuração do Maven. Ele declara as dependências do projeto:
-- spring-boot-starter-web — cria o servidor HTTP e os endpoints REST
-- spring-boot-starter-data-jpa — abstrai o banco de dados usando o Hibernate
-- postgresql — driver para conectar ao PostgreSQL em nuvem
-- h2 e mysql-connector-j — estão presentes mas não são usados na config atual (provavelmente legado)
-
-application.properties é a configuração do servidor. Ele lê as credenciais do banco via variáveis de ambiente (SPRING_DATASOURCE_URL, etc.), o que é uma boa prática para deploy em nuvem. A porta também é configurável via ${PORT:8081}. O Hikari é o pool de conexões, configurado para evitar vazamentos.
-
-ControleApplication.java é o ponto de entrada da aplicação. Ele tem uma lógica extra interessante: antes de iniciar o Spring, ele lê a SPRING_DATASOURCE_URL e, se ela estiver no formato postgres://user:pass@host/db (formato do Render/Railway), ele a converte para o formato JDBC padrão e injeta como propriedade do sistema. Isso é necessário porque plataformas como o Render entregam a URL nesse formato legado.
-
-Os Models (Aluno.java, Estoque.java, RegistroAtendimento.java) são classes Java anotadas com @Entity — o JPA as mapeia para tabelas no banco automaticamente:
-- Aluno — tem id, matrícula, nome e ultimaRefeicao (timestamp do último acesso)
-- Estoque — tem id, nome do alimento, unidade (kg, litros) e quantidade
-- RegistroAtendimento — registra cada refeição servida com matrícula e data/hora
-
-Os Repositories são interfaces que estendem JpaRepository. Isso significa que o Spring gera automaticamente todos os métodos de CRUD (save, findById, findAll, delete...) sem precisar escrever SQL. O AlunoRepository tem um método customizado findByMatricula(String) que o Spring implementa automaticamente baseado no nome do método.
-
-ControleController.java é o coração do backend. Ele expõe uma API REST no caminho /api com @CrossOrigin("*") para aceitar requisições do Vue.js. Os endpoints mais importantes:
-- GET /api/estoque e GET /api/alunos — listam os dados
-- POST /api/validar?matricula= — implementa a regra de negócio principal: verifica se o aluno existe, se já comeu nas últimas 6 horas (comparando ultimaRefeicao com o horário atual), bloqueia ou libera, e retorna os minutos restantes caso bloqueado
-- O método @PostConstruct initData() roda automaticamente na inicialização e popula o banco com dados iniciais se estiver vazio
+> Sistema web para controle de refeições em refeitórios escolares/institucionais.  
+> Permite validar fichas de alunos por **QR Code ou matrícula**, gerenciar o **cadastro de estudantes** e acompanhar o **estoque de alimentos** — tudo em uma única tela.
 
 ---
 
- Frontend — Vue.js 3
+## 📸 Visão Geral
 
-main.js é o ponto de entrada mínimo: cria a app Vue e monta no #app do index.html.
+O sistema é composto por duas partes:
 
-App.vue é um único arquivo que contém toda a aplicação (template + script + style). Ele usa a *Composition API* do Vue 3 com <script setup>, que é a forma moderna de escrever componentes. As principais funcionalidades:
-
-- Sidebar com 4 abas: Validação, Alunos, Estoque e Gerar Fichas
-- Câmera e QR Code: usa a biblioteca html5-qrcode para ligar a câmera do dispositivo, detectar QR Codes, e chamar a API de validação automaticamente. Também suporta troca entre câmera frontal e traseira
-- Contagem regressiva: quando um aluno é bloqueado, um setInterval atualiza o contador em tempo real (horas, minutos e segundos restantes)
-- Geração de QR Code: usa a biblioteca qrcode.vue para gerar um QR Code com a matrícula do aluno, que pode ser impresso
-- axios faz todas as chamadas HTTP para a API do backend
-- *Computed property alunosFiltrados*: filtra a lista de alunos em tempo real conforme o usuário digita na busca, sem consultar o servidor
-- *VITE_API_URL*: a URL da API é configurável via variável de ambiente do Vite; se não definida, usa /api (relativo, útil quando frontend e backend estão no mesmo servidor)
+| Camada | Tecnologia | Função |
+|--------|-----------|--------|
+| **Backend** | Java 17 + Spring Boot 3.2 | API REST, regras de negócio, banco de dados |
+| **Frontend** | Vue 3 + Vite | Interface visual no navegador |
+| **Banco de dados** | PostgreSQL | Armazenamento de alunos, estoque e registros |
 
 ---
 
-## Infraestrutura e Deploy
+## ✨ Funcionalidades
 
-*Dockerfile* orquestra o build completo em um único container: instala Node.js numa imagem Maven, compila o frontend com npm run build, copia os arquivos gerados para backend/src/main/resources/static/ (o Spring Boot serve arquivos estáticos dessa pasta), depois compila o backend com Maven. O resultado é um único JAR que serve tanto a API quanto o frontend.
+### 📷 Validação de Fichas
+- Leitura de **QR Code pela câmera** do dispositivo
+- Entrada **manual por matrícula**
+- Bloqueio automático: o aluno só pode receber uma refeição a cada **6 horas**
+- Exibe quanto tempo falta para a próxima liberação
 
-*vercel.json* configura o deploy do frontend na Vercel. Ele faz um proxy: qualquer requisição para /api/* é redirecionada para o backend no Render, e qualquer outra rota vai para o index.html (necessário para o Vue Router funcionar como SPA).
+### 👥 Gestão de Alunos
+- Cadastrar e excluir alunos (nome + matrícula)
+- Visualizar status de cada aluno: **"Pode comer"** ou **"Aguardar"**
+- Ver horário da última refeição e previsão da próxima liberação
+- Filtro de pesquisa em tempo real
 
-*application.properties* mostra que o banco PostgreSQL fica em nuvem (Neon ou Supabase, dado o comentário sobre sslmode=require), o backend no Render (via Docker), e o frontend na Vercel.
+### 📦 Controle de Estoque
+- Listagem dos alimentos disponíveis (nome, unidade, quantidade)
+- Adicionar novos itens ao estoque
+- Ajustar quantidade (entrada ou saída)
+- Excluir itens
 
+### 🎟️ Geração de Fichas
+- Geração de **QR Codes** individuais para cada aluno cadastrado
+- Fichas prontas para impressão
 
+---
+
+## 🗂️ Estrutura do Projeto
+
+```
+controle-alimentar-spring-vue/
+├── backend/                        # API Spring Boot (Java)
+│   ├── pom.xml                     # Dependências do projeto Java
+│   └── src/main/java/com/sistema/controle/
+│       ├── ControleApplication.java        # Ponto de entrada da aplicação
+│       ├── controller/
+│       │   └── ControleController.java     # Todos os endpoints da API REST
+│       ├── model/
+│       │   ├── Aluno.java                  # Entidade: aluno (id, matrícula, nome, últimaRefeicao)
+│       │   ├── Estoque.java                # Entidade: item de estoque (nome, unidade, quantidade)
+│       │   └── RegistroAtendimento.java    # Entidade: log de cada refeição servida
+│       └── repository/
+│           ├── AlunoRepository.java
+│           ├── EstoqueRepository.java
+│           └── RegistroAtendimentoRepository.java
+│
+├── frontend/                       # Interface Vue 3 (JavaScript)
+│   ├── src/
+│   │   ├── App.vue                 # Componente principal com todas as telas
+│   │   └── main.js                 # Inicialização do Vue
+│   ├── package.json                # Dependências do projeto JavaScript
+│   └── vite.config.js              # Configuração do bundler
+│
+└── Dockerfile                      # Constrói e executa tudo em um único container
+```
+
+---
+
+## 🔌 Endpoints da API
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/api/alunos` | Lista todos os alunos |
+| `POST` | `/api/alunos` | Cadastra novo aluno |
+| `DELETE` | `/api/alunos/{id}` | Remove um aluno |
+| `POST` | `/api/validar?matricula=XXX` | Valida e registra refeição do aluno |
+| `GET` | `/api/estoque` | Lista todos os itens do estoque |
+| `POST` | `/api/estoque` | Adiciona novo item ao estoque |
+| `POST` | `/api/estoque/{id}/ajustar?variacao=N` | Ajusta quantidade de um item |
+| `DELETE` | `/api/estoque/{id}` | Remove item do estoque |
+
+---
+
+## 🚀 Como Executar
+
+Escolha **uma** das opções abaixo. A mais fácil para iniciantes é o **Docker**.
+
+---
+
+### ✅ Opção 1 — Docker (Recomendado para iniciantes)
+
+> O Docker cuida de tudo automaticamente: instala Java, Node.js e compila o projeto.
+
+#### Pré-requisitos
+- Instalar o **Docker Desktop**: https://www.docker.com/products/docker-desktop  
+  *(disponível para Windows, Mac e Linux — basta baixar e instalar como qualquer programa)*
+
+#### Passo a passo
+
+**1. Abra o terminal** (no Windows, use o "Prompt de Comando" ou "PowerShell")
+
+**2. Entre na pasta do projeto:**
+```bash
+cd caminho/para/controle-alimentar-spring-vue-master
+```
+
+**3. Configure o banco de dados** criando um arquivo `.env` na raiz do projeto com o seguinte conteúdo:
+```env
+SPRING_DATASOURCE_URL=jdbc:postgresql://SEU_HOST:5432/SEU_BANCO
+SPRING_DATASOURCE_USERNAME=seu_usuario
+SPRING_DATASOURCE_PASSWORD=sua_senha
+```
+> 💡 Se não tiver um PostgreSQL externo, veja a Opção 3 abaixo com Docker Compose.
+
+**4. Construa a imagem:**
+```bash
+docker build -t controle-alimentar .
+```
+*(Isso pode demorar alguns minutos na primeira vez — está baixando tudo que precisa)*
+
+**5. Execute o container:**
+```bash
+docker run -p 8081:8081 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://SEU_HOST:5432/SEU_BANCO \
+  -e SPRING_DATASOURCE_USERNAME=seu_usuario \
+  -e SPRING_DATASOURCE_PASSWORD=sua_senha \
+  controle-alimentar
+```
+
+**6. Acesse no navegador:**  
+👉 http://localhost:8081
+
+---
+
+### ✅ Opção 2 — Execução Local (sem Docker)
+
+> Para quem quer rodar direto na máquina, sem Docker.
+
+#### Pré-requisitos
+
+Instale os programas abaixo (caso ainda não tenha):
+
+| Programa | Versão mínima | Link para download |
+|---------|--------------|-------------------|
+| **Java JDK** | 17 | https://adoptium.net |
+| **Maven** | 3.8+ | https://maven.apache.org/download.cgi |
+| **Node.js** | 20+ | https://nodejs.org |
+| **PostgreSQL** | 14+ | https://www.postgresql.org/download |
+
+> 💡 **Como verificar se já tem instalado:** abra o terminal e digite `java -version`, `mvn -version`, `node -version`. Se aparecer um número de versão, já está instalado.
+
+#### Passo 1 — Configure o banco de dados
+
+Crie um banco no PostgreSQL (pode usar o pgAdmin ou o terminal):
+```sql
+CREATE DATABASE controle_alimentar;
+```
+
+#### Passo 2 — Configure as variáveis de ambiente
+
+No terminal, defina as variáveis antes de rodar (substitua pelos seus dados):
+
+**Linux / Mac:**
+```bash
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/controle_alimentar
+export SPRING_DATASOURCE_USERNAME=postgres
+export SPRING_DATASOURCE_PASSWORD=suasenha
+```
+
+**Windows (Prompt de Comando):**
+```cmd
+set SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/controle_alimentar
+set SPRING_DATASOURCE_USERNAME=postgres
+set SPRING_DATASOURCE_PASSWORD=suasenha
+```
+
+#### Passo 3 — Build e execução do Backend
+
+```bash
+cd backend
+mvn clean package -DskipTests
+java -jar target/controle-alimentar-0.0.1-SNAPSHOT.jar
+```
+
+> O backend estará disponível em: http://localhost:8081
+
+#### Passo 4 — Build e execução do Frontend (desenvolvimento)
+
+Em outro terminal:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+> O frontend estará disponível em: http://localhost:5173
+
+---
+
+### ✅ Opção 3 — Docker Compose (Docker + PostgreSQL integrados)
+
+> Ideal para rodar tudo localmente sem configurar banco separado.
+
+Crie um arquivo `docker-compose.yml` na raiz do projeto:
+
+```yaml
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: controle_alimentar
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/controle_alimentar
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      - db
+```
+
+Depois execute:
+```bash
+docker-compose up --build
+```
+
+Acesse em: 👉 http://localhost:8081
+
+---
+
+## ☁️ Deploy em Nuvem
+
+O projeto está configurado para rodar em plataformas como **Railway**, **Render** ou **Heroku**.
+
+### Variáveis de ambiente necessárias
+
+Configure as seguintes variáveis no painel da plataforma escolhida:
+
+| Variável | Descrição | Exemplo |
+|---------|-----------|---------|
+| `SPRING_DATASOURCE_URL` | URL de conexão com o PostgreSQL | `jdbc:postgresql://host:5432/banco` |
+| `SPRING_DATASOURCE_USERNAME` | Usuário do banco | `postgres` |
+| `SPRING_DATASOURCE_PASSWORD` | Senha do banco | `minhasenha123` |
+| `PORT` | Porta da aplicação (opcional) | `8081` |
+
+> 💡 A maioria das plataformas de nuvem fornece um banco PostgreSQL gratuito. Ao criar o banco, elas também te dão a URL de conexão pronta para copiar e colar.
+
+---
+
+## ⚙️ Tecnologias Utilizadas
+
+### Backend
+- **Java 17** — Linguagem de programação
+- **Spring Boot 3.2** — Framework para criar a API
+- **Spring Data JPA** — Comunicação com o banco de dados
+- **PostgreSQL** — Banco de dados principal
+- **Maven** — Gerenciador de dependências
+
+### Frontend
+- **Vue 3** — Framework JavaScript para a interface
+- **Vite** — Ferramenta de build rápida
+- **Axios** — Requisições HTTP para o backend
+- **html5-qrcode** — Leitura de QR Code pela câmera
+- **qrcode.vue** — Geração de QR Codes
+
+### Infraestrutura
+- **Docker** — Containerização da aplicação
+
+---
+
+## 🧩 Dados Iniciais (Seed)
+
+Ao iniciar pela primeira vez, o sistema cria automaticamente:
+
+**Alunos de exemplo:**
+| Matrícula | Nome |
+|-----------|------|
+| 2023001 | João Silva |
+| 2023002 | Maria Oliveira |
+| 2023003 | Pedro Santos |
+
+**Estoque inicial:**
+| Item | Unidade | Quantidade |
+|------|---------|-----------|
+| Arroz | kg | 50 |
+| Feijão | kg | 30 |
+| Carnes Vermelhas | kg | 20 |
+| Frango | kg | 25 |
+| Óleo | litros | 10 |
+
+---
+
+## ❓ Problemas Comuns
+
+**"Não consigo conectar ao banco de dados"**  
+→ Verifique se o PostgreSQL está rodando e se as variáveis de ambiente estão corretas.
+
+**"Porta 8081 já está em uso"**  
+→ Mude a porta no comando: `-e PORT=8082` (Docker) ou `--server.port=8082` (Java).
+
+**"npm install falhou"**  
+→ Certifique-se de estar usando Node.js versão 20 ou superior (`node -version`).
+
+**"A câmera não abre no navegador"**  
+→ O navegador precisa de permissão para acessar a câmera. Clique em "Permitir" quando solicitado. Em produção, é necessário HTTPS para a câmera funcionar.
+
+---
+
+## 📄 Licença
+
+Este projeto é de uso livre para fins educacionais.
