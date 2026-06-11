@@ -48,7 +48,7 @@ public class ControleApplication {
 		try {
 			SpringApplication.run(ControleApplication.class, args);
 			System.out.println("\n==========================================");
-			System.out.println("🚀 SISTEMA ONLINE NO RENDER!");
+			System.out.println(" SISTEMA ONLINE NO VERCEL");
 			System.out.println("==========================================");
 		} catch (Exception e) {
 			System.err.println("❌ ERRO CRÍTICO NA INICIALIZAÇÃO:");
