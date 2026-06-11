@@ -26,7 +26,7 @@ public class ControleApplication {
 						String user = userPass.split(":")[0];
 						String pass = userPass.split(":")[1];
 						
-						// Neon e Supabase funcionam melhor com sslmode=require
+						
 						String finalUrl = "jdbc:postgresql://" + hostPart;
 						if (!finalUrl.contains("sslmode")) {
 							finalUrl += (finalUrl.contains("?") ? "&" : "?") + "sslmode=require";
