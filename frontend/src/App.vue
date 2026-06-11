@@ -228,6 +228,17 @@
         </div>
       </Transition>
     </main>
+    <div v-if="alunoEditando" class="modal-overlay" @click.self="alunoEditando = null">
+  <div class="modal-box">
+    <h3>Editar Aluno</h3>
+    <input v-model="editNome" placeholder="Nome" class="input-field" />
+    <input v-model="editMatricula" placeholder="Matrícula" class="input-field" />
+    <div style="display:flex; gap:8px; margin-top:12px">
+      <button @click="salvarEdicao" class="btn-primary">Salvar</button>
+      <button @click="alunoEditando = null" class="btn-secondary">Cancelar</button>
+    </div>
+  </div>
+</div>
   </div>
 </template>
 
