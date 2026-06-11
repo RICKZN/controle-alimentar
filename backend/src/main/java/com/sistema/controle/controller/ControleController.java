@@ -156,3 +156,4 @@ public ResponseEntity<?> validarFicha(@RequestParam String matricula) {
     response.put("message", "Refeição liberada para " + aluno.getNome());
     return ResponseEntity.ok(response);
 }
+}
