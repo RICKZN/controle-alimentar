@@ -114,48 +114,45 @@ public class ControleController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/validar")
-    public ResponseEntity<?> validarFicha(@RequestParam String matricula) {
-        Map<String, Object> response = new HashMap<>();
-        
-        LocalDateTime agora = LocalDateTime.now();
-        LocalDateTime limite6Horas = agora.minusHours(210);
+  @PostMapping("/validar")
+public ResponseEntity<?> validarFicha(@RequestParam String matricula) {
+    Map<String, Object> response = new HashMap<>();
+    
+    LocalDateTime agora = LocalDateTime.now();
+    LocalDateTime limite6Horas = agora.minusHours(6); 
 
-        // Busca o aluno
-        Optional<Aluno> alunoOpt = alunoRepo.findByMatricula(matricula);
-        if (alunoOpt.isEmpty()) {
-            response.put("error", "Estudante não cadastrado no sistema.");
-            return ResponseEntity.status(404).body(response);
-        }
-
-        Aluno aluno = alunoOpt.get();
-
-        // Verifica intervalo de 6 horas
-        if (aluno.getUltimaRefeicao() != null && aluno.getUltimaRefeicao().isAfter(limite6Horas)) {
-                      Duration restante = Duration.between(agora, aluno.getUltimaRefeicao().plusHours(6));
-            long minutosFaltando = restante.toMinutes();
-            long segundosFaltando = restante.toSeconds();
-            
-            response.put("error", "Já recebeu refeição recentemente.");
-            response.put("horaUltimaRefeicao", aluno.getUltimaRefeicao().toString());
-            response.put("proximaRefeicao", aluno.getUltimaRefeicao().plusHours(6).toString());
-            response.put("minutosFaltando", minutosFaltando);
-            response.put("segundosFaltando", segundosFaltando);
-            response.put("espera", String.format("Aguarde mais %d horas e %d minutos.",
-                         minutosFaltando / 60, minutosFaltando % 60));
-        }
-
-        // Registra atendimento
-        RegistroAtendimento reg = new RegistroAtendimento();
-        reg.setMatricula(matricula);
-        reg.setDataHoraAtendimento(agora);
-        registroRepo.save(reg);
-
-        // Atualiza aluno
-        aluno.setUltimaRefeicao(agora);
-        alunoRepo.save(aluno);
-
-        response.put("message", "Refeição liberada para " + aluno.getNome());
-        return ResponseEntity.ok(response);
+    Optional<Aluno> alunoOpt = alunoRepo.findByMatricula(matricula);
+    if (alunoOpt.isEmpty()) {
+        response.put("error", "Estudante não cadastrado no sistema.");
+        return ResponseEntity.status(404).body(response);
     }
+
+    Aluno aluno = alunoOpt.get();
+
+    if (aluno.getUltimaRefeicao() != null && aluno.getUltimaRefeicao().isAfter(limite6Horas)) {
+        Duration restante = Duration.between(agora, aluno.getUltimaRefeicao().plusHours(6));
+        long minutosFaltando = restante.toMinutes();
+        long segundosFaltando = restante.toSeconds();
+
+        response.put("error", "Já recebeu refeição recentemente.");
+        response.put("horaUltimaRefeicao", aluno.getUltimaRefeicao().toString());
+        response.put("proximaRefeicao", aluno.getUltimaRefeicao().plusHours(6).toString());
+        response.put("minutosFaltando", minutosFaltando);
+        response.put("segundosFaltando", segundosFaltando);
+        response.put("espera", String.format("Aguarde mais %d horas e %d minutos.",
+                     minutosFaltando / 60, minutosFaltando % 60));
+        return ResponseEntity.status(429).body(response); // 
+    }
+
+    // só executa se liberado
+    RegistroAtendimento reg = new RegistroAtendimento();
+    reg.setMatricula(matricula);
+    reg.setDataHoraAtendimento(agora);
+    registroRepo.save(reg);
+
+    aluno.setUltimaRefeicao(agora);
+    alunoRepo.save(aluno);
+
+    response.put("message", "Refeição liberada para " + aluno.getNome());
+    return ResponseEntity.ok(response);
 }
