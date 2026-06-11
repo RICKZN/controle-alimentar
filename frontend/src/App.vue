@@ -533,7 +533,6 @@ const gerarQrCode = () => { if (matriculaParaGerar.value) qrCodeGerado.value = t
 const imprimirFicha = () => window.print();
 const formatarQuantidade = (q) => Number.isInteger(q) ? q : q.toFixed(1);
   
-};
 
 onMounted(() => {
   carregarEstoque();
