@@ -448,21 +448,35 @@ const resetScan = () => {
 };
 
 // Utils
+// Converte string do backend (UTC sem fuso) para Date correto
+const toUTC = (dateStr) => {
+  if (!dateStr) return null;
+  const s = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z';
+  return new Date(s);
+};
+
 const formatarData = (dateStr) => {
   if (!dateStr) return 'Nunca';
-  const d = new Date(dateStr);
-  return d.toLocaleString('pt-BR');
+  return toUTC(dateStr).toLocaleString('pt-BR');
 };
-  
 
 const podeComer = (dateStr) => {
   if (!dateStr) return true;
-  const ultima = new Date(dateStr);
+  const ultima = toUTC(dateStr);
   const agora = new Date();
   const diffHoras = (agora - ultima) / (1000 * 60 * 60);
   return diffHoras >= 6;
 };
 
+const tempoRestanteAluno = (dateStr) => {
+  if (!dateStr) return '—';
+  const proxima = new Date(toUTC(dateStr).getTime() + 6 * 60 * 60 * 1000);
+  const diff = Math.max(0, Math.floor((proxima - new Date()) / 1000));
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  return `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+};
 const mostrarMensagem = (txt, tipo) => {
   mensagem.value = txt;
   mensagemTipo.value = tipo;
