@@ -113,7 +113,16 @@ public class ControleController {
         alunoRepo.deleteById(id);
         return ResponseEntity.ok().build();
     }
-
+    
+@PutMapping("/alunos/{id}")
+public ResponseEntity<?> editarAluno(@PathVariable Long id, @RequestBody Aluno dadosNovos) {
+    Optional<Aluno> alunoOpt = alunoRepo.findById(id);
+    if (alunoOpt.isEmpty()) return ResponseEntity.notFound().build();
+    Aluno aluno = alunoOpt.get();
+    aluno.setNome(dadosNovos.getNome());
+    aluno.setMatricula(dadosNovos.getMatricula());
+    return ResponseEntity.ok(alunoRepo.save(aluno));
+}
   @PostMapping("/validar")
 public ResponseEntity<?> validarFicha(@RequestParam String matricula) {
     Map<String, Object> response = new HashMap<>();
