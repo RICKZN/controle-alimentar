@@ -151,6 +151,7 @@
                       </span>
                     </td>
                     <td>
+                      <button @click="editarAluno(aluno)" class="btn-icon-edit">✏️</button>
                       <button @click="excluirAluno(aluno.id)" class="btn-icon-delete">🗑️</button>
                     </td>
                   </tr>
@@ -367,6 +368,24 @@ const excluirAluno = async (id) => {
     await carregarAlunos();
     mostrarMensagem("Aluno removido", "success");
   } catch (err) { mostrarMensagem("Erro ao excluir", "error"); }
+};
+  const alunoEditando = ref(null);
+const editNome = ref('');
+const editMatricula = ref('');
+
+const editarAluno = (aluno) => {
+  alunoEditando.value = aluno;
+  editNome.value = aluno.nome;
+  editMatricula.value = aluno.matricula;
+};
+
+const salvarEdicao = async () => {
+  await axios.put(`${API_URL}/alunos/${alunoEditando.value.id}`, {
+    nome: editNome.value,
+    matricula: editMatricula.value
+  });
+  alunoEditando.value = null;
+  carregarAlunos();
 };
 
 const validarFicha = async (matricula) => {
@@ -590,6 +609,35 @@ body { font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); colo
 
 .btn-icon-delete:hover {
   background: rgba(244, 63, 94, 0.1);
+}
+  .btn-icon-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-right: 4px;
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal-box {
+  background: #1e1e2e;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 300px;
+}
+.modal-box h3 {
+  color: #fff;
+  margin: 0;
 }
 
 .empty-state {
