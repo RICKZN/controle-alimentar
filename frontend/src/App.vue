@@ -532,14 +532,7 @@ const changeTab = async (tab) => {
 const gerarQrCode = () => { if (matriculaParaGerar.value) qrCodeGerado.value = true; };
 const imprimirFicha = () => window.print();
 const formatarQuantidade = (q) => Number.isInteger(q) ? q : q.toFixed(1);
-  const tempoRestanteAluno = (dateStr) => {
-  if (!dateStr) return '—';
-  const proxima = new Date(new Date(dateStr).getTime() + 6*60*60*1000);
-  const diff = Math.max(0, Math.floor((proxima - new Date()) / 1000));
-  const h = Math.floor(diff / 3600);
-  const m = Math.floor((diff % 3600) / 60);
-  const s = diff % 60;
-  return `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+  
 };
 
 onMounted(() => {
