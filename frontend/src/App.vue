@@ -138,7 +138,7 @@
                     <td>{{ aluno.nome }}</td>
                     <td><code>{{ aluno.matricula }}</code></td>
                     <td>{{ formatarData(aluno.ultimaRefeicao) }}</td>
-                    <td>{{ aluno.ultimaRefeicao ? formatarData(new Date(new Date(aluno.ultimaRefeicao).getTime() + 6*60*60*1000)) : '—' }}</td>
+                  <td>{{ aluno.ultimaRefeicao ? formatarData(new Date(toUTC(aluno.ultimaRefeicao).getTime() + 6*60*60*1000)) : '—' }}</td>
                     <td>
                       <span v-if="!podeComer(aluno.ultimaRefeicao)" style="color:#f59e0b; font-weight:700">
                         {{ tempoRestanteAluno(aluno.ultimaRefeicao) }}
