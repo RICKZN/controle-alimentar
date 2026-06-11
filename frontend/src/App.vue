@@ -450,9 +450,19 @@ const resetScan = () => {
 // Utils
 // Converte string do backend (UTC sem fuso) para Date correto
 const toUTC = (dateStr) => {
-  if (!dateStr) return null;
-  const s = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z';
-  return new Date(s);
+  if (!dateStr) return new Date();
+
+  // Se já for um objeto Date
+  if (dateStr instanceof Date) {
+    return dateStr;
+  }
+
+  // Garante que seja string antes de usar endsWith
+  const str = String(dateStr);
+
+  return str.endsWith('Z')
+    ? new Date(str)
+    : new Date(str + 'Z');
 };
 
 const formatarData = (dateStr) => {
