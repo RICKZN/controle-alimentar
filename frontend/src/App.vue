@@ -291,7 +291,7 @@ const countdownTimer = ref(null);
 
 // Campos de Formulário (O que estava faltando!)
 const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
-const novoAluno = ref({ nome: '', matricula: '' });
+
 
 const iniciarContagemRegressiva = (minutosRestantes) => {
   if (countdownTimer.value) clearInterval(countdownTimer.value);
