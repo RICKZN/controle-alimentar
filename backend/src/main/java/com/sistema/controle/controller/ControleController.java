@@ -28,6 +28,9 @@ public class ControleController {
 
     @Autowired
     private AlunoRepository alunoRepo;
+    
+    @Autowired
+private RegistroConsumoRepository consumoRepo;
 
     @PostConstruct
     public void initData() {
@@ -68,19 +71,29 @@ public class ControleController {
         return estoqueRepo.findAll();
     }
 
-    @PostMapping("/estoque/{id}/ajustar")
-    public ResponseEntity<?> ajustarEstoque(@PathVariable Long id, @RequestParam Double variacao) {
-        Optional<Estoque> itemOpt = estoqueRepo.findById(id);
-        if (itemOpt.isPresent()) {
-            Estoque item = itemOpt.get();
-            double novaQuantidade = item.getQuantidade() + variacao;
-            if (novaQuantidade < 0) novaQuantidade = 0; // Evita estoque negativo
-            item.setQuantidade(novaQuantidade);
-            estoqueRepo.save(item);
-            return ResponseEntity.ok(item);
+   @PostMapping("/estoque/{id}/ajustar")
+public ResponseEntity<?> ajustarEstoque(@PathVariable Long id, @RequestParam Double variacao) {
+    Optional<Estoque> itemOpt = estoqueRepo.findById(id);
+    if (itemOpt.isPresent()) {
+        Estoque item = itemOpt.get();
+        double novaQuantidade = item.getQuantidade() + variacao;
+        if (novaQuantidade < 0) novaQuantidade = 0;
+
+        if (variacao < 0) {
+            RegistroConsumo reg = new RegistroConsumo();
+            reg.setEstoqueId(id);
+            reg.setNomeItem(item.getNome());
+            reg.setData(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+            reg.setQuantidadeGasta(Math.abs(variacao));
+            consumoRepo.save(reg);
         }
-        return ResponseEntity.badRequest().body("Item não encontrado.");
+
+        item.setQuantidade(novaQuantidade);
+        estoqueRepo.save(item);
+        return ResponseEntity.ok(item);
     }
+    return ResponseEntity.badRequest().body("Item não encontrado.");
+}
 
     @DeleteMapping("/estoque/{id}")
     public ResponseEntity<?> excluirItemEstoque(@PathVariable Long id) {
@@ -152,7 +165,24 @@ public ResponseEntity<?> validarFicha(@RequestParam String matricula) {
                      minutosFaltando / 60, minutosFaltando % 60));
         return ResponseEntity.status(429).body(response); // 
     }
+@GetMapping("/consumo/diario")
+public ResponseEntity<?> consumoDiario() {
+    LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+    return ResponseEntity.ok(consumoRepo.findByDataBetween(hoje, hoje));
+}
 
+@GetMapping("/consumo/semanal")
+public ResponseEntity<?> consumoSemanal() {
+    LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+    LocalDate inicio = hoje.minusDays(hoje.getDayOfWeek().getValue() - 1);
+    return ResponseEntity.ok(consumoRepo.findByDataBetween(inicio, hoje));
+}
+
+@GetMapping("/consumo/mensal")
+public ResponseEntity<?> consumoMensal() {
+    LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+    return ResponseEntity.ok(consumoRepo.findByDataBetween(hoje.withDayOfMonth(1), hoje));
+}
     // só executa se liberado
     RegistroAtendimento reg = new RegistroAtendimento();
     reg.setMatricula(matricula);
