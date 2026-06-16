@@ -174,45 +174,31 @@
         </div>
 
         <!-- TELA DE ESTOQUE -->
-        <div v-if="currentTab === 'estoque'" class="tab-pane">
-          <div class="card glass-effect">
-            <div class="table-header">
-              <h3>Estoque Atual</h3>
-              <button @click="carregarEstoque" class="btn-refresh">🔄 Atualizar</button>
-            </div>
-          </div>
+<div v-if="currentTab === 'estoque'" class="tab-pane">
 
-          <div class="card glass-effect">
-            <h3>Adicionar Novo Alimento</h3>
-            <div class="input-group-row">
-              <input type="text" v-model="novoItem.nome" placeholder="Nome do alimento (Ex: Arroz)" />
-              <input type="text" v-model="novoItem.unidade" placeholder="Unidade (Ex: kg)" style="width: 100px" />
-              <input type="number" v-model="novoItem.quantidade" placeholder="Qtd" style="width: 80px" />
-              <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar</button>
-            </div>
-          </div>
+  <div class="card glass-effect" style="padding:0.8rem 1.5rem; margin-bottom:1rem; display:flex; gap:8px">
+    <button @click="abaEstoque = 'atual'" :class="['btn', abaEstoque==='atual' ? 'btn-primary' : 'btn-secondary']">📦 Estoque Atual</button>
+    <button @click="abaEstoque = 'semanal'" :class="['btn', abaEstoque==='semanal' ? 'btn-primary' : 'btn-secondary']">📊 Semanal</button>
+    <button @click="abaEstoque = 'mensal'" :class="['btn', abaEstoque==='mensal' ? 'btn-primary' : 'btn-secondary']">📈 Mensal</button>
+  </div>
 
-          <div v-if="estoqueList.length === 0" class="empty-state card">
-            <p>O estoque está vazio. Adicione alimentos no formulário acima.</p>
-          </div>
-          <div v-else class="estoque-grid">
-            <div v-for="item in estoqueList" :key="item.id" class="estoque-card glass-effect">
-              <div class="item-header">
-                <h3>{{ item.nome }}</h3>
-                <button @click="excluirAlimento(item.id)" class="btn-delete">×</button>
-              </div>
-              <p class="unit-label">{{ item.unidade }}</p>
-              <div class="item-body">
-                <button @click="ajustarEstoque(item.id, -1)" class="adjust-btn minus">-</button>
-                <div class="qty-display">
-                  <span class="qty-value">{{ formatarQuantidade(item.quantidade) }}</span>
-                </div>
-                <button @click="ajustarEstoque(item.id, 1)" class="adjust-btn plus">+</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
+  <div v-if="abaEstoque === 'atual'">
+    <div class="card glass-effect">
+      <div class="table-header">
+        <h3>Estoque Atual</h3>
+        <button @click="carregarEstoque" class="btn-refresh">🔄 Atualizar</button>
+      </div>
+    </div>
+    <div class="card glass-effect">
+      <h3>Adicionar Novo Alimento</h3>
+      <div class="input-group-row">
+        <input type="text" v-model="novoItem.nome" placeholder="Nome do alimento (Ex: Arroz)" />
+        <input type="text" v-model="novoItem.unidade" placeholder="Unidade (Ex: kg)" style="width: 100px" />
+        <input type="number" v-model="novoItem.quantidade" placeholder="Qtd" style="width: 80px" />
+        <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar</button>
+      </div>
+    </div>
+    <div>
         <!-- TELA DE GERAÇÃO -->
         <div v-if="currentTab === 'geracao'" class="tab-pane">
           <div class="card glass-effect">
@@ -268,7 +254,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import axios from 'axios';
 import QrcodeVue from 'qrcode.vue';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -302,6 +288,70 @@ const statusValidacao = ref(null);
 const tempoEsperaReal = ref("");
 const countdownTimer = ref(null);
 
+  
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
+
+const abaEstoque = ref('atual');
+const consumoDiario = ref([]);
+const consumoSemanal = ref([]);
+const consumoMensal = ref([]);
+const chartSemanalRef = ref(null);
+const chartMensalRef = ref(null);
+let chartSemanal = null;
+let chartMensal = null;
+
+const carregarConsumo = async () => {
+  const [d, s, m] = await Promise.all([
+    axios.get(`${API_URL}/consumo/diario`),
+    axios.get(`${API_URL}/consumo/semanal`),
+    axios.get(`${API_URL}/consumo/mensal`)
+  ]);
+  consumoDiario.value = d.data;
+  consumoSemanal.value = s.data;
+  consumoMensal.value = m.data;
+};
+
+const agrupar = (registros) => {
+  const map = {};
+  registros.forEach(r => {
+    map[r.nomeItem] = (map[r.nomeItem] || 0) + r.quantidadeGasta;
+  });
+  return map;
+};
+
+const renderChart = (canvasRef, chartInstance, dados, titulo) => {
+  if (chartInstance) chartInstance.destroy();
+  const agrupado = agrupar(dados);
+  return new Chart(canvasRef, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(agrupado),
+      datasets: [{
+        label: titulo,
+        data: Object.values(agrupado),
+        backgroundColor: 'rgba(79,70,229,0.7)',
+        borderColor: '#4f46e5',
+        borderWidth: 2,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#f8fafc' } } },
+      scales: {
+        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+};
+
+watch(abaEstoque, async (val) => {
+  await carregarConsumo();
+  await nextTick();
+  if (val === 'semanal' && chartSemanalRef.value)
+    chartSemanal = renderChart(chartSemanalRef.value,
 // Campos de Formulário (O que estava faltando!)
 const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
 
