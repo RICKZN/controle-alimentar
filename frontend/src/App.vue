@@ -242,8 +242,7 @@
     </main>
     <div v-if="alunoEditando" class="modal-overlay" @click.self="alunoEditando = null">
   <div class="modal-box">
-   <div v-if="alunoEditando" class="modal-overlay" @click.self="alunoEditando = null">
-  <div class="modal-box">
+
     <h3>Editar Aluno</h3>
     <input v-model="editNome" placeholder="Nome" class="input-field" />
     <input v-model="editMatricula" placeholder="Matrícula" class="input-field" />
