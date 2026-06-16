@@ -105,6 +105,10 @@
             <div class="input-group-row">
               <input type="text" v-model="novoAluno.nome" placeholder="Nome completo do aluno" />
               <input type="text" v-model="novoAluno.matricula" placeholder="Número da matrícula" style="width: 180px" />
+              <input type="text" v-model="novoAluno.curso" placeholder="Curso" />
+              <input type="text" v-model="novoAluno.modalidade" placeholder="Modalidade" />
+              <input type="text" v-model="novoAluno.turma" placeholder="Turma" />
+              <input type="text" v-model="novoAluno.turno" placeholder="Turno" />
               <button @click="cadastrarAluno" class="btn btn-success">Cadastrar</button>
             </div>
           </div>
@@ -126,6 +130,10 @@
    <tr>
                     <th>Nome</th>
                     <th>Matrícula</th>
+                     <th>Curso</th>
+                    <th>Modalidade</th>
+                      <th>Turma</th>
+                      <th>Turno</th>
                     <th>Último Acesso</th>
                     <th>Próxima Liberação</th>
                     <th>Tempo Restante</th>
@@ -137,6 +145,10 @@
                     <tr v-for="aluno in alunosFiltrados" :key="aluno.id">
                     <td>{{ aluno.nome }}</td>
                     <td><code>{{ aluno.matricula }}</code></td>
+                      <td>{{ aluno.curso }}</td>
+                      <td>{{ aluno.modalidade }}</td>
+                        <td>{{ aluno.turma }}</td>
+                        <td>{{ aluno.turno }}</td>
                     <td>{{ formatarData(aluno.ultimaRefeicao) }}</td>
                   <td>{{ aluno.ultimaRefeicao ? formatarData(new Date(toUTC(aluno.ultimaRefeicao).getTime() + 6*60*60*1000)) : '—' }}</td>
                     <td>
@@ -341,7 +353,8 @@ const ajustarEstoque = async (id, delta) => {
     await carregarEstoque();
   } catch (err) { mostrarMensagem("Erro ao atualizar", "error"); }
 };
-
+const novoAluno = ref({ nome: '', matricula: '', curso: '', modalidade: '', turma: '', turno: '' });
+  
 const cadastrarNovoAlimento = async () => {
   if (!novoItem.value.nome || !novoItem.value.unidade) return;
   try {
@@ -380,20 +393,32 @@ const excluirAluno = async (id) => {
     mostrarMensagem("Aluno removido", "success");
   } catch (err) { mostrarMensagem("Erro ao excluir", "error"); }
 };
-  const alunoEditando = ref(null);
+ const alunoEditando = ref(null);
 const editNome = ref('');
 const editMatricula = ref('');
+const editCurso = ref('');
+const editModalidade = ref('');
+const editTurma = ref('');
+const editTurno = ref('');
 
 const editarAluno = (aluno) => {
   alunoEditando.value = aluno;
   editNome.value = aluno.nome;
   editMatricula.value = aluno.matricula;
+  editCurso.value = aluno.curso;
+  editModalidade.value = aluno.modalidade;
+  editTurma.value = aluno.turma;
+  editTurno.value = aluno.turno;
 };
 
 const salvarEdicao = async () => {
   await axios.put(`${API_URL}/alunos/${alunoEditando.value.id}`, {
     nome: editNome.value,
-    matricula: editMatricula.value
+    matricula: editMatricula.value,
+    curso: editCurso.value,
+    modalidade: editModalidade.value,
+    turma: editTurma.value,
+    turno: editTurno.value
   });
   alunoEditando.value = null;
   carregarAlunos();
