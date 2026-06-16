@@ -353,7 +353,7 @@ const ajustarEstoque = async (id, delta) => {
     await carregarEstoque();
   } catch (err) { mostrarMensagem("Erro ao atualizar", "error"); }
 };
-const novoAluno = ref({ nome: '', matricula: '', curso: '', modalidade: '', turma: '', turno: '' });
+
   
 const cadastrarNovoAlimento = async () => {
   if (!novoItem.value.nome || !novoItem.value.unidade) return;
@@ -364,7 +364,8 @@ const cadastrarNovoAlimento = async () => {
     mostrarMensagem("Item adicionado!", "success");
   } catch (err) { mostrarMensagem("Erro ao cadastrar", "error"); }
 };
-
+const novoAluno = ref({ nome: '', matricula: '', curso: '', modalidade: '', turma: '', turno: '' });
+  
 const cadastrarAluno = async () => {
   if (!novoAluno.value.nome || !novoAluno.value.matricula) return;
   try {
