@@ -14,7 +14,12 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.time.Duration;
 import java.util.*;
+import java.time.LocalDate;
 
+import java.time.ZoneId;
+
+import com.sistema.controle.model.RegistroConsumo;
+import com.sistema.controle.repository.RegistroConsumoRepository;
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*") // Habilita CORS para o Vue.js
@@ -29,7 +34,7 @@ public class ControleController {
     @Autowired
     private AlunoRepository alunoRepo;
     
-    @Autowired
+@Autowired
 private RegistroConsumoRepository consumoRepo;
 
     @PostConstruct
@@ -130,10 +135,20 @@ public ResponseEntity<?> ajustarEstoque(@PathVariable Long id, @RequestParam Dou
 @PutMapping("/alunos/{id}")
 public ResponseEntity<?> editarAluno(@PathVariable Long id, @RequestBody Aluno dadosNovos) {
     Optional<Aluno> alunoOpt = alunoRepo.findById(id);
-    if (alunoOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+    if (alunoOpt.isEmpty()) {
+        return ResponseEntity.notFound().build();
+    }
+
     Aluno aluno = alunoOpt.get();
+
     aluno.setNome(dadosNovos.getNome());
     aluno.setMatricula(dadosNovos.getMatricula());
+    aluno.setCurso(dadosNovos.getCurso());
+    aluno.setModalidade(dadosNovos.getModalidade());
+    aluno.setTurma(dadosNovos.getTurma());
+    aluno.setTurno(dadosNovos.getTurno());
+
     return ResponseEntity.ok(alunoRepo.save(aluno));
 }
   @PostMapping("/validar")
@@ -165,6 +180,20 @@ public ResponseEntity<?> validarFicha(@RequestParam String matricula) {
                      minutosFaltando / 60, minutosFaltando % 60));
         return ResponseEntity.status(429).body(response); // 
     }
+
+    // só executa se liberado
+// só executa se liberado
+RegistroAtendimento reg = new RegistroAtendimento();
+reg.setMatricula(matricula);
+reg.setDataHoraAtendimento(agora);
+registroRepo.save(reg);
+
+aluno.setUltimaRefeicao(agora);
+alunoRepo.save(aluno);
+
+response.put("message", "Refeição liberada para " + aluno.getNome());
+return ResponseEntity.ok(response);
+}
 @GetMapping("/consumo/diario")
 public ResponseEntity<?> consumoDiario() {
     LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
@@ -175,24 +204,21 @@ public ResponseEntity<?> consumoDiario() {
 public ResponseEntity<?> consumoSemanal() {
     LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
     LocalDate inicio = hoje.minusDays(hoje.getDayOfWeek().getValue() - 1);
-    return ResponseEntity.ok(consumoRepo.findByDataBetween(inicio, hoje));
+
+    return ResponseEntity.ok(
+        consumoRepo.findByDataBetween(inicio, hoje)
+    );
 }
 
 @GetMapping("/consumo/mensal")
 public ResponseEntity<?> consumoMensal() {
     LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
-    return ResponseEntity.ok(consumoRepo.findByDataBetween(hoje.withDayOfMonth(1), hoje));
-}
-    // só executa se liberado
-    RegistroAtendimento reg = new RegistroAtendimento();
-    reg.setMatricula(matricula);
-    reg.setDataHoraAtendimento(agora);
-    registroRepo.save(reg);
 
-    aluno.setUltimaRefeicao(agora);
-    alunoRepo.save(aluno);
-
-    response.put("message", "Refeição liberada para " + aluno.getNome());
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(
+        consumoRepo.findByDataBetween(
+            hoje.withDayOfMonth(1),
+            hoje
+        )
+    );
 }
 }
