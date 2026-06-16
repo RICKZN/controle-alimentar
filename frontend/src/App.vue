@@ -38,6 +38,7 @@
       </header>
 
       <div class="content-area">
+
         <!-- TELA DE VALIDAÇÃO -->
         <div v-if="currentTab === 'validacao'" class="tab-pane">
           <div class="scanner-wrapper card glass-effect">
@@ -48,7 +49,7 @@
 
             <div class="preview-container">
               <div id="reader"></div>
-              
+
               <!-- Overlay de Detecção -->
               <div v-if="matriculaLida" class="scan-success-overlay">
                 <div class="success-card">
@@ -79,14 +80,14 @@
 
           <!-- Mensagem de bloqueio de 6h -->
           <div v-if="statusValidacao" class="card status-card" :class="statusValidacao.tipo">
-           <p>{{ statusValidacao.msg }}</p>
-          <p v-if="statusValidacao.ultimaRefeicao" style="color:#94a3b8; margin-top:0.5rem">
-            🍽️ Última refeição: {{ formatarData(statusValidacao.ultimaRefeicao) }}
-          </p>
-          <p v-if="statusValidacao.proximaRefeicao" style="color:#94a3b8">
-            🔓 Próxima liberação: {{ formatarData(statusValidacao.proximaRefeicao) }}
-          </p>
-          <p v-if="tempoEsperaReal" class="wait-time">⏳ {{ tempoEsperaReal }}</p>
+            <p>{{ statusValidacao.msg }}</p>
+            <p v-if="statusValidacao.ultimaRefeicao" style="color:#94a3b8; margin-top:0.5rem">
+              🍽️ Última refeição: {{ formatarData(statusValidacao.ultimaRefeicao) }}
+            </p>
+            <p v-if="statusValidacao.proximaRefeicao" style="color:#94a3b8">
+              🔓 Próxima liberação: {{ formatarData(statusValidacao.proximaRefeicao) }}
+            </p>
+            <p v-if="tempoEsperaReal" class="wait-time">⏳ {{ tempoEsperaReal }}</p>
           </div>
 
           <div class="card glass-effect">
@@ -112,23 +113,7 @@
               <button @click="cadastrarAluno" class="btn btn-success">Cadastrar</button>
             </div>
           </div>
-          
-        <div v-if="alunoEditando" class="modal-overlay" @click.self="alunoEditando = null">
-          <div class="modal-box">
-          <h3>Editar Aluno</h3>
-            <input v-model="editNome" placeholder="Nome" class="input-field" />
-            <input v-model="editMatricula" placeholder="Matrícula" class="input-field" />
-            <input v-model="editCurso" placeholder="Curso" class="input-field" />
-            <input v-model="editModalidade" placeholder="Modalidade" class="input-field" />
-            <input v-model="editTurma" placeholder="Turma" class="input-field" />
-          <input v-model="editTurno" placeholder="Turno" class="input-field" />
-    <div style="display:flex; gap:8px; margin-top:12px">
-      <button @click="salvarEdicao" class="btn-primary">Salvar</button>
-      <button @click="alunoEditando = null" class="btn-secondary">Cancelar</button>
-      
-    </div>
-  </div>
-</div>
+
           <div class="card glass-effect">
             <div class="table-header">
               <h3>Listagem de Estudantes</h3>
@@ -143,13 +128,13 @@
               </div>
               <table v-else class="data-table">
                 <thead>
-   <tr>
+                  <tr>
                     <th>Nome</th>
                     <th>Matrícula</th>
-                     <th>Curso</th>
+                    <th>Curso</th>
                     <th>Modalidade</th>
-                      <th>Turma</th>
-                      <th>Turno</th>
+                    <th>Turma</th>
+                    <th>Turno</th>
                     <th>Último Acesso</th>
                     <th>Próxima Liberação</th>
                     <th>Tempo Restante</th>
@@ -158,15 +143,15 @@
                   </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="aluno in alunosFiltrados" :key="aluno.id">
+                  <tr v-for="aluno in alunosFiltrados" :key="aluno.id">
                     <td>{{ aluno.nome }}</td>
                     <td><code>{{ aluno.matricula }}</code></td>
-                      <td>{{ aluno.curso }}</td>
-                      <td>{{ aluno.modalidade }}</td>
-                        <td>{{ aluno.turma }}</td>
-                        <td>{{ aluno.turno }}</td>
+                    <td>{{ aluno.curso }}</td>
+                    <td>{{ aluno.modalidade }}</td>
+                    <td>{{ aluno.turma }}</td>
+                    <td>{{ aluno.turno }}</td>
                     <td>{{ formatarData(aluno.ultimaRefeicao) }}</td>
-                  <td>{{ aluno.ultimaRefeicao ? formatarData(new Date(toUTC(aluno.ultimaRefeicao).getTime() + 6*60*60*1000)) : '—' }}</td>
+                    <td>{{ aluno.ultimaRefeicao ? formatarData(new Date(toUTC(aluno.ultimaRefeicao).getTime() + 6*60*60*1000)) : '—' }}</td>
                     <td>
                       <span v-if="!podeComer(aluno.ultimaRefeicao)" style="color:#f59e0b; font-weight:700">
                         {{ tempoRestanteAluno(aluno.ultimaRefeicao) }}
@@ -190,32 +175,67 @@
         </div>
 
         <!-- TELA DE ESTOQUE -->
-<div v-if="currentTab === 'estoque'" class="tab-pane">
+        <!-- FIX: era uma bagunça de divs mal fechadas com a aba geracao aninhada aqui dentro -->
+        <div v-if="currentTab === 'estoque'" class="tab-pane">
+          <div class="card glass-effect" style="padding:0.8rem 1.5rem; margin-bottom:1rem; display:flex; gap:8px">
+            <button @click="abaEstoque = 'atual'" :class="['btn', abaEstoque==='atual' ? 'btn-primary' : 'btn-secondary']">📦 Estoque Atual</button>
+            <button @click="abaEstoque = 'semanal'" :class="['btn', abaEstoque==='semanal' ? 'btn-primary' : 'btn-secondary']">📊 Semanal</button>
+            <button @click="abaEstoque = 'mensal'" :class="['btn', abaEstoque==='mensal' ? 'btn-primary' : 'btn-secondary']">📈 Mensal</button>
+          </div>
 
-  <div class="card glass-effect" style="padding:0.8rem 1.5rem; margin-bottom:1rem; display:flex; gap:8px">
-    <button @click="abaEstoque = 'atual'" :class="['btn', abaEstoque==='atual' ? 'btn-primary' : 'btn-secondary']">📦 Estoque Atual</button>
-    <button @click="abaEstoque = 'semanal'" :class="['btn', abaEstoque==='semanal' ? 'btn-primary' : 'btn-secondary']">📊 Semanal</button>
-    <button @click="abaEstoque = 'mensal'" :class="['btn', abaEstoque==='mensal' ? 'btn-primary' : 'btn-secondary']">📈 Mensal</button>
-  </div>
+          <!-- Aba: Estoque Atual -->
+          <div v-if="abaEstoque === 'atual'">
+            <div class="card glass-effect">
+              <div class="table-header">
+                <h3>Estoque Atual</h3>
+                <button @click="carregarEstoque" class="btn-refresh">🔄 Atualizar</button>
+              </div>
+            </div>
 
-  <div v-if="abaEstoque === 'atual'">
-    <div class="card glass-effect">
-      <div class="table-header">
-        <h3>Estoque Atual</h3>
-        <button @click="carregarEstoque" class="btn-refresh">🔄 Atualizar</button>
-      </div>
-    </div>
-    <div class="card glass-effect">
-      <h3>Adicionar Novo Alimento</h3>
-      <div class="input-group-row">
-        <input type="text" v-model="novoItem.nome" placeholder="Nome do alimento (Ex: Arroz)" />
-        <input type="text" v-model="novoItem.unidade" placeholder="Unidade (Ex: kg)" style="width: 100px" />
-        <input type="number" v-model="novoItem.quantidade" placeholder="Qtd" style="width: 80px" />
-        <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar</button>
-      </div>
-    </div>
-    <div>
+            <!-- FIX: grid de itens do estoque nunca era renderizada no template -->
+            <div class="estoque-grid">
+              <div v-for="item in estoqueList" :key="item.id" class="card glass-effect estoque-card">
+                <button class="btn-delete" @click="excluirAlimento(item.id)">🗑️</button>
+                <h4>{{ item.nome }}</h4>
+                <p class="unit-label">{{ item.unidade }}</p>
+                <div class="item-body">
+                  <button class="adjust-btn minus" @click="ajustarEstoque(item.id, -1)">−</button>
+                  <span class="qty-value">{{ formatarQuantidade(item.quantidade) }}</span>
+                  <button class="adjust-btn plus" @click="ajustarEstoque(item.id, 1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card glass-effect">
+              <h3>Adicionar Novo Alimento</h3>
+              <div class="input-group-row">
+                <input type="text" v-model="novoItem.nome" placeholder="Nome do alimento (Ex: Arroz)" />
+                <input type="text" v-model="novoItem.unidade" placeholder="Unidade (Ex: kg)" style="width: 100px" />
+                <input type="number" v-model="novoItem.quantidade" placeholder="Qtd" style="width: 80px" />
+                <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Aba: Semanal — FIX: canvas ausente no template, gráfico nunca renderizava -->
+          <div v-if="abaEstoque === 'semanal'">
+            <div class="card glass-effect">
+              <h3>Consumo Semanal</h3>
+              <canvas ref="chartSemanalRef"></canvas>
+            </div>
+          </div>
+
+          <!-- Aba: Mensal — FIX: mesmo problema do semanal -->
+          <div v-if="abaEstoque === 'mensal'">
+            <div class="card glass-effect">
+              <h3>Consumo Mensal</h3>
+              <canvas ref="chartMensalRef"></canvas>
+            </div>
+          </div>
+        </div>
+
         <!-- TELA DE GERAÇÃO -->
+        <!-- FIX: estava aninhada dentro do bloco de estoque, agora é irmã das outras abas -->
         <div v-if="currentTab === 'geracao'" class="tab-pane">
           <div class="card glass-effect">
             <h3>Gerar Ficha QR Code</h3>
@@ -223,7 +243,7 @@
               <input type="text" v-model="matriculaParaGerar" placeholder="Matrícula do aluno" />
               <button @click="gerarQrCode" class="btn btn-primary mt-1">Gerar Agora</button>
             </div>
-            
+
             <div v-if="qrCodeGerado" class="qr-result">
               <div class="printable-area">
                 <qrcode-vue :value="matriculaParaGerar" :size="200" level="H" />
@@ -233,40 +253,37 @@
             </div>
           </div>
         </div>
-      </div>
+
+      </div><!-- /content-area -->
 
       <!-- Toast de Notificação -->
-<Transition name="slide-fade">
-  <div v-if="mensagem" :class="['toast', mensagemTipo]">
-    {{ mensagem }}
-  </div>
-</Transition>
-</main>
+      <!-- FIX: estava preso dentro da aba de estoque -->
+      <Transition name="slide-fade">
+        <div v-if="mensagem" :class="['toast', mensagemTipo]">
+          {{ mensagem }}
+        </div>
+      </Transition>
 
-<div v-if="alunoEditando"class="modal-overlay" @click.self="alunoEditando = null">
-  <div class="modal-box">
-    <h3>Editar Aluno</h3>
+    </main><!-- /main-content -->
 
-    <input v-model="editNome" placeholder="Nome" class="input-field" />
-    <input v-model="editMatricula" placeholder="Matrícula" class="input-field" />
-    <input v-model="editCurso" placeholder="Curso" class="input-field" />
-    <input v-model="editModalidade" placeholder="Modalidade" class="input-field" />
-    <input v-model="editTurma" placeholder="Turma" class="input-field" />
-    <input v-model="editTurno" placeholder="Turno" class="input-field" />
-
-    <div style="display:flex; gap:8px; margin-top:12px">
-      <button @click="salvarEdicao" class="btn-primary">
-        Salvar
-      </button>
-
-      <button @click="alunoEditando = null" class="btn-secondary">
-        Cancelar
-      </button>
+    <div v-if="alunoEditando" class="modal-overlay" @click.self="alunoEditando = null">
+      <div class="modal-box">
+        <h3>Editar Aluno</h3>
+        <input v-model="editNome" placeholder="Nome" class="input-field" />
+        <input v-model="editMatricula" placeholder="Matrícula" class="input-field" />
+        <input v-model="editCurso" placeholder="Curso" class="input-field" />
+        <input v-model="editModalidade" placeholder="Modalidade" class="input-field" />
+        <input v-model="editTurma" placeholder="Turma" class="input-field" />
+        <input v-model="editTurno" placeholder="Turno" class="input-field" />
+        <div style="display:flex; gap:8px; margin-top:12px">
+          <!-- FIX: botões sem a classe .btn base — não tinham padding nem border-radius -->
+          <button @click="salvarEdicao" class="btn btn-primary">Salvar</button>
+          <button @click="alunoEditando = null" class="btn btn-secondary">Cancelar</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-
+  </div><!-- /app-layout -->
 </template>
 
 <script setup>
@@ -274,58 +291,58 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import axios from 'axios';
 import QrcodeVue from 'qrcode.vue';
 import { Html5Qrcode } from 'html5-qrcode';
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Estados
-const currentTab = ref('validacao');
-const isSidebarOpen = ref(false);
-const isOnline = ref(true);
-const isCameraActive = ref(false);
-const currentCameraId = ref('environment');
+// ── Estados ──────────────────────────────────────────────────────────────────
+const currentTab       = ref('validacao');
+const isSidebarOpen    = ref(false);
+const isOnline         = ref(true);
+const isCameraActive   = ref(false);
+const currentCameraId  = ref('environment');
 
 const tabTitles = {
   validacao: 'Validação de Acesso',
-  alunos: 'Banco de Estudantes',
-  estoque: 'Gestão de Estoque',
-  geracao: 'Geração de Fichas'
+  alunos:    'Banco de Estudantes',
+  estoque:   'Gestão de Estoque',
+  geracao:   'Geração de Fichas'
 };
 
-const estoqueList = ref([]);
-const alunosList = ref([]);
-const filtroAluno = ref('');
-const matriculaLida = ref(null);
+const estoqueList         = ref([]);
+const alunosList          = ref([]);
+const filtroAluno         = ref('');
+const matriculaLida       = ref(null);
 const matriculaParaValidar = ref('');
-const matriculaParaGerar = ref('');
-const qrCodeGerado = ref(false);
-const mensagem = ref('');
-const mensagemTipo = ref('');
-const statusValidacao = ref(null);
-const tempoEsperaReal = ref("");
-const countdownTimer = ref(null);
+const matriculaParaGerar  = ref('');
+const qrCodeGerado        = ref(false);
+const mensagem            = ref('');
+const mensagemTipo        = ref('');
+const statusValidacao     = ref(null);
+const tempoEsperaReal     = ref('');
+const countdownTimer      = ref(null);
 
-  
-import { Chart, registerables } from 'chart.js';
-Chart.register(...registerables);
-
-const abaEstoque = ref('atual');
-const consumoDiario = ref([]);
-const consumoSemanal = ref([]);
-const consumoMensal = ref([]);
+// ── Estoque / Charts ──────────────────────────────────────────────────────────
+const abaEstoque      = ref('atual');
+const consumoSemanal  = ref([]);
+const consumoMensal   = ref([]);
 const chartSemanalRef = ref(null);
-const chartMensalRef = ref(null);
+const chartMensalRef  = ref(null);
 let chartSemanal = null;
-let chartMensal = null;
+let chartMensal  = null;
+
+// FIX: novoItem estava declarado dentro do bloco watch cortado — movido para cá
+const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
 
 const carregarConsumo = async () => {
-  const [d, s, m] = await Promise.all([
-    axios.get(`${API_URL}/consumo/diario`),
+  const [s, m] = await Promise.all([
     axios.get(`${API_URL}/consumo/semanal`),
     axios.get(`${API_URL}/consumo/mensal`)
   ]);
-  consumoDiario.value = d.data;
   consumoSemanal.value = s.data;
-  consumoMensal.value = m.data;
+  consumoMensal.value  = m.data;
 };
 
 const agrupar = (registros) => {
@@ -363,34 +380,37 @@ const renderChart = (canvasRef, chartInstance, dados, titulo) => {
   });
 };
 
+// FIX: watch estava cortado no meio (erro de sintaxe que impedia o app de iniciar)
 watch(abaEstoque, async (val) => {
   await carregarConsumo();
   await nextTick();
   if (val === 'semanal' && chartSemanalRef.value)
-    chartSemanal = renderChart(chartSemanalRef.value,
-// Campos de Formulário (O que estava faltando!)
-const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
+    chartSemanal = renderChart(chartSemanalRef.value, chartSemanal, consumoSemanal.value, 'Consumo Semanal');
+  if (val === 'mensal' && chartMensalRef.value)
+    chartMensal = renderChart(chartMensalRef.value, chartMensal, consumoMensal.value, 'Consumo Mensal');
+});
 
-
-const iniciarContagemRegressiva = (minutosRestantes) => {
+// ── Contagem regressiva ───────────────────────────────────────────────────────
+// FIX: parâmetro renomeado de minutosRestantes para segundosFaltando
+// (o backend envia segundosFaltando, que era tratado como segundos no corpo — confusão de nome)
+const iniciarContagemRegressiva = (segundosFaltando) => {
   if (countdownTimer.value) clearInterval(countdownTimer.value);
-  
- let segundosTotais = Math.floor(minutosRestantes);
-  
+
+  let segundosTotais = Math.floor(segundosFaltando);
+
   const atualizarTexto = () => {
     const h = Math.floor(segundosTotais / 3600);
     const m = Math.floor((segundosTotais % 3600) / 60);
     const s = segundosTotais % 60;
     tempoEsperaReal.value = `Aguarde mais ${h}h ${m}m ${s}s`;
   };
-  
 
-  atualizarTexto(); // Atualiza na hora
+  atualizarTexto();
 
   countdownTimer.value = setInterval(() => {
     if (segundosTotais <= 0) {
       clearInterval(countdownTimer.value);
-      tempoEsperaReal.value = "Pode comer agora!";
+      tempoEsperaReal.value = 'Pode comer agora!';
       return;
     }
     segundosTotais--;
@@ -398,9 +418,10 @@ const iniciarContagemRegressiva = (minutosRestantes) => {
   }, 1000);
 };
 
+// ── Scanner ───────────────────────────────────────────────────────────────────
 let html5QrCode = null;
 
-// Lógica de Negócio
+// ── Estoque ───────────────────────────────────────────────────────────────────
 const carregarEstoque = async () => {
   try {
     const res = await axios.get(`${API_URL}/estoque`);
@@ -409,136 +430,132 @@ const carregarEstoque = async () => {
   } catch (err) { isOnline.value = false; }
 };
 
-const carregarAlunos = async () => {
-  try {
-    const res = await axios.get(`${API_URL}/alunos`);
-    alunosList.value = res.data;
-  } catch (err) { console.error("Erro ao carregar alunos"); }
-};
-
-const alunosFiltrados = computed(() => {
-  const lista = alunosList.value || [];
-  if (!filtroAluno.value) return lista;
-  const f = filtroAluno.value.toLowerCase();
-  return lista.filter(a => 
-    (a.nome && a.nome.toLowerCase().includes(f)) || 
-    (a.matricula && a.matricula.includes(f))
-  );
-});
-
 const ajustarEstoque = async (id, delta) => {
   try {
     await axios.post(`${API_URL}/estoque/${id}/ajustar?variacao=${delta}`);
     await carregarEstoque();
-  } catch (err) { mostrarMensagem("Erro ao atualizar", "error"); }
+  } catch (err) { mostrarMensagem('Erro ao atualizar', 'error'); }
 };
 
-  
 const cadastrarNovoAlimento = async () => {
   if (!novoItem.value.nome || !novoItem.value.unidade) return;
   try {
     await axios.post(`${API_URL}/estoque`, novoItem.value);
     novoItem.value = { nome: '', unidade: '', quantidade: 0 };
     await carregarEstoque();
-    mostrarMensagem("Item adicionado!", "success");
-  } catch (err) { mostrarMensagem("Erro ao cadastrar", "error"); }
+    mostrarMensagem('Item adicionado!', 'success');
+  } catch (err) { mostrarMensagem('Erro ao cadastrar', 'error'); }
 };
+
+const excluirAlimento = async (id) => {
+  if (!confirm('Excluir este alimento?')) return;
+  try {
+    await axios.delete(`${API_URL}/estoque/${id}`);
+    await carregarEstoque();
+  } catch (err) { mostrarMensagem('Erro ao excluir', 'error'); }
+};
+
+// ── Alunos ────────────────────────────────────────────────────────────────────
 const novoAluno = ref({ nome: '', matricula: '', curso: '', modalidade: '', turma: '', turno: '' });
-  
+
+const carregarAlunos = async () => {
+  try {
+    const res = await axios.get(`${API_URL}/alunos`);
+    alunosList.value = res.data;
+  } catch (err) { console.error('Erro ao carregar alunos'); }
+};
+
+const alunosFiltrados = computed(() => {
+  const lista = alunosList.value || [];
+  if (!filtroAluno.value) return lista;
+  const f = filtroAluno.value.toLowerCase();
+  return lista.filter(a =>
+    (a.nome && a.nome.toLowerCase().includes(f)) ||
+    (a.matricula && a.matricula.includes(f))
+  );
+});
+
 const cadastrarAluno = async () => {
   if (!novoAluno.value.nome || !novoAluno.value.matricula) return;
   try {
     await axios.post(`${API_URL}/alunos`, novoAluno.value);
-    novoAluno.value = { nome: '', matricula: '' };
+    // FIX: reset incompleto apagava só nome e matricula, perdendo curso/modalidade/turma/turno
+    novoAluno.value = { nome: '', matricula: '', curso: '', modalidade: '', turma: '', turno: '' };
     await carregarAlunos();
-    mostrarMensagem("Aluno cadastrado!", "success");
-  } catch (err) { 
-    mostrarMensagem(err.response?.data?.error || "Erro ao cadastrar", "error"); 
+    mostrarMensagem('Aluno cadastrado!', 'success');
+  } catch (err) {
+    mostrarMensagem(err.response?.data?.error || 'Erro ao cadastrar', 'error');
   }
 };
 
-const excluirAlimento = async (id) => {
-  if (!confirm("Excluir este alimento?")) return;
-  try {
-    await axios.delete(`${API_URL}/estoque/${id}`);
-    await carregarEstoque();
-  } catch (err) { mostrarMensagem("Erro ao excluir", "error"); }
-};
-
 const excluirAluno = async (id) => {
-  if (!confirm("Excluir este aluno do sistema?")) return;
+  if (!confirm('Excluir este aluno do sistema?')) return;
   try {
     await axios.delete(`${API_URL}/alunos/${id}`);
     await carregarAlunos();
-    mostrarMensagem("Aluno removido", "success");
-  } catch (err) { mostrarMensagem("Erro ao excluir", "error"); }
+    mostrarMensagem('Aluno removido', 'success');
+  } catch (err) { mostrarMensagem('Erro ao excluir', 'error'); }
 };
- const alunoEditando = ref(null);
-const editNome = ref('');
-const editMatricula = ref('');
-const editCurso = ref('');
+
+// ── Modal de edição ───────────────────────────────────────────────────────────
+const alunoEditando  = ref(null);
+const editNome       = ref('');
+const editMatricula  = ref('');
+const editCurso      = ref('');
 const editModalidade = ref('');
-const editTurma = ref('');
-const editTurno = ref('');
+const editTurma      = ref('');
+const editTurno      = ref('');
 
 const editarAluno = (aluno) => {
-  alunoEditando.value = aluno;
-  editNome.value = aluno.nome;
-  editMatricula.value = aluno.matricula;
-  editCurso.value = aluno.curso;
+  alunoEditando.value  = aluno;
+  editNome.value       = aluno.nome;
+  editMatricula.value  = aluno.matricula;
+  editCurso.value      = aluno.curso;
   editModalidade.value = aluno.modalidade;
-  editTurma.value = aluno.turma;
-  editTurno.value = aluno.turno;
+  editTurma.value      = aluno.turma;
+  editTurno.value      = aluno.turno;
 };
 
 const salvarEdicao = async () => {
   await axios.put(`${API_URL}/alunos/${alunoEditando.value.id}`, {
-    nome: editNome.value,
-    matricula: editMatricula.value,
-    curso: editCurso.value,
+    nome:       editNome.value,
+    matricula:  editMatricula.value,
+    curso:      editCurso.value,
     modalidade: editModalidade.value,
-    turma: editTurma.value,
-    turno: editTurno.value
+    turma:      editTurma.value,
+    turno:      editTurno.value
   });
   alunoEditando.value = null;
   carregarAlunos();
 };
 
+// ── Validação ─────────────────────────────────────────────────────────────────
 const validarFicha = async (matricula) => {
   if (!matricula) return;
   statusValidacao.value = null;
-  tempoEsperaReal.value = "";
+  tempoEsperaReal.value = '';
   if (countdownTimer.value) clearInterval(countdownTimer.value);
   try {
     const res = await axios.post(`${API_URL}/validar?matricula=${matricula}`);
     mostrarMensagem(res.data.message, 'success');
-    statusValidacao.value = {
-      tipo: 'success',
-      titulo: 'Acesso Liberado',
-      msg: res.data.message
-    };
+    statusValidacao.value = { tipo: 'success', titulo: 'Acesso Liberado', msg: res.data.message };
     matriculaParaValidar.value = '';
     carregarEstoque();
     carregarAlunos();
   } catch (err) {
     const errorData = err.response?.data;
     statusValidacao.value = {
-    tipo: 'error',
-    titulo: 'Acesso Negado',
-    msg: errorData?.error || "Erro na validação",
-    espera: errorData?.espera,
-    ultimaRefeicao: errorData?.horaUltimaRefeicao,
-    proximaRefeicao: errorData?.proximaRefeicao
-};
-    
-    
-if (errorData?.segundosFaltando) {
-  iniciarContagemRegressiva(errorData.segundosFaltando);
-}
-
-    
-    
-    mostrarMensagem(errorData?.error || "Erro", 'error');
+      tipo:          'error',
+      titulo:        'Acesso Negado',
+      msg:           errorData?.error || 'Erro na validação',
+      espera:        errorData?.espera,
+      ultimaRefeicao: errorData?.horaUltimaRefeicao,
+      proximaRefeicao: errorData?.proximaRefeicao
+    };
+    if (errorData?.segundosFaltando) {
+      iniciarContagemRegressiva(errorData.segundosFaltando);
+    }
+    mostrarMensagem(errorData?.error || 'Erro', 'error');
   }
 };
 
@@ -552,22 +569,12 @@ const resetScan = () => {
   if (isCameraActive.value) startCamera();
 };
 
-// Utils
-// Converte string do backend (UTC sem fuso) para Date correto
+// ── Utilitários ───────────────────────────────────────────────────────────────
 const toUTC = (dateStr) => {
   if (!dateStr) return new Date();
-
-  // Se já for um objeto Date
-  if (dateStr instanceof Date) {
-    return dateStr;
-  }
-
-  // Garante que seja string antes de usar endsWith
+  if (dateStr instanceof Date) return dateStr;
   const str = String(dateStr);
-
-  return str.endsWith('Z')
-    ? new Date(str)
-    : new Date(str + 'Z');
+  return str.endsWith('Z') ? new Date(str) : new Date(str + 'Z');
 };
 
 const formatarData = (dateStr) => {
@@ -578,8 +585,7 @@ const formatarData = (dateStr) => {
 const podeComer = (dateStr) => {
   if (!dateStr) return true;
   const ultima = toUTC(dateStr);
-  const agora = new Date();
-  const diffHoras = (agora - ultima) / (1000 * 60 * 60);
+  const diffHoras = (new Date() - ultima) / (1000 * 60 * 60);
   return diffHoras >= 6;
 };
 
@@ -592,25 +598,28 @@ const tempoRestanteAluno = (dateStr) => {
   const s = diff % 60;
   return `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
 };
+
 const mostrarMensagem = (txt, tipo) => {
-  mensagem.value = txt;
+  mensagem.value     = txt;
   mensagemTipo.value = tipo;
   setTimeout(() => mensagem.value = '', 4000);
 };
 
-// Lógica do Scanner
+const formatarQuantidade = (q) => Number.isInteger(q) ? q : q.toFixed(1);
+
+// ── Câmera ────────────────────────────────────────────────────────────────────
 const toggleCamera = async () => {
   if (isCameraActive.value) await stopCamera();
   else await startCamera();
 };
 
 const startCamera = async () => {
-  if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+  if (!html5QrCode) html5QrCode = new Html5Qrcode('reader');
   const config = { fps: 15, qrbox: { width: 250, height: 250 } };
   try {
     await html5QrCode.start(
-      { facingMode: currentCameraId.value }, 
-      config, 
+      { facingMode: currentCameraId.value },
+      config,
       (decodedText) => {
         matriculaLida.value = decodedText;
         html5QrCode.stop();
@@ -620,7 +629,7 @@ const startCamera = async () => {
     );
     isCameraActive.value = true;
   } catch (err) {
-    mostrarMensagem("Câmera bloqueada ou não encontrada.", "error");
+    mostrarMensagem('Câmera bloqueada ou não encontrada.', 'error');
   }
 };
 
@@ -639,23 +648,23 @@ const switchCamera = async () => {
 
 const changeTab = async (tab) => {
   if (isCameraActive.value) await stopCamera();
-  currentTab.value = tab;
+  currentTab.value    = tab;
   isSidebarOpen.value = false;
   if (tab === 'alunos') carregarAlunos();
 };
 
-const gerarQrCode = () => { if (matriculaParaGerar.value) qrCodeGerado.value = true; };
+// ── QR Code / Impressão ───────────────────────────────────────────────────────
+const gerarQrCode   = () => { if (matriculaParaGerar.value) qrCodeGerado.value = true; };
 const imprimirFicha = () => window.print();
-const formatarQuantidade = (q) => Number.isInteger(q) ? q : q.toFixed(1);
-  
 
+// ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
   carregarEstoque();
   carregarAlunos();
-  setInterval(() => {
-    alunosList.value = [...alunosList.value];
-  }, 1000);
+  // Atualiza contadores de tempo restante a cada segundo
+  setInterval(() => { alunosList.value = [...alunosList.value]; }, 1000);
 });
+
 onUnmounted(stopCamera);
 </script>
 
@@ -663,62 +672,111 @@ onUnmounted(stopCamera);
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
 
 :root {
-  --primary: #4f46e5;
-  --success: #10b981;
-  --danger: #f43f5e;
-  --warning: #f59e0b;
-  --bg-dark: #020617;
+  --primary:    #4f46e5;
+  --success:    #10b981;
+  --danger:     #f43f5e;
+  --warning:    #f59e0b;
+  --bg-dark:    #020617;
   --sidebar-bg: #0f172a;
-  --glass: rgba(30, 41, 59, 0.6);
-  --border: rgba(255, 255, 255, 0.08);
+  --glass:      rgba(30, 41, 59, 0.6);
+  --border:     rgba(255, 255, 255, 0.08);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); color: #f8fafc; overflow-x: hidden; }
 .app-layout { display: flex; min-height: 100vh; }
 
-/* SIDEBAR */
-.sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); position: fixed; height: 100vh; z-index: 100; transition: transform 0.3s; }
+/* ── SIDEBAR ─────────────────────────────────────────────────────────────────── */
+.sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); position: fixed; height: 100vh; z-index: 100; transition: transform 0.3s; display: flex; flex-direction: column; }
 .sidebar-header { padding: 2rem; text-align: center; }
 .logo { font-size: 1.5rem; font-weight: 800; }
 .logo span { color: var(--primary); }
 .sidebar-nav { padding: 1rem; flex: 1; }
-.sidebar-nav button { width: 100%; padding: 1rem; margin-bottom: 0.5rem; background: transparent; border: none; color: #94a3b8; font-size: 1rem; font-weight: 600; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
+.sidebar-nav button { width: 100%; padding: 1rem; margin-bottom: 0.5rem; background: transparent; border: none; color: #94a3b8; font-size: 1rem; font-weight: 600; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s; font-family: inherit; }
+.sidebar-nav button:hover { background: rgba(79,70,229,0.15); color: #f8fafc; }
 .sidebar-nav button.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+.sidebar-footer { padding: 1rem; text-align: center; color: #64748b; font-size: 0.8rem; border-top: 1px solid var(--border); }
 
-/* MAIN */
-.main-content { flex: 1; margin-left: 280px; min-width: 0; }
+/* ── MAIN ────────────────────────────────────────────────────────────────────── */
+.main-content { flex: 1; margin-left: 280px; min-width: 0; display: flex; flex-direction: column; }
 .top-bar { height: 70px; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 90; }
-.content-area { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+.top-bar h1 { font-size: 1.1rem; font-weight: 600; }
+.content-area { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+.menu-toggle { display: none; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
 
-/* CARDS */
+/* Status online/offline */
+.user-status { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: rgba(244, 63, 94, 0.2); color: var(--danger); }
+.user-status.online { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+/* ── CARDS ───────────────────────────────────────────────────────────────────── */
 .card { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; }
 .glass-effect { box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
 
-/* TABLES */
+/* ── BUTTONS — FIX: .btn base faltava, botões não tinham padding/border-radius ─ */
+.btn { padding: 0.6rem 1.2rem; border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+.btn:active { transform: scale(0.95); }
+.btn-primary   { background: var(--primary); color: white; }
+.btn-success   { background: var(--success); color: white; }
+.btn-danger    { background: var(--danger);  color: white; }
+.btn-secondary { background: #334155; color: white; }
+.btn-validate  { background: var(--success); color: white; width: 100%; margin-top: 1rem; }
+.btn-link { background: transparent; border: none; color: #94a3b8; cursor: pointer; margin-top: 0.5rem; font-size: 0.9rem; font-family: inherit; }
+.btn-refresh { background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: white; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; margin-right: 10px; font-family: inherit; }
+.btn-refresh:hover { background: var(--primary); }
+.mt-1 { margin-top: 0.5rem; }
+
+/* ── INPUTS ──────────────────────────────────────────────────────────────────── */
+.input-group-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.input-group-row input,
+.input-group input {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: white;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.input-group { display: flex; flex-direction: column; gap: 10px; }
+/* FIX: .input-field (usada no modal) nunca foi definida no CSS original */
+.input-field { width: 100%; padding: 0.6rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 0.9rem; font-family: inherit; }
+.search-input { background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 0.6rem 1rem; border-radius: 10px; color: white; flex: 1; max-width: 400px; font-family: inherit; }
+input::placeholder { color: #64748b; }
+
+/* ── TABLES ──────────────────────────────────────────────────────────────────── */
 .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem; }
-.search-input { background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 0.6rem 1rem; border-radius: 10px; color: white; flex: 1; max-width: 400px; }
 .table-wrapper { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; text-align: left; }
 .data-table th { padding: 1rem; color: #94a3b8; border-bottom: 1px solid var(--border); font-weight: 600; }
 .data-table td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
 .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-.status-badge.can-eat { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+.status-badge.can-eat  { background: rgba(16, 185, 129, 0.2); color: var(--success); }
 .status-badge.must-wait { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+.actions { display: flex; align-items: center; flex: 1; justify-content: flex-end; }
+.empty-state { padding: 3rem; text-align: center; color: #64748b; font-style: italic; }
 
-/* SCANNER UI */
+/* ── SCANNER ─────────────────────────────────────────────────────────────────── */
 .scanner-wrapper { max-width: 450px; margin: 0 auto 1.5rem; text-align: center; }
+.scanner-header { margin-bottom: 0.5rem; }
+.camera-info { color: #64748b; font-size: 0.9rem; }
+.camera-info.active { color: var(--success); }
 .preview-container { position: relative; aspect-ratio: 1; background: #000; border-radius: 15px; overflow: hidden; margin-bottom: 1rem; border: 2px solid var(--border); }
 #reader { width: 100%; height: 100%; }
-.camera-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: #475569; }
+.camera-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: #475569; gap: 0.5rem; }
+.icon-large { font-size: 3rem; }
 .scan-success-overlay { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.95); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.success-card { text-align: center; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.id-display { font-size: 1.2rem; font-weight: 700; background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 8px; margin: 0.5rem 0; }
+.scanner-controls { display: flex; gap: 10px; justify-content: center; }
 .status-card { text-align: center; border-left: 6px solid var(--primary); }
 .status-card.success { border-color: var(--success); background: rgba(16, 185, 129, 0.1); }
-.status-card.error { border-color: var(--danger); background: rgba(244, 63, 94, 0.1); }
+.status-card.error   { border-color: var(--danger);  background: rgba(244, 63, 94, 0.1); }
 .wait-time { font-weight: 800; color: var(--warning); font-size: 1.1rem; margin-top: 0.5rem; }
 
-/* ESTOQUE UI */
-.estoque-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+/* ── ESTOQUE ─────────────────────────────────────────────────────────────────── */
+.estoque-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
 .estoque-card { padding: 1.2rem; position: relative; }
 .btn-delete { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #64748b; font-size: 1.5rem; cursor: pointer; line-height: 1; }
 .btn-delete:hover { color: var(--danger); }
@@ -726,95 +784,51 @@ body { font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); colo
 .item-body { display: flex; align-items: center; justify-content: space-between; }
 .adjust-btn { width: 36px; height: 36px; border-radius: 50%; border: none; color: white; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
 .adjust-btn.minus { background: #334155; }
-.adjust-btn.plus { background: var(--primary); }
+.adjust-btn.plus  { background: var(--primary); }
 .qty-value { font-size: 1.5rem; font-weight: 800; }
 
-.btn-icon-delete {
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 5px;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
+/* ── TABELA DE BOTÕES DE AÇÃO ────────────────────────────────────────────────── */
+.btn-icon-delete { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; border-radius: 8px; transition: background 0.2s; }
+.btn-icon-delete:hover { background: rgba(244, 63, 94, 0.1); }
+.btn-icon-edit { background: none; border: none; cursor: pointer; font-size: 1.1rem; margin-right: 4px; }
 
-.btn-icon-delete:hover {
-  background: rgba(244, 63, 94, 0.1);
-}
-  .btn-icon-edit {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.1rem;
-  margin-right: 4px;
-}
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-.modal-box {
-  background: #1e1e2e;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 300px;
-}
-.modal-box h3 {
-  color: #fff;
-  margin: 0;
-}
+/* ── MODAL ───────────────────────────────────────────────────────────────────── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 999; }
+.modal-box { background: #1e1e2e; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px; min-width: 320px; }
+.modal-box h3 { color: #fff; margin: 0; }
 
-.empty-state {
-  padding: 3rem;
-  text-align: center;
-  color: #64748b;
-  font-style: italic;
-}
+/* ── QR CODE ─────────────────────────────────────────────────────────────────── */
+.qr-result { margin-top: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.qr-label { margin-top: 0.5rem; font-weight: 700; }
 
-/* FORM & BUTTONS */
-.input-group-row { display: flex; gap: 10px; flex-wrap: wrap; }
-.btn-refresh {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid var(--border);
-  color: white;
-  padding: 5px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  margin-right: 10px;
-}
-.btn-refresh:hover { background: var(--primary); }
-.actions { display: flex; align-items: center; flex: 1; justify-content: flex-end; }
-.btn:active { transform: scale(0.95); }
-.btn-primary { background: var(--primary); color: white; }
-.btn-success { background: var(--success); color: white; }
-.btn-danger { background: var(--danger); color: white; }
-.btn-secondary { background: #334155; color: white; }
-.btn-validate { background: var(--success); color: white; width: 100%; margin-top: 1rem; }
-
-/* NOTIFICATIONS */
+/* ── TOAST ───────────────────────────────────────────────────────────────────── */
 .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 2rem; border-radius: 12px; z-index: 200; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
 .toast.success { background: var(--success); color: white; }
-.toast.error { background: var(--danger); color: white; }
+.toast.error   { background: var(--danger);  color: white; }
 
-/* MOBILE */
+/* FIX: animação slide-fade do toast nunca definida */
+.slide-fade-enter-active, .slide-fade-leave-active { transition: all 0.3s ease; }
+.slide-fade-enter-from, .slide-fade-leave-to { transform: translateX(20px); opacity: 0; }
+
+/* Animação pulse no botão de liberar acesso */
+.pulse { animation: pulse 1.5s infinite; }
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70%  { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ── MOBILE ──────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar-open .sidebar { transform: translateX(0); }
   .main-content { margin-left: 0; }
-  .menu-toggle { display: block; background: transparent; border: none; color: white; font-size: 1.5rem; }
+  .menu-toggle { display: block; }
   .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
   .content-area { padding: 1rem; }
 }
 
+/* ── IMPRESSÃO ───────────────────────────────────────────────────────────────── */
 @media print {
   body * { display: none !important; }
   .printable-area, .printable-area * { display: block !important; }
