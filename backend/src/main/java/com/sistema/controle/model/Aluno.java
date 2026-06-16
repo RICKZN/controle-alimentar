@@ -13,6 +13,11 @@ public class Aluno {
     private Long id;
     private String matricula;
     private String nome;
+    private String curso;
+    private String modalidade;
+    private String turma;
+    private String turno;
+
     private LocalDateTime ultimaRefeicao;
 
     public Long getId() { return id; }
@@ -23,6 +28,18 @@ public class Aluno {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+
+    public String getCurso() { return curso; }
+    public void setCurso(String curso) { this.curso = curso; }
+    
+    public String getModalidade() { return modalidade; }
+    public void setModalidade(String modalidade) { this.modalidade = modalidade; }
+
+    public String getTurma() { return turma; }
+    public void setTurma(String turma) { this.turma = turma; }
+
+    public String getTurno() { return turno; }
+    public void setTurno(String turno) { this.turno = turno; }
 
     public LocalDateTime getUltimaRefeicao() { return ultimaRefeicao; }
     public void setUltimaRefeicao(LocalDateTime ultimaRefeicao) { this.ultimaRefeicao = ultimaRefeicao; }
