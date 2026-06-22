@@ -18,6 +18,12 @@
         <button @click="changeTab('estoque')" :class="{ active: currentTab === 'estoque' }">
           <span class="icon">📦</span> Estoque
         </button>
+        <button @click="changeTab('prato')" :class="{ active: currentTab === 'prato' }">
+          <span class="icon">🍽️</span> Prato do Dia
+        </button>
+        <button @click="changeTab('alertas')" :class="{ active: currentTab === 'alertas' }">
+          <span class="icon">⚠️</span> Alertas
+        </button>
         <button @click="changeTab('geracao')" :class="{ active: currentTab === 'geracao' }">
           <span class="icon">🎟️</span> Gerar Fichas
         </button>
@@ -179,6 +185,8 @@
         <div v-if="currentTab === 'estoque'" class="tab-pane">
           <div class="card glass-effect" style="padding:0.8rem 1.5rem; margin-bottom:1rem; display:flex; gap:8px">
             <button @click="abaEstoque = 'atual'" :class="['btn', abaEstoque==='atual' ? 'btn-primary' : 'btn-secondary']">📦 Estoque Atual</button>
+            <button @click="abaEstoque = 'historico'" :class="['btn', abaEstoque==='historico' ? 'btn-primary' : 'btn-secondary']">🧾 Histórico</button>
+            <button @click="abaEstoque = 'diario'" :class="['btn', abaEstoque==='diario' ? 'btn-primary' : 'btn-secondary']">📊 Diário</button>
             <button @click="abaEstoque = 'semanal'" :class="['btn', abaEstoque==='semanal' ? 'btn-primary' : 'btn-secondary']">📊 Semanal</button>
             <button @click="abaEstoque = 'mensal'" :class="['btn', abaEstoque==='mensal' ? 'btn-primary' : 'btn-secondary']">📈 Mensal</button>
           </div>
@@ -198,6 +206,7 @@
                 <button class="btn-delete" @click="excluirAlimento(item.id)">🗑️</button>
                 <h4>{{ item.nome }}</h4>
                 <p class="unit-label">{{ item.unidade }}</p>
+                <button class="btn-link" @click="abrirLotes(item.nome)">Ver lotes e validades</button>
                 <div class="item-body">
                   <button class="adjust-btn minus" @click="ajustarEstoque(item.id, -1)">−</button>
                   <span class="qty-value">{{ formatarQuantidade(item.quantidade) }}</span>
@@ -210,12 +219,23 @@
               <h3>Adicionar Novo Alimento</h3>
               <div class="input-group-row">
                 <input type="text" v-model="novoItem.nome" placeholder="Nome do alimento (Ex: Arroz)" />
-                <input type="text" v-model="novoItem.unidade" placeholder="Unidade (Ex: kg)" style="width: 100px" />
+                <input type="text" v-model="novoItem.unidade" placeholder="Unidade (kg ou g)" style="width: 130px" />
                 <input type="number" v-model="novoItem.quantidade" placeholder="Qtd" style="width: 80px" />
-                <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar</button>
+                <input type="date" v-model="novoItem.dataCompra" title="Data da compra" />
+                <input type="date" v-model="novoItem.dataValidade" title="Data de validade" />
+                <input type="text" v-model="novoItem.usuarioResponsavel" placeholder="Responsável" />
+                <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar lote</button>
               </div>
             </div>
           </div>
+
+          <div v-if="abaEstoque === 'historico'" class="card glass-effect">
+            <h3>Histórico de Entradas</h3>
+            <div class="input-group-row"><input v-model="filtroHistorico.alimento" placeholder="Filtrar por alimento" /><input type="date" v-model="filtroHistorico.inicio" /><input type="date" v-model="filtroHistorico.fim" /><input type="date" v-model="filtroHistorico.validade" /><input type="number" v-model="filtroHistorico.lote" placeholder="Lote" /><button @click="carregarHistorico" class="btn btn-primary">Filtrar</button></div>
+            <div class="table-wrapper"><table class="data-table"><thead><tr><th>Lote</th><th>Alimento</th><th>Quantidade</th><th>Compra</th><th>Validade</th><th>Responsável</th></tr></thead><tbody><tr v-for="l in historicoEntradas" :key="l.id"><td>{{ l.id }}</td><td>{{ l.nome }}</td><td>{{ formatarQuantidade(l.quantidade) }} {{ l.unidade }}</td><td>{{ formatarDataCurta(l.dataCompra) }}</td><td>{{ formatarDataCurta(l.dataValidade) }}</td><td>{{ l.usuarioResponsavel }}</td></tr></tbody></table></div>
+          </div>
+
+          <div v-if="abaEstoque === 'diario'"><div class="card glass-effect"><h3>Consumo Diário</h3><canvas ref="chartDiarioRef"></canvas></div></div>
 
           <!-- Aba: Semanal — FIX: canvas ausente no template, gráfico nunca renderizava -->
           <div v-if="abaEstoque === 'semanal'">
@@ -233,6 +253,10 @@
             </div>
           </div>
         </div>
+
+        <div v-if="currentTab === 'prato'" class="tab-pane"><div class="card glass-effect"><h3>Registrar Prato do Dia</h3><div class="input-group-row"><input v-model="pratoDoDia.nome" placeholder="Nome do prato/refeição" /><input type="date" v-model="pratoDoDia.data" /><input type="number" v-model="pratoDoDia.refeicoesLiberadas" placeholder="Refeições liberadas" /></div><h4 style="margin-top:1rem">Ingredientes utilizados</h4><div v-for="(ing, idx) in pratoDoDia.ingredientes" :key="idx" class="input-group-row" style="margin-top:0.5rem"><select v-model="ing.nome" class="input-field" @change="sincronizarUnidadeIngrediente(ing)"><option value="">Selecione</option><option v-for="item in estoqueList" :key="item.id" :value="item.nome">{{ item.nome }} ({{ formatarQuantidade(item.quantidade) }} {{ item.unidade }})</option></select><input type="number" v-model="ing.quantidade" placeholder="Quantidade" /><input v-model="ing.unidade" placeholder="Unidade" /><button @click="removerIngrediente(idx)" class="btn btn-danger">Remover</button></div><button @click="adicionarIngrediente" class="btn btn-secondary">+ Ingrediente</button><button @click="salvarPratoDia" class="btn btn-success" style="margin-left:0.5rem">Registrar e baixar estoque</button></div></div>
+
+        <div v-if="currentTab === 'alertas'" class="tab-pane"><div class="dashboard-grid"><div class="card glass-effect alert-card"><h3>⚠️ Estoque Baixo</h3><p v-if="!alertas.estoqueBaixo?.length">Nenhum item abaixo do limite.</p><ul><li v-for="i in alertas.estoqueBaixo" :key="i.id">{{ i.nome }}: {{ formatarQuantidade(i.quantidade) }} {{ i.unidade }}</li></ul></div><div class="card glass-effect alert-card"><h3>⏳ Próximos do Vencimento</h3><p v-if="!alertas.vencimentos?.length">Nenhum lote vencendo em até 30 dias.</p><ul><li v-for="l in alertas.vencimentos" :key="l.id">{{ l.nome }} (lote {{ l.id }}) vence em {{ diasParaVencer(l.dataValidade) }} dias</li></ul></div><div class="card glass-effect alert-card"><h3>🍽️ Resumo Diário</h3><p>Prato: {{ alertas.pratoDoDia?.nome || 'Não registrado' }}</p><p>Refeições liberadas: {{ alertas.pratoDoDia?.refeicoesLiberadas || 0 }}</p><p>Alimentos utilizados: {{ totalIngredientesDia }}</p></div></div></div>
 
         <!-- TELA DE GERAÇÃO -->
         <!-- FIX: estava aninhada dentro do bloco de estoque, agora é irmã das outras abas -->
@@ -283,6 +307,8 @@
       </div>
     </div>
 
+    <div v-if="alimentoSelecionado" class="modal-overlay" @click.self="alimentoSelecionado = null"><div class="modal-box modal-wide"><h3>Lotes de {{ alimentoSelecionado }}</h3><div class="table-wrapper"><table class="data-table"><thead><tr><th>Lote</th><th>Quantidade</th><th>Compra</th><th>Validade</th></tr></thead><tbody><tr v-for="l in lotesSelecionados" :key="l.id"><td>{{ l.id }}</td><td>{{ formatarQuantidade(l.quantidade) }} {{ l.unidade }}</td><td>{{ formatarDataCurta(l.dataCompra) }}</td><td>{{ formatarDataCurta(l.dataValidade) }}</td></tr></tbody></table></div><button @click="alimentoSelecionado = null" class="btn btn-secondary">Fechar</button></div></div>
+
   </div><!-- /app-layout -->
 </template>
 
@@ -308,6 +334,8 @@ const tabTitles = {
   validacao: 'Validação de Acesso',
   alunos:    'Banco de Estudantes',
   estoque:   'Gestão de Estoque',
+  prato:     'Prato do Dia',
+  alertas:   'Dashboard de Alertas',
   geracao:   'Geração de Fichas'
 };
 
@@ -326,21 +354,32 @@ const countdownTimer      = ref(null);
 
 // ── Estoque / Charts ──────────────────────────────────────────────────────────
 const abaEstoque      = ref('atual');
+const consumoDiario   = ref([]);
 const consumoSemanal  = ref([]);
 const consumoMensal   = ref([]);
+const chartDiarioRef  = ref(null);
 const chartSemanalRef = ref(null);
 const chartMensalRef  = ref(null);
+let chartDiario = null;
 let chartSemanal = null;
 let chartMensal  = null;
 
-// FIX: novoItem estava declarado dentro do bloco watch cortado — movido para cá
-const novoItem = ref({ nome: '', unidade: '', quantidade: 0 });
+const hojeISO = () => new Date().toISOString().slice(0, 10);
+const novoItem = ref({ nome: '', unidade: 'kg', quantidade: 0, dataCompra: hojeISO(), dataValidade: '', usuarioResponsavel: '' });
+const alimentoSelecionado = ref(null);
+const lotesSelecionados = ref([]);
+const historicoEntradas = ref([]);
+const filtroHistorico = ref({ alimento: '', inicio: '', fim: '', validade: '', lote: '' });
+const alertas = ref({ estoqueBaixo: [], vencimentos: [], pratoDoDia: null });
+const pratoDoDia = ref({ nome: '', data: hojeISO(), refeicoesLiberadas: 0, ingredientes: [{ nome: '', unidade: 'kg', quantidade: 0 }] });
 
 const carregarConsumo = async () => {
-  const [s, m] = await Promise.all([
+  const [d, s, m] = await Promise.all([
+    axios.get(`${API_URL}/consumo/diario`),
     axios.get(`${API_URL}/consumo/semanal`),
     axios.get(`${API_URL}/consumo/mensal`)
   ]);
+  consumoDiario.value = d.data;
   consumoSemanal.value = s.data;
   consumoMensal.value  = m.data;
 };
@@ -384,6 +423,9 @@ const renderChart = (canvasRef, chartInstance, dados, titulo) => {
 watch(abaEstoque, async (val) => {
   await carregarConsumo();
   await nextTick();
+  if (val === 'diario' && chartDiarioRef.value)
+    chartDiario = renderChart(chartDiarioRef.value, chartDiario, consumoDiario.value, 'Consumo Diário');
+  if (val === 'historico') carregarHistorico();
   if (val === 'semanal' && chartSemanalRef.value)
     chartSemanal = renderChart(chartSemanalRef.value, chartSemanal, consumoSemanal.value, 'Consumo Semanal');
   if (val === 'mensal' && chartMensalRef.value)
@@ -434,18 +476,60 @@ const ajustarEstoque = async (id, delta) => {
   try {
     await axios.post(`${API_URL}/estoque/${id}/ajustar?variacao=${delta}`);
     await carregarEstoque();
-  } catch (err) { mostrarMensagem('Erro ao atualizar', 'error'); }
+  } catch (err) { mostrarMensagem(err.response?.data?.error || 'Erro ao atualizar', 'error'); }
 };
 
 const cadastrarNovoAlimento = async () => {
   if (!novoItem.value.nome || !novoItem.value.unidade) return;
   try {
     await axios.post(`${API_URL}/estoque`, novoItem.value);
-    novoItem.value = { nome: '', unidade: '', quantidade: 0 };
+    novoItem.value = { nome: '', unidade: 'kg', quantidade: 0, dataCompra: hojeISO(), dataValidade: '', usuarioResponsavel: '' };
     await carregarEstoque();
     mostrarMensagem('Item adicionado!', 'success');
   } catch (err) { mostrarMensagem('Erro ao cadastrar', 'error'); }
 };
+
+
+const abrirLotes = async (nome) => {
+  const res = await axios.get(`${API_URL}/estoque/${encodeURIComponent(nome)}/lotes`);
+  alimentoSelecionado.value = nome;
+  lotesSelecionados.value = res.data;
+};
+
+const carregarHistorico = async () => {
+  const params = new URLSearchParams();
+  Object.entries(filtroHistorico.value).forEach(([k, v]) => { if (v) params.append(k, v); });
+  const res = await axios.get(`${API_URL}/estoque/historico?${params.toString()}`);
+  historicoEntradas.value = res.data;
+};
+
+const carregarAlertas = async () => {
+  const res = await axios.get(`${API_URL}/alertas`);
+  alertas.value = res.data;
+};
+
+const adicionarIngrediente = () => pratoDoDia.value.ingredientes.push({ nome: '', unidade: 'kg', quantidade: 0 });
+const removerIngrediente = (idx) => pratoDoDia.value.ingredientes.splice(idx, 1);
+const sincronizarUnidadeIngrediente = (ingrediente) => {
+  const item = estoqueList.value.find(e => e.nome === ingrediente.nome);
+  if (item) ingrediente.unidade = item.unidade;
+};
+
+const salvarPratoDia = async () => {
+  try {
+    await axios.post(`${API_URL}/prato-dia`, pratoDoDia.value);
+    mostrarMensagem('Prato registrado e estoque baixado por validade mais próxima!', 'success');
+    pratoDoDia.value = { nome: '', data: hojeISO(), refeicoesLiberadas: 0, ingredientes: [{ nome: '', unidade: 'kg', quantidade: 0 }] };
+    await carregarEstoque();
+    await carregarAlertas();
+  } catch (err) {
+    mostrarMensagem(err.response?.data?.error || 'Erro ao registrar prato do dia', 'error');
+  }
+};
+
+const totalIngredientesDia = computed(() => alertas.value.pratoDoDia?.ingredientes?.reduce((t, i) => t + Number(i.quantidade || 0), 0) || 0);
+const formatarDataCurta = (dateStr) => dateStr ? new Date(`${dateStr}T00:00:00`).toLocaleDateString('pt-BR') : '—';
+const diasParaVencer = (dateStr) => Math.ceil((new Date(`${dateStr}T00:00:00`) - new Date()) / (1000 * 60 * 60 * 24));
 
 const excluirAlimento = async (id) => {
   if (!confirm('Excluir este alimento?')) return;
@@ -527,6 +611,8 @@ const salvarEdicao = async () => {
   });
   alunoEditando.value = null;
   carregarAlunos();
+  carregarAlertas();
+  carregarHistorico();
 };
 
 // ── Validação ─────────────────────────────────────────────────────────────────
@@ -651,6 +737,8 @@ const changeTab = async (tab) => {
   currentTab.value    = tab;
   isSidebarOpen.value = false;
   if (tab === 'alunos') carregarAlunos();
+  if (tab === 'alertas') carregarAlertas();
+  if (tab === 'prato') carregarEstoque();
 };
 
 // ── QR Code / Impressão ───────────────────────────────────────────────────────
@@ -661,6 +749,8 @@ const imprimirFicha = () => window.print();
 onMounted(() => {
   carregarEstoque();
   carregarAlunos();
+  carregarAlertas();
+  carregarHistorico();
   // Atualiza contadores de tempo restante a cada segundo
   setInterval(() => { alunosList.value = [...alunosList.value]; }, 1000);
 });
@@ -795,6 +885,9 @@ input::placeholder { color: #64748b; }
 /* ── MODAL ───────────────────────────────────────────────────────────────────── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 999; }
 .modal-box { background: #1e1e2e; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px; min-width: 320px; }
+.modal-wide { width: min(760px, 94vw); }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+.alert-card ul { margin: 1rem 0 0 1.2rem; color: #fbbf24; }
 .modal-box h3 { color: #fff; margin: 0; }
 
 /* ── QR CODE ─────────────────────────────────────────────────────────────────── */

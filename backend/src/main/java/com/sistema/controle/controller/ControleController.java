@@ -2,14 +2,20 @@ package com.sistema.controle.controller;
 
 import com.sistema.controle.model.Aluno;
 import com.sistema.controle.model.Estoque;
+import com.sistema.controle.model.EstoqueLote;
+import com.sistema.controle.model.PratoDoDia;
+import com.sistema.controle.model.PratoIngrediente;
 import com.sistema.controle.model.RegistroAtendimento;
 import com.sistema.controle.repository.AlunoRepository;
 import com.sistema.controle.repository.EstoqueRepository;
+import com.sistema.controle.repository.EstoqueLoteRepository;
+import com.sistema.controle.repository.PratoDoDiaRepository;
 import com.sistema.controle.repository.RegistroAtendimentoRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
@@ -29,6 +35,12 @@ public class ControleController {
     private EstoqueRepository estoqueRepo;
 
     @Autowired
+    private EstoqueLoteRepository loteRepo;
+
+    @Autowired
+    private PratoDoDiaRepository pratoRepo;
+
+    @Autowired
     private RegistroAtendimentoRepository registroRepo;
 
     @Autowired
@@ -40,7 +52,7 @@ private RegistroConsumoRepository consumoRepo;
     @PostConstruct
     public void initData() {
         // Inicializa estoque
-        if (estoqueRepo.count() == 0) {
+        if (loteRepo.count() == 0 && estoqueRepo.count() == 0) {
             adicionarItemInicial("Arroz", "kg", 50.0);
             adicionarItemInicial("Feijão", "kg", 30.0);
             adicionarItemInicial("Carnes Vermelhas", "kg", 20.0);
@@ -64,11 +76,68 @@ private RegistroConsumoRepository consumoRepo;
     }
 
     private void adicionarItemInicial(String nome, String unidade, Double quantidade) {
-        Estoque item = new Estoque();
+        EstoqueLote lote = new EstoqueLote();
+        lote.setNome(nome);
+        lote.setUnidade(unidade);
+        lote.setQuantidade(quantidade);
+        lote.setDataCompra(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        lote.setDataValidade(LocalDate.now(ZoneId.of("America/Sao_Paulo")).plusMonths(6));
+        lote.setUsuarioResponsavel("Sistema");
+        lote.setDataCadastro(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        loteRepo.save(lote);
+        atualizarEstoqueConsolidado(nome);
+    }
+
+    private Estoque atualizarEstoqueConsolidado(String nome) {
+        List<EstoqueLote> lotes = loteRepo.findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(nome);
+        double total = lotes.stream().mapToDouble(l -> l.getQuantidade() == null ? 0 : l.getQuantidade()).sum();
+        Estoque item = estoqueRepo.findAll().stream()
+            .filter(e -> e.getNome() != null && e.getNome().equalsIgnoreCase(nome))
+            .findFirst().orElseGet(Estoque::new);
         item.setNome(nome);
-        item.setUnidade(unidade);
-        item.setQuantidade(quantidade);
-        estoqueRepo.save(item);
+        item.setUnidade(lotes.isEmpty() ? item.getUnidade() : lotes.get(0).getUnidade());
+        item.setQuantidade(total);
+        return estoqueRepo.save(item);
+    }
+
+    private void registrarConsumo(String nome, Double quantidade) {
+        RegistroConsumo reg = new RegistroConsumo();
+        reg.setNomeItem(nome);
+        reg.setData(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        reg.setQuantidadeGasta(quantidade);
+        consumoRepo.save(reg);
+    }
+
+    private double quantidadeDisponivel(String nome) {
+        return loteRepo.findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(nome).stream()
+            .mapToDouble(l -> l.getQuantidade() == null ? 0 : l.getQuantidade())
+            .sum();
+    }
+
+    private Optional<String> validarEstoqueDisponivel(String nome, Double quantidade) {
+        if (nome == null || nome.isBlank()) return Optional.of("Informe o alimento utilizado.");
+        if (quantidade == null || quantidade <= 0) return Optional.of("Informe uma quantidade válida para " + nome + ".");
+        double disponivel = quantidadeDisponivel(nome);
+        if (disponivel < quantidade) {
+            return Optional.of(String.format(Locale.US,
+                "Estoque insuficiente para %s. Disponível: %.2f, solicitado: %.2f.",
+                nome, disponivel, quantidade));
+        }
+        return Optional.empty();
+    }
+
+    private void consumirPorFefo(String nome, Double quantidade) {
+        double restante = quantidade == null ? 0 : quantidade;
+        for (EstoqueLote lote : loteRepo.findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(nome)) {
+            if (restante <= 0) break;
+            double disponivel = lote.getQuantidade() == null ? 0 : lote.getQuantidade();
+            double consumo = Math.min(disponivel, restante);
+            lote.setQuantidade(disponivel - consumo);
+            loteRepo.save(lote);
+            restante -= consumo;
+        }
+        registrarConsumo(nome, quantidade - Math.max(restante, 0));
+        atualizarEstoqueConsolidado(nome);
     }
 
     @GetMapping("/estoque")
@@ -79,36 +148,95 @@ private RegistroConsumoRepository consumoRepo;
    @PostMapping("/estoque/{id}/ajustar")
 public ResponseEntity<?> ajustarEstoque(@PathVariable Long id, @RequestParam Double variacao) {
     Optional<Estoque> itemOpt = estoqueRepo.findById(id);
-    if (itemOpt.isPresent()) {
-        Estoque item = itemOpt.get();
-        double novaQuantidade = item.getQuantidade() + variacao;
-        if (novaQuantidade < 0) novaQuantidade = 0;
-
-        if (variacao < 0) {
-            RegistroConsumo reg = new RegistroConsumo();
-            reg.setEstoqueId(id);
-            reg.setNomeItem(item.getNome());
-            reg.setData(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
-            reg.setQuantidadeGasta(Math.abs(variacao));
-            consumoRepo.save(reg);
-        }
-
-        item.setQuantidade(novaQuantidade);
-        estoqueRepo.save(item);
-        return ResponseEntity.ok(item);
+    if (itemOpt.isEmpty()) return ResponseEntity.badRequest().body("Item não encontrado.");
+    Estoque item = itemOpt.get();
+    if (variacao < 0) {
+        Optional<String> erro = validarEstoqueDisponivel(item.getNome(), Math.abs(variacao));
+        if (erro.isPresent()) return ResponseEntity.badRequest().body(Map.of("error", erro.get()));
+        consumirPorFefo(item.getNome(), Math.abs(variacao));
     }
-    return ResponseEntity.badRequest().body("Item não encontrado.");
+    else {
+        EstoqueLote lote = new EstoqueLote();
+        lote.setNome(item.getNome());
+        lote.setUnidade(item.getUnidade());
+        lote.setQuantidade(variacao);
+        lote.setDataCompra(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        lote.setDataValidade(LocalDate.now(ZoneId.of("America/Sao_Paulo")).plusMonths(6));
+        lote.setUsuarioResponsavel("Ajuste manual");
+        lote.setDataCadastro(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        loteRepo.save(lote);
+        atualizarEstoqueConsolidado(item.getNome());
+    }
+    return ResponseEntity.ok(atualizarEstoqueConsolidado(item.getNome()));
 }
 
     @DeleteMapping("/estoque/{id}")
     public ResponseEntity<?> excluirItemEstoque(@PathVariable Long id) {
+        estoqueRepo.findById(id).ifPresent(item -> loteRepo.findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(item.getNome()).forEach(loteRepo::delete));
         estoqueRepo.deleteById(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/estoque")
-    public ResponseEntity<?> adicionarNovoItem(@RequestBody Estoque novoItem) {
-        return ResponseEntity.ok(estoqueRepo.save(novoItem));
+    public ResponseEntity<?> adicionarNovoItem(@RequestBody EstoqueLote novoLote) {
+        if (novoLote.getDataCadastro() == null) novoLote.setDataCadastro(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        if (novoLote.getUsuarioResponsavel() == null || novoLote.getUsuarioResponsavel().isBlank()) novoLote.setUsuarioResponsavel("Cozinha");
+        loteRepo.save(novoLote);
+        return ResponseEntity.ok(atualizarEstoqueConsolidado(novoLote.getNome()));
+    }
+
+    @GetMapping("/estoque/{nome}/lotes")
+    public List<EstoqueLote> lotesPorAlimento(@PathVariable String nome) {
+        return loteRepo.findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(nome);
+    }
+
+    @GetMapping("/estoque/historico")
+    public List<EstoqueLote> historicoEntradas(@RequestParam(required = false) String alimento,
+                                               @RequestParam(required = false) LocalDate inicio,
+                                               @RequestParam(required = false) LocalDate fim,
+                                               @RequestParam(required = false) LocalDate validade,
+                                               @RequestParam(required = false) Long lote) {
+        if (lote != null) return loteRepo.findById(lote).map(List::of).orElse(List.of());
+        return loteRepo.findAll().stream()
+            .filter(l -> alimento == null || l.getNome().equalsIgnoreCase(alimento))
+            .filter(l -> inicio == null || !l.getDataCompra().isBefore(inicio))
+            .filter(l -> fim == null || !l.getDataCompra().isAfter(fim))
+            .filter(l -> validade == null || l.getDataValidade().equals(validade))
+            .toList();
+    }
+
+    @GetMapping("/alertas")
+    public Map<String,Object> alertas(@RequestParam(defaultValue = "2") Double limiteBaixo) {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+        Map<String,Object> map = new HashMap<>();
+        map.put("estoqueBaixo", estoqueRepo.findAll().stream().filter(e -> e.getQuantidade() <= limiteBaixo).toList());
+        map.put("vencimentos", loteRepo.findByQuantidadeGreaterThanOrderByDataValidadeAscDataCompraAscIdAsc(0.0).stream().filter(l -> !l.getDataValidade().isBefore(hoje) && !l.getDataValidade().isAfter(hoje.plusDays(30))).toList());
+        map.put("pratoDoDia", pratoRepo.findTopByDataOrderByIdDesc(hoje).orElse(null));
+        return map;
+    }
+
+    @PostMapping("/prato-dia")
+    @Transactional
+    public ResponseEntity<?> salvarPratoDia(@RequestBody PratoDoDia prato) {
+        if (prato.getNome() == null || prato.getNome().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Informe o nome do prato do dia."));
+        }
+        if (prato.getData() == null) prato.setData(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        if (prato.getRefeicoesLiberadas() == null) prato.setRefeicoesLiberadas(0);
+        if (prato.getIngredientes() == null || prato.getIngredientes().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Informe pelo menos um ingrediente."));
+        }
+        for (PratoIngrediente ing : prato.getIngredientes()) {
+            Optional<String> erro = validarEstoqueDisponivel(ing.getNome(), ing.getQuantidade());
+            if (erro.isPresent()) return ResponseEntity.badRequest().body(Map.of("error", erro.get()));
+        }
+        for (PratoIngrediente ing : prato.getIngredientes()) consumirPorFefo(ing.getNome(), ing.getQuantidade());
+        return ResponseEntity.ok(pratoRepo.save(prato));
+    }
+
+    @GetMapping("/prato-dia/hoje")
+    public ResponseEntity<?> pratoDiaHoje() {
+        return ResponseEntity.ok(pratoRepo.findTopByDataOrderByIdDesc(LocalDate.now(ZoneId.of("America/Sao_Paulo"))).orElse(null));
     }
 
     @GetMapping("/alunos")
