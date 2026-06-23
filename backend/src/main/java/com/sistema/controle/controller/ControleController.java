@@ -189,6 +189,19 @@ public ResponseEntity<?> ajustarEstoque(@PathVariable Long id, @RequestParam Dou
         map.put("estoqueBaixo", estoqueRepo.findAll().stream().filter(e -> e.getQuantidade() <= limiteBaixo).toList());
         map.put("vencimentos", loteRepo.findByQuantidadeGreaterThanOrderByDataValidadeAscDataCompraAscIdAsc(0.0).stream().filter(l -> !l.getDataValidade().isBefore(hoje) && !l.getDataValidade().isAfter(hoje.plusDays(30))).toList());
         map.put("pratoDoDia", pratoRepo.findTopByDataOrderByIdDesc(hoje).orElse(null));
+
+        // Resumo diário real: conta refeições liberadas hoje a partir dos registros de validação
+        long refeicoesLiberadasHoje = registroRepo.findAll().stream()
+                .filter(r -> r.getDataHoraAtendimento() != null && r.getDataHoraAtendimento().toLocalDate().equals(hoje))
+                .count();
+        map.put("refeicoesLiberadasHoje", refeicoesLiberadasHoje);
+
+        // Resumo diário real: soma o consumo registrado hoje (prato do dia + ajustes manuais de estoque)
+        double alimentosUtilizadosHoje = consumoRepo.findByDataBetween(hoje, hoje).stream()
+                .mapToDouble(RegistroConsumo::getQuantidadeGasta)
+                .sum();
+        map.put("alimentosUtilizadosHoje", alimentosUtilizadosHoje);
+
         return map;
     }
 
