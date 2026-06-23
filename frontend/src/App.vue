@@ -235,28 +235,47 @@
             <div class="table-wrapper"><table class="data-table"><thead><tr><th>Lote</th><th>Alimento</th><th>Quantidade</th><th>Compra</th><th>Validade</th><th>Responsável</th></tr></thead><tbody><tr v-for="l in historicoEntradas" :key="l.id"><td>{{ l.id }}</td><td>{{ l.nome }}</td><td>{{ formatarQuantidade(l.quantidade) }} {{ l.unidade }}</td><td>{{ formatarDataCurta(l.dataCompra) }}</td><td>{{ formatarDataCurta(l.dataValidade) }}</td><td>{{ l.usuarioResponsavel }}</td></tr></tbody></table></div>
           </div>
 
-          <div v-if="abaEstoque === 'diario'"><div class="card glass-effect"><h3>Consumo Diário</h3><canvas ref="chartDiarioRef"></canvas></div></div>
+          <div v-if="abaEstoque === 'diario'">
+            <div class="card glass-effect">
+              <h3>Consumo Diário</h3>
+              <div v-if="Object.keys(totalConsumoDiarioPorUnidade).length > 0" style="margin-bottom:1rem; display:flex; gap:10px; flex-wrap:wrap">
+                <span v-for="(qtd, un) in totalConsumoDiarioPorUnidade" :key="un" class="chip">Total hoje: {{ formatarQuantidade(qtd) }} {{ un }}</span>
+              </div>
+              <canvas ref="chartDiarioRef"></canvas>
+            </div>
+          </div>
 
           <!-- Aba: Semanal — FIX: canvas ausente no template, gráfico nunca renderizava -->
           <div v-if="abaEstoque === 'semanal'">
             <div class="card glass-effect">
-              <h3>Consumo Semanal</h3>
+              <h3>Consumo Semanal por Alimento</h3>
               <canvas ref="chartSemanalRef"></canvas>
+            </div>
+            <div class="card glass-effect">
+              <h3>Comparação entre os Dias da Semana</h3>
+              <canvas ref="chartDiaSemanaRef"></canvas>
             </div>
           </div>
 
           <!-- Aba: Mensal — FIX: mesmo problema do semanal -->
           <div v-if="abaEstoque === 'mensal'">
             <div class="card glass-effect">
-              <h3>Consumo Mensal</h3>
+              <h3>Consumo Mensal por Alimento</h3>
               <canvas ref="chartMensalRef"></canvas>
+            </div>
+            <div class="card glass-effect">
+              <h3>Alimentos Mais Consumidos no Mês</h3>
+              <ol class="ranking-list">
+                <li v-for="(r, i) in rankingMensal" :key="r.nome"><span class="ranking-pos">{{ i + 1 }}º</span> {{ r.nome }} — {{ formatarQuantidade(r.total) }}</li>
+              </ol>
+              <p style="margin-top:1rem; font-weight:700; color:#94a3b8">Total utilizado no mês: {{ formatarQuantidade(totalConsumoMensal) }}</p>
             </div>
           </div>
         </div>
 
         <div v-if="currentTab === 'prato'" class="tab-pane"><div class="card glass-effect"><h3>Registrar Prato do Dia</h3><div class="input-group-row"><input v-model="pratoDoDia.nome" placeholder="Nome do prato/refeição" /><input type="date" v-model="pratoDoDia.data" /><input type="number" v-model="pratoDoDia.refeicoesLiberadas" placeholder="Refeições liberadas" /></div><h4 style="margin-top:1rem">Ingredientes utilizados</h4><div v-for="(ing, idx) in pratoDoDia.ingredientes" :key="idx" class="input-group-row" style="margin-top:0.5rem"><select v-model="ing.nome" class="input-field"><option value="">Selecione</option><option v-for="item in estoqueList" :key="item.id" :value="item.nome">{{ item.nome }} ({{ formatarQuantidade(item.quantidade) }} {{ item.unidade }})</option></select><input type="number" v-model="ing.quantidade" placeholder="Quantidade" /><input v-model="ing.unidade" placeholder="Unidade" /><button @click="removerIngrediente(idx)" class="btn btn-danger">Remover</button></div><button @click="adicionarIngrediente" class="btn btn-secondary">+ Ingrediente</button><button @click="salvarPratoDia" class="btn btn-success" style="margin-left:0.5rem">Registrar e baixar estoque</button></div></div>
 
-        <div v-if="currentTab === 'alertas'" class="tab-pane"><div class="dashboard-grid"><div class="card glass-effect alert-card"><h3>⚠️ Estoque Baixo</h3><p v-if="!alertas.estoqueBaixo?.length">Nenhum item abaixo do limite.</p><ul><li v-for="i in alertas.estoqueBaixo" :key="i.id">{{ i.nome }}: {{ formatarQuantidade(i.quantidade) }} {{ i.unidade }}</li></ul></div><div class="card glass-effect alert-card"><h3>⏳ Próximos do Vencimento</h3><p v-if="!alertas.vencimentos?.length">Nenhum lote vencendo em até 30 dias.</p><ul><li v-for="l in alertas.vencimentos" :key="l.id">{{ l.nome }} (lote {{ l.id }}) vence em {{ diasParaVencer(l.dataValidade) }} dias</li></ul></div><div class="card glass-effect alert-card"><h3>🍽️ Resumo Diário</h3><p>Prato: {{ alertas.pratoDoDia?.nome || 'Não registrado' }}</p><p>Refeições liberadas: {{ alertas.pratoDoDia?.refeicoesLiberadas || 0 }}</p><p>Alimentos utilizados: {{ totalIngredientesDia }}</p></div></div></div>
+        <div v-if="currentTab === 'alertas'" class="tab-pane"><div class="card glass-effect" style="margin-bottom:1rem; display:flex; align-items:center; gap:10px"><label style="color:#94a3b8; font-size:0.9rem">⚠️ Limite mínimo para alerta de estoque baixo:</label><input type="number" v-model.number="limiteBaixo" @change="carregarAlertas" style="width:80px" class="input-field" /></div><div class="dashboard-grid"><div class="card glass-effect alert-card"><h3>⚠️ Estoque Baixo</h3><p v-if="!alertas.estoqueBaixo?.length">Nenhum item abaixo do limite.</p><ul><li v-for="i in alertas.estoqueBaixo" :key="i.id">{{ i.nome }}: {{ formatarQuantidade(i.quantidade) }} {{ i.unidade }}</li></ul></div><div class="card glass-effect alert-card"><h3>⏳ Próximos do Vencimento</h3><p v-if="!alertas.vencimentos?.length">Nenhum lote vencendo em até 30 dias.</p><ul><li v-for="l in alertas.vencimentos" :key="l.id">{{ l.nome }} (lote {{ l.id }}) vence em {{ diasParaVencer(l.dataValidade) }} dias</li></ul></div><div class="card glass-effect alert-card"><h3>🍽️ Resumo Diário</h3><p>Prato: {{ alertas.pratoDoDia?.nome || 'Não registrado' }}</p><p>Refeições liberadas: {{ alertas.refeicoesLiberadasHoje || 0 }}</p><p>Alimentos utilizados: {{ formatarQuantidade(alertas.alimentosUtilizadosHoje || 0) }}</p></div></div></div>
 
         <!-- TELA DE GERAÇÃO -->
         <!-- FIX: estava aninhada dentro do bloco de estoque, agora é irmã das outras abas -->
@@ -360,9 +379,12 @@ const consumoMensal   = ref([]);
 const chartDiarioRef  = ref(null);
 const chartSemanalRef = ref(null);
 const chartMensalRef  = ref(null);
+const chartDiaSemanaRef = ref(null);
+const limiteBaixo = ref(2);
 let chartDiario = null;
 let chartSemanal = null;
 let chartMensal  = null;
+let chartDiaSemana = null;
 
 const hojeISO = () => new Date().toISOString().slice(0, 10);
 const novoItem = ref({ nome: '', unidade: 'kg', quantidade: 0, dataCompra: hojeISO(), dataValidade: '', usuarioResponsavel: '' });
@@ -419,6 +441,61 @@ const renderChart = (canvasRef, chartInstance, dados, titulo) => {
   });
 };
 
+const agruparPorDiaSemana = (registros) => {
+  const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const totais = [0, 0, 0, 0, 0, 0, 0];
+  registros.forEach(r => {
+    const d = new Date(`${r.data}T00:00:00`);
+    totais[d.getDay()] += r.quantidadeGasta;
+  });
+  return { labels: dias, data: totais };
+};
+
+const renderChartDiaSemana = (canvasRef, chartInstance, registros) => {
+  if (chartInstance) chartInstance.destroy();
+  const { labels, data } = agruparPorDiaSemana(registros);
+  return new Chart(canvasRef, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Consumo total por dia',
+        data,
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16,185,129,0.2)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#f8fafc' } } },
+      scales: {
+        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+};
+
+const rankingMensal = computed(() => {
+  const map = agrupar(consumoMensal.value);
+  return Object.entries(map).map(([nome, total]) => ({ nome, total })).sort((a, b) => b.total - a.total);
+});
+
+const totalConsumoMensal = computed(() => consumoMensal.value.reduce((acc, c) => acc + c.quantidadeGasta, 0));
+
+const totalConsumoDiarioPorUnidade = computed(() => {
+  const map = {};
+  consumoDiario.value.forEach(c => {
+    const item = estoqueList.value.find(e => e.id === c.estoqueId || e.nome === c.nomeItem);
+    const un = item ? item.unidade : '';
+    map[un] = (map[un] || 0) + c.quantidadeGasta;
+  });
+  return map;
+});
+
 // FIX: watch estava cortado no meio (erro de sintaxe que impedia o app de iniciar)
 watch(abaEstoque, async (val) => {
   await carregarConsumo();
@@ -426,8 +503,11 @@ watch(abaEstoque, async (val) => {
   if (val === 'diario' && chartDiarioRef.value)
     chartDiario = renderChart(chartDiarioRef.value, chartDiario, consumoDiario.value, 'Consumo Diário');
   if (val === 'historico') carregarHistorico();
-  if (val === 'semanal' && chartSemanalRef.value)
+  if (val === 'semanal' && chartSemanalRef.value) {
     chartSemanal = renderChart(chartSemanalRef.value, chartSemanal, consumoSemanal.value, 'Consumo Semanal');
+    if (chartDiaSemanaRef.value)
+      chartDiaSemana = renderChartDiaSemana(chartDiaSemanaRef.value, chartDiaSemana, consumoSemanal.value);
+  }
   if (val === 'mensal' && chartMensalRef.value)
     chartMensal = renderChart(chartMensalRef.value, chartMensal, consumoMensal.value, 'Consumo Mensal');
 });
@@ -504,7 +584,7 @@ const carregarHistorico = async () => {
 };
 
 const carregarAlertas = async () => {
-  const res = await axios.get(`${API_URL}/alertas`);
+  const res = await axios.get(`${API_URL}/alertas?limiteBaixo=${limiteBaixo.value}`);
   alertas.value = res.data;
 };
 
@@ -519,7 +599,6 @@ const salvarPratoDia = async () => {
   await carregarAlertas();
 };
 
-const totalIngredientesDia = computed(() => alertas.value.pratoDoDia?.ingredientes?.reduce((t, i) => t + Number(i.quantidade || 0), 0) || 0);
 const formatarDataCurta = (dateStr) => dateStr ? new Date(`${dateStr}T00:00:00`).toLocaleDateString('pt-BR') : '—';
 const diasParaVencer = (dateStr) => Math.ceil((new Date(`${dateStr}T00:00:00`) - new Date()) / (1000 * 60 * 60 * 24));
 
@@ -881,6 +960,10 @@ input::placeholder { color: #64748b; }
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
 .alert-card ul { margin: 1rem 0 0 1.2rem; color: #fbbf24; }
 .modal-box h3 { color: #fff; margin: 0; }
+.chip { background: rgba(79,70,229,0.2); color: #a5b4fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.ranking-list { list-style: none; padding: 0; }
+.ranking-list li { padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; font-size: 0.9rem; }
+.ranking-pos { font-weight: 800; color: var(--primary); min-width: 28px; }
 
 /* ── QR CODE ─────────────────────────────────────────────────────────────────── */
 .qr-result { margin-top: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
