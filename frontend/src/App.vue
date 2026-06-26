@@ -6,7 +6,9 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo">SISTEMA<span>IF</span> v3.5</div>
+        <img src="/ifba-logo.png" class="ifba-logo-img" alt="Instituto Federal Bahia" />
+        <div class="logo">SISTEMA<span>IF</span></div>
+        <div class="logo-version">v3.5 · Controle Alimentar</div>
       </div>
       <nav class="sidebar-nav">
         <button @click="changeTab('validacao')" :class="{ active: currentTab === 'validacao' }">
@@ -37,7 +39,10 @@
     <main class="main-content">
       <header class="top-bar">
         <button class="menu-toggle" @click="isSidebarOpen = true">☰</button>
-        <h1>{{ tabTitles[currentTab] }}</h1>
+        <div class="top-bar-brand">
+          <img src="/ifba-logo.png" class="top-bar-logo" alt="IFBA" />
+          <h1>{{ tabTitles[currentTab] }}</h1>
+        </div>
         <div class="user-status" :class="{ online: isOnline }">
           {{ isOnline ? 'Online' : 'Offline' }}
         </div>
@@ -449,8 +454,8 @@ const renderChart = (canvasRef, chartInstance, dados, titulo) => {
       datasets: [{
         label: titulo,
         data: Object.values(agrupado),
-        backgroundColor: 'rgba(79,70,229,0.7)',
-        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(0, 107, 61, 0.75)',
+        borderColor: '#006B3D',
         borderWidth: 2,
         borderRadius: 6
       }]
@@ -486,8 +491,8 @@ const renderChartDiaSemana = (canvasRef, chartInstance, registros) => {
       datasets: [{
         label: 'Consumo total por dia',
         data,
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16,185,129,0.2)',
+        borderColor: '#00A651',
+        backgroundColor: 'rgba(0, 166, 81, 0.18)',
         borderWidth: 2,
         tension: 0.3,
         fill: true
@@ -891,14 +896,17 @@ onUnmounted(stopCamera);
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
 
 :root {
-  --primary:    #4f46e5;
-  --success:    #10b981;
-  --danger:     #f43f5e;
-  --warning:    #f59e0b;
-  --bg-dark:    #020617;
-  --sidebar-bg: #0f172a;
-  --glass:      rgba(30, 41, 59, 0.6);
-  --border:     rgba(255, 255, 255, 0.08);
+  --primary:      #006B3D;   /* Verde IFBA institucional */
+  --primary-glow: rgba(0, 107, 61, 0.35);
+  --primary-dark: #004F2C;
+  --success:      #00A651;
+  --danger:       #DC2626;
+  --warning:      #F59E0B;
+  --ifba-red:     #C8102E;
+  --bg-dark:      #07100A;
+  --sidebar-bg:   #0A180D;
+  --glass:        rgba(10, 24, 13, 0.70);
+  --border:       rgba(0, 107, 61, 0.20);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -907,19 +915,23 @@ body { font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); colo
 
 /* ── SIDEBAR ─────────────────────────────────────────────────────────────────── */
 .sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); position: fixed; height: 100vh; z-index: 100; transition: transform 0.3s; display: flex; flex-direction: column; }
-.sidebar-header { padding: 2rem; text-align: center; }
-.logo { font-size: 1.5rem; font-weight: 800; }
+.sidebar-header { padding: 1.5rem 1rem; text-align: center; border-bottom: 1px solid var(--border); }
+.ifba-logo-img { width: 72px; height: auto; margin-bottom: 0.75rem; filter: drop-shadow(0 2px 8px rgba(0,107,61,0.4)); }
+.logo { font-size: 1.3rem; font-weight: 800; letter-spacing: 0.04em; }
 .logo span { color: var(--primary); }
+.logo-version { font-size: 0.72rem; color: #4a7a5a; font-weight: 500; margin-top: 0.2rem; letter-spacing: 0.03em; }
 .sidebar-nav { padding: 1rem; flex: 1; }
 .sidebar-nav button { width: 100%; padding: 1rem; margin-bottom: 0.5rem; background: transparent; border: none; color: #94a3b8; font-size: 1rem; font-weight: 600; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s; font-family: inherit; }
-.sidebar-nav button:hover { background: rgba(79,70,229,0.15); color: #f8fafc; }
-.sidebar-nav button.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-.sidebar-footer { padding: 1rem; text-align: center; color: #64748b; font-size: 0.8rem; border-top: 1px solid var(--border); }
+.sidebar-nav button:hover { background: rgba(0,107,61,0.18); color: #f8fafc; }
+.sidebar-nav button.active { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(0, 107, 61, 0.45); }
+.sidebar-footer { padding: 1rem; text-align: center; color: #3a6447; font-size: 0.78rem; border-top: 1px solid var(--border); }
 
 /* ── MAIN ────────────────────────────────────────────────────────────────────── */
 .main-content { flex: 1; margin-left: 280px; min-width: 0; display: flex; flex-direction: column; }
-.top-bar { height: 70px; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 90; }
+.top-bar { height: 70px; background: rgba(7, 16, 10, 0.88); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 90; }
 .top-bar h1 { font-size: 1.1rem; font-weight: 600; }
+.top-bar-brand { display: flex; align-items: center; gap: 0.75rem; }
+.top-bar-logo { height: 36px; width: auto; display: none; }
 .content-area { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
 .menu-toggle { display: none; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
 
@@ -1013,12 +1025,12 @@ input::placeholder { color: #64748b; }
 
 /* ── MODAL ───────────────────────────────────────────────────────────────────── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 999; }
-.modal-box { background: #1e1e2e; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px; min-width: 320px; }
+.modal-box { background: #0e1f12; border: 1px solid var(--border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px; min-width: 320px; }
 .modal-wide { width: min(760px, 94vw); }
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
 .alert-card ul { margin: 1rem 0 0 1.2rem; color: #fbbf24; }
 .modal-box h3 { color: #fff; margin: 0; }
-.chip { background: rgba(79,70,229,0.2); color: #a5b4fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.chip { background: rgba(0,107,61,0.20); color: #4ade80; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
 .ranking-list { list-style: none; padding: 0; }
 .ranking-list li { padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; font-size: 0.9rem; }
 .ranking-pos { font-weight: 800; color: var(--primary); min-width: 28px; }
@@ -1050,6 +1062,7 @@ input::placeholder { color: #64748b; }
   .sidebar-open .sidebar { transform: translateX(0); }
   .main-content { margin-left: 0; }
   .menu-toggle { display: block; }
+  .top-bar-logo { display: block; }
   .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
   .content-area { padding: 1rem; }
 }
