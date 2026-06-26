@@ -87,11 +87,16 @@ private RegistroConsumoRepository consumoRepo;
         atualizarEstoqueConsolidado(nome);
     }
 
-    private Estoque atualizarEstoqueConsolidado(String nome) {
+    private String normalizar(String nome) {
+        return nome == null ? null : nome.trim();
+    }
+
+    private Estoque atualizarEstoqueConsolidado(String nomeOriginal) {
+        String nome = normalizar(nomeOriginal);
         List<EstoqueLote> lotes = loteRepo.findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(nome);
         double total = lotes.stream().mapToDouble(l -> l.getQuantidade() == null ? 0 : l.getQuantidade()).sum();
         Estoque item = estoqueRepo.findAll().stream()
-            .filter(e -> e.getNome() != null && e.getNome().equalsIgnoreCase(nome))
+            .filter(e -> e.getNome() != null && e.getNome().trim().equalsIgnoreCase(nome))
             .findFirst().orElseGet(Estoque::new);
         item.setNome(nome);
         item.setUnidade(lotes.isEmpty() ? item.getUnidade() : lotes.get(0).getUnidade());
@@ -156,10 +161,55 @@ public ResponseEntity<?> ajustarEstoque(@PathVariable Long id, @RequestParam Dou
 
     @PostMapping("/estoque")
     public ResponseEntity<?> adicionarNovoItem(@RequestBody EstoqueLote novoLote) {
+        String nome = normalizar(novoLote.getNome());
+        if (nome == null || nome.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Informe o nome do alimento."));
+        }
+        boolean jaExiste = estoqueRepo.findAll().stream()
+            .anyMatch(e -> e.getNome() != null && e.getNome().trim().equalsIgnoreCase(nome));
+        if (jaExiste) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "\"" + nome + "\" já está cadastrado. Use o botão \"+ Lote\" no card do alimento para adicionar mais estoque."
+            ));
+        }
+        novoLote.setNome(nome);
         if (novoLote.getDataCadastro() == null) novoLote.setDataCadastro(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
         if (novoLote.getUsuarioResponsavel() == null || novoLote.getUsuarioResponsavel().isBlank()) novoLote.setUsuarioResponsavel("Cozinha");
         loteRepo.save(novoLote);
-        return ResponseEntity.ok(atualizarEstoqueConsolidado(novoLote.getNome()));
+        return ResponseEntity.ok(atualizarEstoqueConsolidado(nome));
+    }
+
+    @PostMapping("/estoque/{nome}/lotes")
+    public ResponseEntity<?> adicionarLoteExistente(@PathVariable String nome, @RequestBody EstoqueLote novoLote) {
+        String nomeNormalizado = normalizar(nome);
+        boolean existe = estoqueRepo.findAll().stream()
+            .anyMatch(e -> e.getNome() != null && e.getNome().trim().equalsIgnoreCase(nomeNormalizado));
+        if (!existe) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Alimento não encontrado. Cadastre-o primeiro."));
+        }
+        novoLote.setNome(nomeNormalizado);
+        if (novoLote.getDataCadastro() == null) novoLote.setDataCadastro(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        if (novoLote.getUsuarioResponsavel() == null || novoLote.getUsuarioResponsavel().isBlank()) novoLote.setUsuarioResponsavel("Cozinha");
+        loteRepo.save(novoLote);
+        return ResponseEntity.ok(atualizarEstoqueConsolidado(nomeNormalizado));
+    }
+
+    @PostMapping("/estoque/reconstruir")
+    public ResponseEntity<?> reconstruirEstoque() {
+        // Corrige duplicados já existentes: normaliza o nome de todos os lotes e recalcula o estoque do zero
+        List<EstoqueLote> todosLotes = loteRepo.findAll();
+        for (EstoqueLote lote : todosLotes) {
+            String nomeLimpo = normalizar(lote.getNome());
+            if (!nomeLimpo.equals(lote.getNome())) {
+                lote.setNome(nomeLimpo);
+                loteRepo.save(lote);
+            }
+        }
+        estoqueRepo.deleteAll();
+        Set<String> nomesUnicos = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (EstoqueLote lote : loteRepo.findAll()) nomesUnicos.add(lote.getNome());
+        for (String nome : nomesUnicos) atualizarEstoqueConsolidado(nome);
+        return ResponseEntity.ok(estoqueRepo.findAll());
     }
 
     @GetMapping("/estoque/{nome}/lotes")
