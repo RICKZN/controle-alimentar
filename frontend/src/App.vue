@@ -196,7 +196,10 @@
             <div class="card glass-effect">
               <div class="table-header">
                 <h3>Estoque Atual</h3>
-                <button @click="carregarEstoque" class="btn-refresh">🔄 Atualizar</button>
+                <div style="display:flex; gap:8px">
+                  <button @click="corrigirDuplicados" class="btn-refresh" title="Normaliza nomes e reconsolida o estoque, eliminando cards duplicados do mesmo alimento">🔧 Corrigir duplicados</button>
+                  <button @click="carregarEstoque" class="btn-refresh">🔄 Atualizar</button>
+                </div>
               </div>
             </div>
 
@@ -206,7 +209,10 @@
                 <button class="btn-delete" @click="excluirAlimento(item.id)">🗑️</button>
                 <h4>{{ item.nome }}</h4>
                 <p class="unit-label">{{ item.unidade }}</p>
-                <button class="btn-link" @click="abrirLotes(item.nome)">Ver lotes e validades</button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap">
+                  <button class="btn-link" @click="abrirLotes(item.nome)">Ver lotes e validades</button>
+                  <button class="btn-link" @click="abrirNovoLote(item)">+ Lote</button>
+                </div>
                 <div class="item-body">
                   <button class="adjust-btn minus" @click="ajustarEstoque(item.id, -1)">−</button>
                   <span class="qty-value">{{ formatarQuantidade(item.quantidade) }}</span>
@@ -216,7 +222,10 @@
             </div>
 
             <div class="card glass-effect">
-              <h3>Adicionar Novo Alimento</h3>
+              <h3>Cadastrar Alimento Novo</h3>
+              <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:0.8rem">
+                Use este formulário apenas para um alimento que ainda não existe no estoque. Para um alimento já cadastrado, use o botão "+ Lote" no card dele.
+              </p>
               <div class="input-group-row">
                 <input type="text" v-model="novoItem.nome" placeholder="Nome do alimento (Ex: Arroz)" />
                 <input type="text" v-model="novoItem.unidade" placeholder="Unidade (kg ou g)" style="width: 130px" />
@@ -224,7 +233,7 @@
                 <input type="date" v-model="novoItem.dataCompra" title="Data da compra" />
                 <input type="date" v-model="novoItem.dataValidade" title="Data de validade" />
                 <input type="text" v-model="novoItem.usuarioResponsavel" placeholder="Responsável" />
-                <button @click="cadastrarNovoAlimento" class="btn btn-success">Adicionar lote</button>
+                <button @click="cadastrarNovoAlimento" class="btn btn-success">Cadastrar Alimento</button>
               </div>
             </div>
           </div>
@@ -327,6 +336,22 @@
     </div>
 
     <div v-if="alimentoSelecionado" class="modal-overlay" @click.self="alimentoSelecionado = null"><div class="modal-box modal-wide"><h3>Lotes de {{ alimentoSelecionado }}</h3><div class="table-wrapper"><table class="data-table"><thead><tr><th>Lote</th><th>Quantidade</th><th>Compra</th><th>Validade</th></tr></thead><tbody><tr v-for="l in lotesSelecionados" :key="l.id"><td>{{ l.id }}</td><td>{{ formatarQuantidade(l.quantidade) }} {{ l.unidade }}</td><td>{{ formatarDataCurta(l.dataCompra) }}</td><td>{{ formatarDataCurta(l.dataValidade) }}</td></tr></tbody></table></div><button @click="alimentoSelecionado = null" class="btn btn-secondary">Fechar</button></div></div>
+
+    <div v-if="loteParaAdicionar" class="modal-overlay" @click.self="loteParaAdicionar = null">
+      <div class="modal-box">
+        <h3>Adicionar Lote — {{ loteParaAdicionar.nome }}</h3>
+        <div class="input-group" style="display:flex; flex-direction:column; gap:10px">
+          <input type="number" v-model="novoLoteExtra.quantidade" placeholder="Quantidade" />
+          <input type="date" v-model="novoLoteExtra.dataCompra" title="Data da compra" />
+          <input type="date" v-model="novoLoteExtra.dataValidade" title="Data de validade" />
+          <input type="text" v-model="novoLoteExtra.usuarioResponsavel" placeholder="Responsável" />
+        </div>
+        <div style="display:flex; gap:8px; margin-top:14px">
+          <button @click="confirmarNovoLote" class="btn btn-success">Adicionar Lote</button>
+          <button @click="loteParaAdicionar = null" class="btn btn-secondary">Cancelar</button>
+        </div>
+      </div>
+    </div>
 
   </div><!-- /app-layout -->
 </template>
@@ -565,8 +590,41 @@ const cadastrarNovoAlimento = async () => {
     await axios.post(`${API_URL}/estoque`, novoItem.value);
     novoItem.value = { nome: '', unidade: 'kg', quantidade: 0, dataCompra: hojeISO(), dataValidade: '', usuarioResponsavel: '' };
     await carregarEstoque();
-    mostrarMensagem('Item adicionado!', 'success');
-  } catch (err) { mostrarMensagem('Erro ao cadastrar', 'error'); }
+    mostrarMensagem('Alimento cadastrado!', 'success');
+  } catch (err) { mostrarMensagem(err.response?.data?.error || 'Erro ao cadastrar', 'error'); }
+};
+
+const loteParaAdicionar = ref(null);
+const novoLoteExtra = ref({ quantidade: 0, dataCompra: hojeISO(), dataValidade: '', usuarioResponsavel: '' });
+
+const abrirNovoLote = (item) => {
+  loteParaAdicionar.value = item;
+  novoLoteExtra.value = { quantidade: 0, dataCompra: hojeISO(), dataValidade: '', usuarioResponsavel: '' };
+};
+
+const confirmarNovoLote = async () => {
+  if (!novoLoteExtra.value.quantidade || !novoLoteExtra.value.dataValidade) {
+    mostrarMensagem('Informe quantidade e data de validade.', 'error');
+    return;
+  }
+  try {
+    const nome = loteParaAdicionar.value.nome;
+    await axios.post(`${API_URL}/estoque/${encodeURIComponent(nome)}/lotes`, {
+      unidade: loteParaAdicionar.value.unidade,
+      ...novoLoteExtra.value
+    });
+    loteParaAdicionar.value = null;
+    await carregarEstoque();
+    mostrarMensagem('Lote adicionado!', 'success');
+  } catch (err) { mostrarMensagem(err.response?.data?.error || 'Erro ao adicionar lote', 'error'); }
+};
+
+const corrigirDuplicados = async () => {
+  try {
+    await axios.post(`${API_URL}/estoque/reconstruir`);
+    await carregarEstoque();
+    mostrarMensagem('Estoque reconsolidado — duplicados corrigidos!', 'success');
+  } catch (err) { mostrarMensagem('Erro ao corrigir estoque', 'error'); }
 };
 
 
