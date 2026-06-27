@@ -268,6 +268,19 @@ public ResponseEntity<?> ajustarEstoque(@PathVariable Long id, @RequestParam Dou
         return ResponseEntity.ok(pratoRepo.findTopByDataOrderByIdDesc(LocalDate.now(ZoneId.of("America/Sao_Paulo"))).orElse(null));
     }
 
+    @GetMapping("/prato-dia")
+    public List<PratoDoDia> historicoPratos() {
+        return pratoRepo.findAllByOrderByDataDescIdDesc();
+    }
+
+    @DeleteMapping("/prato-dia/{id}")
+    public ResponseEntity<?> excluirPratoDoDia(@PathVariable Long id) {
+        // Exclusão disponível apenas na aba Histórico de Pratos do frontend.
+        // Não afeta o estoque: os alimentos já foram baixados no momento do registro.
+        pratoRepo.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/alunos")
     public List<Aluno> listarAlunos() {
         return alunoRepo.findAll();
