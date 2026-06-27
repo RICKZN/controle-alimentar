@@ -11,6 +11,7 @@ public class PratoDoDia {
     private Long id;
     private String nome;
     private LocalDate data;
+    private String turno;
     private Integer refeicoesLiberadas;
     @ElementCollection
     private List<PratoIngrediente> ingredientes = new ArrayList<>();
@@ -21,6 +22,8 @@ public class PratoDoDia {
     public void setNome(String nome) { this.nome = nome; }
     public LocalDate getData() { return data; }
     public void setData(LocalDate data) { this.data = data; }
+    public String getTurno() { return turno; }
+    public void setTurno(String turno) { this.turno = turno; }
     public Integer getRefeicoesLiberadas() { return refeicoesLiberadas; }
     public void setRefeicoesLiberadas(Integer refeicoesLiberadas) { this.refeicoesLiberadas = refeicoesLiberadas; }
     public List<PratoIngrediente> getIngredientes() { return ingredientes; }
