@@ -285,7 +285,44 @@
 
         <div v-if="currentTab === 'prato'" class="tab-pane"><div class="card glass-effect"><h3>Registrar Prato do Dia</h3><div class="input-group-row"><input v-model="pratoDoDia.nome" placeholder="Nome do prato/refeição" /><input type="date" v-model="pratoDoDia.data" /><select v-model="pratoDoDia.turno" class="input-field" style="width:160px"><option value="" disabled>Turno</option><option v-for="t in TURNOS" :key="t" :value="t">{{ t }}</option></select></div><h4 style="margin-top:1rem">Ingredientes utilizados</h4><div v-for="(ing, idx) in pratoDoDia.ingredientes" :key="idx" class="input-group-row" style="margin-top:0.5rem"><select v-model="ing.nome" class="input-field"><option value="">Selecione</option><option v-for="item in estoqueList" :key="item.id" :value="item.nome">{{ item.nome }} ({{ formatarQuantidade(item.quantidade) }} {{ item.unidade }})</option></select><input type="number" v-model="ing.quantidade" placeholder="Quantidade" /><input v-model="ing.unidade" placeholder="Unidade" /><button @click="removerIngrediente(idx)" class="btn btn-danger">Remover</button></div><button @click="adicionarIngrediente" class="btn btn-secondary">+ Ingrediente</button><button @click="salvarPratoDia" class="btn btn-success" style="margin-left:0.5rem">Registrar e baixar estoque</button></div></div>
 
-        <div v-if="currentTab === 'alertas'" class="tab-pane"><div class="card glass-effect" style="margin-bottom:1rem; display:flex; align-items:center; gap:10px"><label style="color:#94a3b8; font-size:0.9rem">⚠️ Limite mínimo para alerta de estoque baixo:</label><input type="number" v-model.number="limiteBaixo" @change="carregarAlertas" style="width:80px" class="input-field" /></div><div class="dashboard-grid"><div class="card glass-effect alert-card"><h3>⚠️ Estoque Baixo</h3><p v-if="!alertas.estoqueBaixo?.length">Nenhum item abaixo do limite.</p><ul><li v-for="i in alertas.estoqueBaixo" :key="i.id">{{ i.nome }}: {{ formatarQuantidade(i.quantidade) }} {{ i.unidade }}</li></ul></div><div class="card glass-effect alert-card"><h3>⏳ Próximos do Vencimento</h3><p v-if="!alertas.vencimentos?.length">Nenhum lote vencendo em até 30 dias.</p><ul><li v-for="l in alertas.vencimentos" :key="l.id">{{ l.nome }} (lote {{ l.id }}) vence em {{ diasParaVencer(l.dataValidade) }} dias</li></ul></div><div class="card glass-effect alert-card"><h3>🍽️ Resumo Diário</h3><p>Prato: {{ alertas.pratoDoDia?.nome || 'Não registrado' }}</p><p>Refeições liberadas: {{ alertas.refeicoesLiberadasHoje || 0 }}</p><p>Alimentos utilizados: {{ formatarQuantidade(alertas.alimentosUtilizadosHoje || 0) }}</p></div></div></div>
+        <div v-if="currentTab === 'alertas'" class="tab-pane">
+          <div class="card glass-effect" style="margin-bottom:1rem; display:flex; align-items:center; gap:10px">
+            <label style="color:#94a3b8; font-size:0.9rem">⚠️ Limite mínimo para alerta de estoque baixo:</label>
+            <input type="number" v-model.number="limiteBaixo" @change="carregarAlertas" style="width:80px" class="input-field" />
+          </div>
+          <div class="dashboard-grid">
+            <div class="card glass-effect alert-card alert-card-amarelo">
+              <h3>🟡 Estoque Baixo</h3>
+              <p v-if="!alertas.estoqueBaixo?.length">Nenhum item abaixo do limite.</p>
+              <ul><li v-for="i in alertas.estoqueBaixo" :key="i.id">{{ i.nome }}: {{ formatarQuantidade(i.quantidade) }} {{ i.unidade }} restantes</li></ul>
+            </div>
+            <div class="card glass-effect alert-card alert-card-vermelho">
+              <h3>🔴 Estoque Esgotado</h3>
+              <p v-if="!alertas.estoqueEsgotado?.length">Nenhum item esgotado.</p>
+              <ul><li v-for="i in alertas.estoqueEsgotado" :key="i.id">{{ i.nome }} — acabou</li></ul>
+            </div>
+            <div class="card glass-effect alert-card alert-card-amarelo">
+              <h3>🟡 Vencendo em Breve</h3>
+              <p v-if="!alertas.vencendoEm?.length">Nenhum lote em aviso de vencimento (30/25/20/15/10/5 dias).</p>
+              <ul><li v-for="l in alertas.vencendoEm" :key="l.id">{{ l.nome }} (lote {{ l.id }}) — vence em {{ l.diasRestantes }} dias</li></ul>
+            </div>
+            <div class="card glass-effect alert-card alert-card-vermelho">
+              <h3>🔴 Vencidos</h3>
+              <p v-if="!alertas.vencidos?.length">Nenhum lote vencido.</p>
+              <ul>
+                <li v-for="l in alertas.vencidos" :key="l.id">
+                  {{ l.nome }} (lote {{ l.id }}) — {{ l.diasRestantes === 0 ? 'vence hoje' : `venceu há ${Math.abs(l.diasRestantes)} dia(s)` }}
+                </li>
+              </ul>
+            </div>
+            <div class="card glass-effect alert-card">
+              <h3>🍽️ Resumo Diário</h3>
+              <p>Prato: {{ alertas.pratoDoDia?.nome || 'Não registrado' }}</p>
+              <p>Refeições liberadas: {{ alertas.refeicoesLiberadasHoje || 0 }}</p>
+              <p>Alimentos utilizados: {{ formatarQuantidade(alertas.alimentosUtilizadosHoje || 0) }}</p>
+            </div>
+          </div>
+        </div>
 
         <!-- TELA DE GERAÇÃO -->
         <!-- FIX: estava aninhada dentro do bloco de estoque, agora é irmã das outras abas -->
@@ -411,7 +448,7 @@ const lotesSelecionados = ref([]);
 const historicoEntradas = ref([]);
 const historicoPratos = ref([]);
 const filtroHistorico = ref({ alimento: '', inicio: '', fim: '', validade: '', lote: '' });
-const alertas = ref({ estoqueBaixo: [], vencimentos: [], pratoDoDia: null });
+const alertas = ref({ estoqueBaixo: [], estoqueEsgotado: [], vencendoEm: [], vencidos: [], pratoDoDia: null });
 const pratoDoDia = ref({ nome: '', data: hojeISO(), turno: '', ingredientes: [{ nome: '', unidade: 'kg', quantidade: 0 }] });
 
 const carregarHistoricoPratos = async () => {
@@ -473,10 +510,31 @@ const carregarEstoque = async () => {
   } catch (err) { isOnline.value = false; }
 };
 
+const verificarAlertaEstoqueId = (id) => {
+  const esgotado = (alertas.value.estoqueEsgotado || []).find(i => i.id === id);
+  if (esgotado) { mostrarMensagem(`🔴 ${esgotado.nome} esgotou no estoque!`, 'error'); return; }
+  const baixo = (alertas.value.estoqueBaixo || []).find(i => i.id === id);
+  if (baixo) { mostrarMensagem(`🟡 Estoque baixo: ${baixo.nome} (${formatarQuantidade(baixo.quantidade)} ${baixo.unidade} restantes)`, 'warning'); }
+};
+
+const verificarAlertaPorNomes = (nomes) => {
+  for (const nome of nomes) {
+    const esgotado = (alertas.value.estoqueEsgotado || []).find(i => i.nome === nome);
+    if (esgotado) { mostrarMensagem(`🔴 ${esgotado.nome} esgotou no estoque!`, 'error'); return true; }
+  }
+  for (const nome of nomes) {
+    const baixo = (alertas.value.estoqueBaixo || []).find(i => i.nome === nome);
+    if (baixo) { mostrarMensagem(`🟡 Estoque baixo: ${baixo.nome} (${formatarQuantidade(baixo.quantidade)} ${baixo.unidade} restantes)`, 'warning'); return true; }
+  }
+  return false;
+};
+
 const ajustarEstoque = async (id, delta) => {
   try {
     await axios.post(`${API_URL}/estoque/${id}/ajustar?variacao=${delta}`);
     await carregarEstoque();
+    await carregarAlertas();
+    verificarAlertaEstoqueId(id);
   } catch (err) { mostrarMensagem('Erro ao atualizar', 'error'); }
 };
 
@@ -546,12 +604,14 @@ const adicionarIngrediente = () => pratoDoDia.value.ingredientes.push({ nome: ''
 const removerIngrediente = (idx) => pratoDoDia.value.ingredientes.splice(idx, 1);
 
 const salvarPratoDia = async () => {
+  const nomesConsumidos = pratoDoDia.value.ingredientes.map(i => i.nome).filter(Boolean);
   await axios.post(`${API_URL}/prato-dia`, pratoDoDia.value);
-  mostrarMensagem('Prato registrado e estoque baixado por validade mais próxima!', 'success');
   pratoDoDia.value = { nome: '', data: hojeISO(), turno: '', ingredientes: [{ nome: '', unidade: 'kg', quantidade: 0 }] };
   await carregarEstoque();
   await carregarAlertas();
   await carregarHistoricoPratos();
+  const teveAlerta = verificarAlertaPorNomes(nomesConsumidos);
+  if (!teveAlerta) mostrarMensagem('Prato registrado e estoque baixado por validade mais próxima!', 'success');
 };
 
 const formatarDataCurta = (dateStr) => dateStr ? new Date(`${dateStr}T00:00:00`).toLocaleDateString('pt-BR') : '—';
@@ -955,8 +1015,12 @@ select.input-field option { background: white; color: var(--text-primary); }
 .modal-wide { width: min(760px, 94vw); }
 .modal-box h3 { color: var(--text-primary); margin: 0; font-size: 1.05rem; font-weight: 700; }
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
-.alert-card ul { margin: 0.75rem 0 0 1.2rem; color: var(--warning); }
+.alert-card ul { margin: 0.75rem 0 0 1.2rem; }
 .alert-card li { font-size: 0.88rem; padding: 0.2rem 0; }
+.alert-card-amarelo { border-left: 5px solid var(--warning); background: var(--warning-light); }
+.alert-card-amarelo ul { color: #92400E; }
+.alert-card-vermelho { border-left: 5px solid var(--danger); background: var(--danger-light); }
+.alert-card-vermelho ul { color: #991B1B; }
 .chip { background: var(--primary-light); color: var(--primary); padding: 3px 11px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
 .ranking-list { list-style: none; padding: 0; }
 .ranking-list li { padding: 0.6rem 0; border-bottom: 1px solid var(--border); display: flex; gap: 8px; font-size: 0.88rem; color: var(--text-primary); }
@@ -970,6 +1034,7 @@ select.input-field option { background: white; color: var(--text-primary); }
 .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.85rem 1.75rem; border-radius: 10px; z-index: 200; font-weight: 600; box-shadow: var(--shadow-lg); font-size: 0.88rem; }
 .toast.success { background: var(--success); color: white; }
 .toast.error   { background: var(--danger);  color: white; }
+.toast.warning { background: var(--warning); color: white; }
 
 .slide-fade-enter-active, .slide-fade-leave-active { transition: all 0.3s ease; }
 .slide-fade-enter-from, .slide-fade-leave-to { transform: translateX(20px); opacity: 0; }
