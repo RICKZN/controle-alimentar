@@ -22,6 +22,7 @@ import java.util.*;
 import java.time.LocalDate;
 
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 
 import com.sistema.controle.model.RegistroConsumo;
 import com.sistema.controle.repository.RegistroConsumoRepository;
@@ -236,8 +237,37 @@ public ResponseEntity<?> ajustarEstoque(@PathVariable Long id, @RequestParam Dou
     public Map<String,Object> alertas(@RequestParam(defaultValue = "2") Double limiteBaixo) {
         LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
         Map<String,Object> map = new HashMap<>();
-        map.put("estoqueBaixo", estoqueRepo.findAll().stream().filter(e -> e.getQuantidade() <= limiteBaixo).toList());
-        map.put("vencimentos", loteRepo.findByQuantidadeGreaterThanOrderByDataValidadeAscDataCompraAscIdAsc(0.0).stream().filter(l -> !l.getDataValidade().isBefore(hoje) && !l.getDataValidade().isAfter(hoje.plusDays(30))).toList());
+
+        // Estoque baixo (amarelo, quantidade > 0) x esgotado (vermelho, quantidade <= 0)
+        map.put("estoqueBaixo", estoqueRepo.findAll().stream()
+            .filter(e -> e.getQuantidade() > 0 && e.getQuantidade() <= limiteBaixo).toList());
+        map.put("estoqueEsgotado", estoqueRepo.findAll().stream()
+            .filter(e -> e.getQuantidade() <= 0).toList());
+
+        // Vencimento: lotes ainda com saldo em estoque
+        List<EstoqueLote> lotesComSaldo = loteRepo.findByQuantidadeGreaterThanOrderByDataValidadeAscDataCompraAscIdAsc(0.0);
+        List<Map<String,Object>> vencendoEm = new ArrayList<>();
+        List<Map<String,Object>> vencidos = new ArrayList<>();
+        for (EstoqueLote l : lotesComSaldo) {
+            long dias = ChronoUnit.DAYS.between(hoje, l.getDataValidade());
+            Map<String,Object> m = new HashMap<>();
+            m.put("id", l.getId());
+            m.put("nome", l.getNome());
+            m.put("quantidade", l.getQuantidade());
+            m.put("unidade", l.getUnidade());
+            m.put("dataValidade", l.getDataValidade());
+            m.put("diasRestantes", dias);
+            if (dias <= 0) {
+                // Já venceu (ou vence hoje) — alerta vermelho, aparece todos os dias até o lote ser removido/zerado
+                vencidos.add(m);
+            } else if (dias <= 30 && dias % 5 == 0) {
+                // Checkpoints de aviso a cada 5 dias: 30, 25, 20, 15, 10, 5 — alerta amarelo
+                vencendoEm.add(m);
+            }
+        }
+        map.put("vencendoEm", vencendoEm);
+        map.put("vencidos", vencidos);
+
         map.put("pratoDoDia", pratoRepo.findTopByDataOrderByIdDesc(hoje).orElse(null));
 
         // Resumo diário real: conta refeições liberadas hoje a partir dos registros de validação
