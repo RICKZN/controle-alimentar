@@ -120,7 +120,10 @@
               <input type="text" v-model="novoAluno.curso" placeholder="Curso" />
               <input type="text" v-model="novoAluno.modalidade" placeholder="Modalidade" />
               <input type="text" v-model="novoAluno.turma" placeholder="Turma" />
-              <input type="text" v-model="novoAluno.turno" placeholder="Turno" />
+              <select v-model="novoAluno.turno" class="input-field" style="width: 160px">
+                <option value="" disabled>Turno</option>
+                <option v-for="t in TURNOS" :key="t" :value="t">{{ t }}</option>
+              </select>
               <button @click="cadastrarAluno" class="btn btn-success">Cadastrar</button>
             </div>
           </div>
@@ -130,6 +133,10 @@
               <h3>Listagem de Estudantes</h3>
               <div class="actions">
                 <button @click="carregarAlunos" class="btn-refresh">🔄 Atualizar</button>
+                <select v-model="filtroTurno" class="input-field" style="width: 160px">
+                  <option value="">Todos os turnos</option>
+                  <option v-for="t in TURNOS" :key="t" :value="t">{{ t }}</option>
+                </select>
                 <input type="text" v-model="filtroAluno" placeholder="Pesquisar..." class="search-input" />
               </div>
             </div>
@@ -190,10 +197,8 @@
         <div v-if="currentTab === 'estoque'" class="tab-pane">
           <div class="card glass-effect" style="padding:0.8rem 1.5rem; margin-bottom:1rem; display:flex; gap:8px">
             <button @click="abaEstoque = 'atual'" :class="['btn', abaEstoque==='atual' ? 'btn-primary' : 'btn-secondary']">📦 Estoque Atual</button>
-            <button @click="abaEstoque = 'historico'" :class="['btn', abaEstoque==='historico' ? 'btn-primary' : 'btn-secondary']">🧾 Histórico</button>
-            <button @click="abaEstoque = 'diario'" :class="['btn', abaEstoque==='diario' ? 'btn-primary' : 'btn-secondary']">📊 Diário</button>
-            <button @click="abaEstoque = 'semanal'" :class="['btn', abaEstoque==='semanal' ? 'btn-primary' : 'btn-secondary']">📊 Semanal</button>
-            <button @click="abaEstoque = 'mensal'" :class="['btn', abaEstoque==='mensal' ? 'btn-primary' : 'btn-secondary']">📈 Mensal</button>
+            <button @click="abaEstoque = 'historico'" :class="['btn', abaEstoque==='historico' ? 'btn-primary' : 'btn-secondary']">📥 Entradas de Estoque</button>
+            <button @click="abaEstoque = 'historico-pratos'" :class="['btn', abaEstoque==='historico-pratos' ? 'btn-primary' : 'btn-secondary']">🍽️ Histórico de Pratos</button>
           </div>
 
           <!-- Aba: Estoque Atual -->
@@ -249,45 +254,36 @@
             <div class="table-wrapper"><table class="data-table"><thead><tr><th>Lote</th><th>Alimento</th><th>Quantidade</th><th>Compra</th><th>Validade</th><th>Responsável</th></tr></thead><tbody><tr v-for="l in historicoEntradas" :key="l.id"><td>{{ l.id }}</td><td>{{ l.nome }}</td><td>{{ formatarQuantidade(l.quantidade) }} {{ l.unidade }}</td><td>{{ formatarDataCurta(l.dataCompra) }}</td><td>{{ formatarDataCurta(l.dataValidade) }}</td><td>{{ l.usuarioResponsavel }}</td></tr></tbody></table></div>
           </div>
 
-          <div v-if="abaEstoque === 'diario'">
-            <div class="card glass-effect">
-              <h3>Consumo Diário</h3>
-              <div v-if="Object.keys(totalConsumoDiarioPorUnidade).length > 0" style="margin-bottom:1rem; display:flex; gap:10px; flex-wrap:wrap">
-                <span v-for="(qtd, un) in totalConsumoDiarioPorUnidade" :key="un" class="chip">Total hoje: {{ formatarQuantidade(qtd) }} {{ un }}</span>
-              </div>
-              <canvas ref="chartDiarioRef"></canvas>
+          <div v-if="abaEstoque === 'historico-pratos'" class="card glass-effect">
+            <h3>Histórico de Pratos</h3>
+            <p style="color:#6B7280; font-size:0.85rem; margin-bottom:0.8rem">
+              Excluir um registro aqui remove apenas o histórico — não devolve os alimentos ao estoque.
+            </p>
+            <div v-if="historicoPratos.length === 0" class="empty-state">
+              <p>Nenhum prato registrado ainda.</p>
             </div>
-          </div>
-
-          <!-- Aba: Semanal — FIX: canvas ausente no template, gráfico nunca renderizava -->
-          <div v-if="abaEstoque === 'semanal'">
-            <div class="card glass-effect">
-              <h3>Consumo Semanal por Alimento</h3>
-              <canvas ref="chartSemanalRef"></canvas>
-            </div>
-            <div class="card glass-effect">
-              <h3>Comparação entre os Dias da Semana</h3>
-              <canvas ref="chartDiaSemanaRef"></canvas>
-            </div>
-          </div>
-
-          <!-- Aba: Mensal — FIX: mesmo problema do semanal -->
-          <div v-if="abaEstoque === 'mensal'">
-            <div class="card glass-effect">
-              <h3>Consumo Mensal por Alimento</h3>
-              <canvas ref="chartMensalRef"></canvas>
-            </div>
-            <div class="card glass-effect">
-              <h3>Alimentos Mais Consumidos no Mês</h3>
-              <ol class="ranking-list">
-                <li v-for="(r, i) in rankingMensal" :key="r.nome"><span class="ranking-pos">{{ i + 1 }}º</span> {{ r.nome }} — {{ formatarQuantidade(r.total) }}</li>
-              </ol>
-              <p style="margin-top:1rem; font-weight:700; color:#94a3b8">Total utilizado no mês: {{ formatarQuantidade(totalConsumoMensal) }}</p>
+            <div v-else class="table-wrapper">
+              <table class="data-table">
+                <thead><tr><th>Data</th><th>Turno</th><th>Prato</th><th>Ingredientes utilizados</th><th>Ação</th></tr></thead>
+                <tbody>
+                  <tr v-for="p in historicoPratos" :key="p.id">
+                    <td>{{ formatarDataCurta(p.data) }}</td>
+                    <td>{{ p.turno || '—' }}</td>
+                    <td>{{ p.nome }}</td>
+                    <td>
+                      <span v-for="(ing, i) in p.ingredientes" :key="i">
+                        {{ ing.nome }} ({{ formatarQuantidade(ing.quantidade) }} {{ ing.unidade }})<span v-if="i < p.ingredientes.length - 1">, </span>
+                      </span>
+                    </td>
+                    <td><button @click="excluirPratoHistorico(p.id)" class="btn-icon-delete">🗑️</button></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        <div v-if="currentTab === 'prato'" class="tab-pane"><div class="card glass-effect"><h3>Registrar Prato do Dia</h3><div class="input-group-row"><input v-model="pratoDoDia.nome" placeholder="Nome do prato/refeição" /><input type="date" v-model="pratoDoDia.data" /><input type="number" v-model="pratoDoDia.refeicoesLiberadas" placeholder="Refeições liberadas" /></div><h4 style="margin-top:1rem">Ingredientes utilizados</h4><div v-for="(ing, idx) in pratoDoDia.ingredientes" :key="idx" class="input-group-row" style="margin-top:0.5rem"><select v-model="ing.nome" class="input-field"><option value="">Selecione</option><option v-for="item in estoqueList" :key="item.id" :value="item.nome">{{ item.nome }} ({{ formatarQuantidade(item.quantidade) }} {{ item.unidade }})</option></select><input type="number" v-model="ing.quantidade" placeholder="Quantidade" /><input v-model="ing.unidade" placeholder="Unidade" /><button @click="removerIngrediente(idx)" class="btn btn-danger">Remover</button></div><button @click="adicionarIngrediente" class="btn btn-secondary">+ Ingrediente</button><button @click="salvarPratoDia" class="btn btn-success" style="margin-left:0.5rem">Registrar e baixar estoque</button></div></div>
+        <div v-if="currentTab === 'prato'" class="tab-pane"><div class="card glass-effect"><h3>Registrar Prato do Dia</h3><div class="input-group-row"><input v-model="pratoDoDia.nome" placeholder="Nome do prato/refeição" /><input type="date" v-model="pratoDoDia.data" /><select v-model="pratoDoDia.turno" class="input-field" style="width:160px"><option value="" disabled>Turno</option><option v-for="t in TURNOS" :key="t" :value="t">{{ t }}</option></select></div><h4 style="margin-top:1rem">Ingredientes utilizados</h4><div v-for="(ing, idx) in pratoDoDia.ingredientes" :key="idx" class="input-group-row" style="margin-top:0.5rem"><select v-model="ing.nome" class="input-field"><option value="">Selecione</option><option v-for="item in estoqueList" :key="item.id" :value="item.nome">{{ item.nome }} ({{ formatarQuantidade(item.quantidade) }} {{ item.unidade }})</option></select><input type="number" v-model="ing.quantidade" placeholder="Quantidade" /><input v-model="ing.unidade" placeholder="Unidade" /><button @click="removerIngrediente(idx)" class="btn btn-danger">Remover</button></div><button @click="adicionarIngrediente" class="btn btn-secondary">+ Ingrediente</button><button @click="salvarPratoDia" class="btn btn-success" style="margin-left:0.5rem">Registrar e baixar estoque</button></div></div>
 
         <div v-if="currentTab === 'alertas'" class="tab-pane"><div class="card glass-effect" style="margin-bottom:1rem; display:flex; align-items:center; gap:10px"><label style="color:#94a3b8; font-size:0.9rem">⚠️ Limite mínimo para alerta de estoque baixo:</label><input type="number" v-model.number="limiteBaixo" @change="carregarAlertas" style="width:80px" class="input-field" /></div><div class="dashboard-grid"><div class="card glass-effect alert-card"><h3>⚠️ Estoque Baixo</h3><p v-if="!alertas.estoqueBaixo?.length">Nenhum item abaixo do limite.</p><ul><li v-for="i in alertas.estoqueBaixo" :key="i.id">{{ i.nome }}: {{ formatarQuantidade(i.quantidade) }} {{ i.unidade }}</li></ul></div><div class="card glass-effect alert-card"><h3>⏳ Próximos do Vencimento</h3><p v-if="!alertas.vencimentos?.length">Nenhum lote vencendo em até 30 dias.</p><ul><li v-for="l in alertas.vencimentos" :key="l.id">{{ l.nome }} (lote {{ l.id }}) vence em {{ diasParaVencer(l.dataValidade) }} dias</li></ul></div><div class="card glass-effect alert-card"><h3>🍽️ Resumo Diário</h3><p>Prato: {{ alertas.pratoDoDia?.nome || 'Não registrado' }}</p><p>Refeições liberadas: {{ alertas.refeicoesLiberadasHoje || 0 }}</p><p>Alimentos utilizados: {{ formatarQuantidade(alertas.alimentosUtilizadosHoje || 0) }}</p></div></div></div>
 
@@ -331,7 +327,10 @@
         <input v-model="editCurso" placeholder="Curso" class="input-field" />
         <input v-model="editModalidade" placeholder="Modalidade" class="input-field" />
         <input v-model="editTurma" placeholder="Turma" class="input-field" />
-        <input v-model="editTurno" placeholder="Turno" class="input-field" />
+        <select v-model="editTurno" class="input-field">
+          <option value="" disabled>Turno</option>
+          <option v-for="t in TURNOS" :key="t" :value="t">{{ t }}</option>
+        </select>
         <div style="display:flex; gap:8px; margin-top:12px">
           <!-- FIX: botões sem a classe .btn base — não tinham padding nem border-radius -->
           <button @click="salvarEdicao" class="btn btn-primary">Salvar</button>
@@ -366,9 +365,6 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import axios from 'axios';
 import QrcodeVue from 'qrcode.vue';
 import { Html5Qrcode } from 'html5-qrcode';
-import { Chart, registerables } from 'chart.js';
-
-Chart.register(...registerables);
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -401,145 +397,40 @@ const statusValidacao     = ref(null);
 const tempoEsperaReal     = ref('');
 const countdownTimer      = ref(null);
 
-// ── Estoque / Charts ──────────────────────────────────────────────────────────
+// ── Estoque ────────────────────────────────────────────────────────────────────
 const abaEstoque      = ref('atual');
-const consumoDiario   = ref([]);
-const consumoSemanal  = ref([]);
-const consumoMensal   = ref([]);
-const chartDiarioRef  = ref(null);
-const chartSemanalRef = ref(null);
-const chartMensalRef  = ref(null);
-const chartDiaSemanaRef = ref(null);
 const limiteBaixo = ref(2);
-let chartDiario = null;
-let chartSemanal = null;
-let chartMensal  = null;
-let chartDiaSemana = null;
+
+const TURNOS = ['Matutino', 'Vespertino', 'Integral', 'Noturno'];
+const filtroTurno = ref('');
 
 const hojeISO = () => new Date().toISOString().slice(0, 10);
 const novoItem = ref({ nome: '', unidade: 'kg', quantidade: 0, dataCompra: hojeISO(), dataValidade: '', usuarioResponsavel: '' });
 const alimentoSelecionado = ref(null);
 const lotesSelecionados = ref([]);
 const historicoEntradas = ref([]);
+const historicoPratos = ref([]);
 const filtroHistorico = ref({ alimento: '', inicio: '', fim: '', validade: '', lote: '' });
 const alertas = ref({ estoqueBaixo: [], vencimentos: [], pratoDoDia: null });
-const pratoDoDia = ref({ nome: '', data: hojeISO(), refeicoesLiberadas: 0, ingredientes: [{ nome: '', unidade: 'kg', quantidade: 0 }] });
+const pratoDoDia = ref({ nome: '', data: hojeISO(), turno: '', ingredientes: [{ nome: '', unidade: 'kg', quantidade: 0 }] });
 
-const carregarConsumo = async () => {
-  const [d, s, m] = await Promise.all([
-    axios.get(`${API_URL}/consumo/diario`),
-    axios.get(`${API_URL}/consumo/semanal`),
-    axios.get(`${API_URL}/consumo/mensal`)
-  ]);
-  consumoDiario.value = d.data;
-  consumoSemanal.value = s.data;
-  consumoMensal.value  = m.data;
+const carregarHistoricoPratos = async () => {
+  const res = await axios.get(`${API_URL}/prato-dia`);
+  historicoPratos.value = res.data;
 };
 
-const agrupar = (registros) => {
-  const map = {};
-  registros.forEach(r => {
-    map[r.nomeItem] = (map[r.nomeItem] || 0) + r.quantidadeGasta;
-  });
-  return map;
+const excluirPratoHistorico = async (id) => {
+  if (!confirm('Excluir este registro do histórico? Os alimentos já baixados não retornarão ao estoque.')) return;
+  try {
+    await axios.delete(`${API_URL}/prato-dia/${id}`);
+    await carregarHistoricoPratos();
+    mostrarMensagem('Registro removido do histórico', 'success');
+  } catch (err) { mostrarMensagem('Erro ao excluir registro', 'error'); }
 };
 
-const renderChart = (canvasRef, chartInstance, dados, titulo) => {
-  if (chartInstance) chartInstance.destroy();
-  const agrupado = agrupar(dados);
-  return new Chart(canvasRef, {
-    type: 'bar',
-    data: {
-      labels: Object.keys(agrupado),
-      datasets: [{
-        label: titulo,
-        data: Object.values(agrupado),
-        backgroundColor: 'rgba(0, 107, 61, 0.75)',
-        borderColor: '#006B3D',
-        borderWidth: 2,
-        borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { color: '#374151' } } },
-      scales: {
-        x: { ticks: { color: '#6B7280' }, grid: { color: 'rgba(0,0,0,0.06)' } },
-        y: { ticks: { color: '#6B7280' }, grid: { color: 'rgba(0,0,0,0.06)' } }
-      }
-    }
-  });
-};
-
-const agruparPorDiaSemana = (registros) => {
-  const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  const totais = [0, 0, 0, 0, 0, 0, 0];
-  registros.forEach(r => {
-    const d = new Date(`${r.data}T00:00:00`);
-    totais[d.getDay()] += r.quantidadeGasta;
-  });
-  return { labels: dias, data: totais };
-};
-
-const renderChartDiaSemana = (canvasRef, chartInstance, registros) => {
-  if (chartInstance) chartInstance.destroy();
-  const { labels, data } = agruparPorDiaSemana(registros);
-  return new Chart(canvasRef, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Consumo total por dia',
-        data,
-        borderColor: '#00A651',
-        backgroundColor: 'rgba(0, 166, 81, 0.18)',
-        borderWidth: 2,
-        tension: 0.3,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { color: '#374151' } } },
-      scales: {
-        x: { ticks: { color: '#6B7280' }, grid: { color: 'rgba(0,0,0,0.06)' } },
-        y: { ticks: { color: '#6B7280' }, grid: { color: 'rgba(0,0,0,0.06)' } }
-      }
-    }
-  });
-};
-
-const rankingMensal = computed(() => {
-  const map = agrupar(consumoMensal.value);
-  return Object.entries(map).map(([nome, total]) => ({ nome, total })).sort((a, b) => b.total - a.total);
-});
-
-const totalConsumoMensal = computed(() => consumoMensal.value.reduce((acc, c) => acc + c.quantidadeGasta, 0));
-
-const totalConsumoDiarioPorUnidade = computed(() => {
-  const map = {};
-  consumoDiario.value.forEach(c => {
-    const item = estoqueList.value.find(e => e.id === c.estoqueId || e.nome === c.nomeItem);
-    const un = item ? item.unidade : '';
-    map[un] = (map[un] || 0) + c.quantidadeGasta;
-  });
-  return map;
-});
-
-// FIX: watch estava cortado no meio (erro de sintaxe que impedia o app de iniciar)
 watch(abaEstoque, async (val) => {
-  await carregarConsumo();
-  await nextTick();
-  if (val === 'diario' && chartDiarioRef.value)
-    chartDiario = renderChart(chartDiarioRef.value, chartDiario, consumoDiario.value, 'Consumo Diário');
   if (val === 'historico') carregarHistorico();
-  if (val === 'semanal' && chartSemanalRef.value) {
-    chartSemanal = renderChart(chartSemanalRef.value, chartSemanal, consumoSemanal.value, 'Consumo Semanal');
-    if (chartDiaSemanaRef.value)
-      chartDiaSemana = renderChartDiaSemana(chartDiaSemanaRef.value, chartDiaSemana, consumoSemanal.value);
-  }
-  if (val === 'mensal' && chartMensalRef.value)
-    chartMensal = renderChart(chartMensalRef.value, chartMensal, consumoMensal.value, 'Consumo Mensal');
+  if (val === 'historico-pratos') carregarHistoricoPratos();
 });
 
 // ── Contagem regressiva ───────────────────────────────────────────────────────
@@ -657,9 +548,10 @@ const removerIngrediente = (idx) => pratoDoDia.value.ingredientes.splice(idx, 1)
 const salvarPratoDia = async () => {
   await axios.post(`${API_URL}/prato-dia`, pratoDoDia.value);
   mostrarMensagem('Prato registrado e estoque baixado por validade mais próxima!', 'success');
-  pratoDoDia.value = { nome: '', data: hojeISO(), refeicoesLiberadas: 0, ingredientes: [{ nome: '', unidade: 'kg', quantidade: 0 }] };
+  pratoDoDia.value = { nome: '', data: hojeISO(), turno: '', ingredientes: [{ nome: '', unidade: 'kg', quantidade: 0 }] };
   await carregarEstoque();
   await carregarAlertas();
+  await carregarHistoricoPratos();
 };
 
 const formatarDataCurta = (dateStr) => dateStr ? new Date(`${dateStr}T00:00:00`).toLocaleDateString('pt-BR') : '—';
@@ -684,7 +576,8 @@ const carregarAlunos = async () => {
 };
 
 const alunosFiltrados = computed(() => {
-  const lista = alunosList.value || [];
+  let lista = alunosList.value || [];
+  if (filtroTurno.value) lista = lista.filter(a => a.turno === filtroTurno.value);
   if (!filtroAluno.value) return lista;
   const f = filtroAluno.value.toLowerCase();
   return lista.filter(a =>
@@ -885,6 +778,7 @@ onMounted(() => {
   carregarAlunos();
   carregarAlertas();
   carregarHistorico();
+  carregarHistoricoPratos();
   // Atualiza contadores de tempo restante a cada segundo
   setInterval(() => { alunosList.value = [...alunosList.value]; }, 1000);
 });
@@ -1036,7 +930,7 @@ select.input-field option { background: white; color: var(--text-primary); }
 
 /* ESTOQUE */
 .estoque-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
-.estoque-card { padding: 1.25rem; position: relative; border-top: 3px solid var(--primary); }
+.estoque-card { padding: 1.25rem; position: relative; border: 1px solid var(--primary); border-top: 4px solid var(--primary); background: #FFFFFF; box-shadow: 0 2px 8px rgba(0,107,61,0.10); }
 .estoque-card h4 { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
 .btn-delete { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; line-height: 1; padding: 4px; border-radius: 6px; transition: 0.16s; }
 .btn-delete:hover { color: var(--danger); background: var(--danger-light); }
