@@ -881,7 +881,7 @@ body { font-family: 'Outfit', sans-serif; background-color: var(--bg); color: va
 /* SIDEBAR */
 .sidebar { width: 256px; background: var(--sidebar-bg); position: fixed; height: 100vh; z-index: 100; transition: transform 0.3s; display: flex; flex-direction: column; }
 .sidebar-header { padding: 1.75rem 1.25rem 1.5rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.07); }
-.ifba-logo-img { width: 66px; height: auto; margin-bottom: 0.75rem; border-radius:10px; }
+.ifba-logo-img { width: 66px; height: auto; margin-bottom: 0.75rem; }
 .logo { font-size: 1.15rem; font-weight: 700; color: #FFFFFF; letter-spacing: 0.05em; }
 .logo span { color: #4ADE80; }
 .logo-version { font-size: 0.68rem; color: var(--sidebar-text); font-weight: 400; margin-top: 0.25rem; }
