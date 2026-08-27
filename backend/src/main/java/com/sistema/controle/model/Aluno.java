@@ -18,10 +18,9 @@ public class Aluno {
     private String modalidade;
     private String turma;
     private String turno;
-    private LocalDateTime ultimaRefeicao;
-    
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX", timezone = "America/Sao_Paulo")
     private LocalDateTime ultimaRefeicao;
+    
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
