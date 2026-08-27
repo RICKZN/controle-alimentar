@@ -1,6 +1,6 @@
 package com.sistema.controle.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,7 +18,7 @@ public class Aluno {
     private String modalidade;
     private String turma;
     private String turno;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX", timezone = "America/Sao_Paulo")
+
     private LocalDateTime ultimaRefeicao;
     
     public Long getId() { return id; }
