@@ -670,6 +670,39 @@
                   🔄 Atualizar
                 </button>
 
+                <button
+                  v-if="alunosList.length > 0"
+                  @click="selecionarTodosAlunos"
+                  class="btn-refresh"
+                >
+                  ☑️ Selecionar todos
+                </button>
+
+                <button
+                  v-if="alunosSelecionados.length > 0"
+                  @click="limparSelecaoAlunos"
+                  class="btn-refresh"
+                >
+                  ⬜ Limpar seleção
+                </button>
+
+                <button
+                  v-if="alunosSelecionados.length > 0"
+                  @click="abrirModalExclusaoSelecionados"
+                  class="btn btn-danger btn-exclusao-massa"
+                >
+                  🗑️ Excluir selecionados
+                  ({{ alunosSelecionados.length }})
+                </button>
+
+                <button
+                  v-if="alunosList.length > 0"
+                  @click="abrirModalExclusaoTodos"
+                  class="btn btn-danger btn-excluir-todos"
+                >
+                  🗑️ Excluir todos
+                </button>
+
                 <select
                   v-model="filtroTurno"
                   class="input-field"
@@ -701,6 +734,29 @@
 
             </div>
 
+            <!-- INFORMAÇÃO DA SELEÇÃO -->
+            <div
+              v-if="alunosSelecionados.length > 0"
+              class="selecao-info"
+            >
+
+              <span>
+                ✅
+                <strong>
+                  {{ alunosSelecionados.length }}
+                </strong>
+                aluno(s) selecionado(s)
+              </span>
+
+              <button
+                @click="limparSelecaoAlunos"
+                class="btn-limpar-selecao"
+              >
+                Limpar seleção
+              </button>
+
+            </div>
+
             <div class="table-wrapper">
 
               <div
@@ -715,11 +771,25 @@
 
               <table
                 v-else
-                class="data-table"
+                class="data-table alunos-data-table"
               >
 
                 <thead>
+
                   <tr>
+
+                    <!-- SELECIONAR TODOS OS FILTRADOS -->
+                    <th
+                      class="coluna-checkbox"
+                    >
+                      <input
+                        type="checkbox"
+                        :checked="todosFiltradosSelecionados"
+                        @change="alternarTodosFiltrados"
+                        title="Selecionar todos os alunos exibidos"
+                      />
+                    </th>
+
                     <th>Nome</th>
                     <th>Matrícula</th>
                     <th>Curso</th>
@@ -731,7 +801,9 @@
                     <th>Tempo Restante</th>
                     <th>Status</th>
                     <th>Ação</th>
+
                   </tr>
+
                 </thead>
 
                 <tbody>
@@ -739,7 +811,32 @@
                   <tr
                     v-for="aluno in alunosFiltrados"
                     :key="aluno.id"
+                    :class="{
+                      'aluno-selecionado':
+                        alunoSelecionado(aluno.id)
+                    }"
                   >
+
+                    <!-- CHECKBOX -->
+                    <td
+                      class="coluna-checkbox"
+                    >
+
+                      <input
+                        type="checkbox"
+                        :checked="
+                          alunoSelecionado(
+                            aluno.id
+                          )
+                        "
+                        @change="
+                          toggleSelecionarAluno(
+                            aluno.id
+                          )
+                        "
+                      />
+
+                    </td>
 
                     <td>
                       {{ aluno.nome }}
@@ -849,13 +946,19 @@
                       <button
                         @click="editarAluno(aluno)"
                         class="btn-icon-edit"
+                        title="Editar aluno"
                       >
                         ✏️
                       </button>
 
                       <button
-                        @click="excluirAluno(aluno.id)"
+                        @click="
+                          excluirAluno(
+                            aluno.id
+                          )
+                        "
                         class="btn-icon-delete"
+                        title="Excluir aluno"
                       >
                         🗑️
                       </button>
@@ -1358,7 +1461,6 @@
               Todos os campos são obrigatórios.
             </p>
 
-            <!-- AVISO -->
             <div
               v-if="camposFaltandoPrato.length > 0"
               class="cadastro-erro"
@@ -1374,10 +1476,8 @@
 
             </div>
 
-            <!-- DADOS -->
             <div class="input-group-row">
 
-              <!-- NOME -->
               <input
                 v-model="pratoDoDia.nome"
                 placeholder="Nome do prato/refeição"
@@ -1390,7 +1490,6 @@
                 "
               />
 
-              <!-- DATA -->
               <input
                 type="date"
                 v-model="pratoDoDia.data"
@@ -1403,7 +1502,6 @@
                 "
               />
 
-              <!-- TURNO -->
               <select
                 v-model="pratoDoDia.turno"
                 class="input-field"
@@ -1444,7 +1542,6 @@
               Ingredientes utilizados
             </h4>
 
-            <!-- INGREDIENTES -->
             <div
               v-for="(
                 ing,
@@ -1454,7 +1551,6 @@
               class="ingrediente-linha"
             >
 
-              <!-- ALIMENTO -->
               <select
                 v-model="ing.nome"
                 class="input-field"
@@ -1492,7 +1588,6 @@
 
               </select>
 
-              <!-- QUANTIDADE -->
               <input
                 type="number"
                 v-model="ing.quantidade"
@@ -1510,7 +1605,6 @@
                 "
               />
 
-              <!-- UNIDADE -->
               <input
                 v-model="ing.unidade"
                 placeholder="Unidade"
@@ -1537,7 +1631,6 @@
 
             </div>
 
-            <!-- BOTÕES -->
             <button
               @click="adicionarIngrediente"
               class="btn btn-secondary"
@@ -2201,7 +2294,6 @@
           Todos os campos são obrigatórios.
         </p>
 
-        <!-- AVISO -->
         <div
           v-if="camposFaltandoNovoLote.length > 0"
           class="cadastro-erro"
@@ -2219,7 +2311,6 @@
 
         <div class="input-group">
 
-          <!-- QUANTIDADE -->
           <input
             type="number"
             v-model="novoLoteExtra.quantidade"
@@ -2234,7 +2325,6 @@
             "
           />
 
-          <!-- DATA COMPRA -->
           <input
             type="date"
             v-model="novoLoteExtra.dataCompra"
@@ -2248,7 +2338,6 @@
             "
           />
 
-          <!-- DATA VALIDADE -->
           <input
             type="date"
             v-model="novoLoteExtra.dataValidade"
@@ -2262,7 +2351,6 @@
             "
           />
 
-          <!-- RESPONSÁVEL -->
           <input
             type="text"
             v-model="novoLoteExtra.usuarioResponsavel"
@@ -2302,6 +2390,106 @@
             class="btn btn-secondary"
           >
             Cancelar
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- =========================================================
+         MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE ALUNOS
+    ========================================================== -->
+    <div
+      v-if="modalExclusao.aberto"
+      class="modal-exclusao-overlay"
+      @click.self="fecharModalExclusao"
+    >
+
+      <div class="modal-exclusao-box">
+
+        <div class="modal-exclusao-icone">
+          🗑️
+        </div>
+
+        <div class="modal-exclusao-indicador">
+          AÇÃO DE EXCLUSÃO
+        </div>
+
+        <h2>
+          Confirmar exclusão
+        </h2>
+
+        <p class="modal-exclusao-texto">
+
+          <template
+            v-if="modalExclusao.tipo === 'todos'"
+          >
+            Você está prestes a excluir
+            <strong>
+              todos os {{ modalExclusao.quantidade }} alunos
+            </strong>
+            cadastrados no sistema.
+          </template>
+
+          <template
+            v-else
+          >
+            Você está prestes a excluir
+            <strong>
+              {{ modalExclusao.quantidade }} aluno(s)
+            </strong>
+            selecionado(s).
+          </template>
+
+        </p>
+
+        <div class="modal-exclusao-resumo">
+
+          <div class="modal-exclusao-resumo-icone">
+            👥
+          </div>
+
+          <div>
+            <span class="modal-exclusao-resumo-label">
+              Alunos selecionados
+            </span>
+
+            <strong class="modal-exclusao-resumo-valor">
+              {{ modalExclusao.quantidade }}
+            </strong>
+          </div>
+
+        </div>
+
+        <div class="modal-exclusao-aviso">
+
+          <span class="modal-exclusao-aviso-icone">
+            ⚠️
+          </span>
+
+          <span>
+            Essa ação não poderá ser desfeita.
+          </span>
+
+        </div>
+
+        <div class="modal-exclusao-acoes">
+
+          <button
+            @click="fecharModalExclusao"
+            class="btn-modal-cancelar"
+          >
+            Cancelar
+          </button>
+
+          <button
+            @click="confirmarExclusaoAlunos"
+            class="btn-modal-confirmar"
+          >
+            🗑️
+            Confirmar exclusão
           </button>
 
         </div>
@@ -2986,6 +3174,351 @@ const limparErroAluno =
 
     errosNovoAluno.value[campo] =
       false;
+
+  };
+
+
+/* =============================================================
+   SELEÇÃO DE ALUNOS
+============================================================= */
+
+const alunosSelecionados =
+  ref([]);
+
+
+const modalExclusao =
+  ref({
+
+    aberto:
+      false,
+
+    tipo:
+      '',
+
+    ids:
+      [],
+
+    quantidade:
+      0
+
+  });
+
+
+const alunoSelecionado =
+  (id) => {
+
+    return alunosSelecionados.value.includes(
+      id
+    );
+
+  };
+
+
+const todosFiltradosSelecionados =
+  computed(() => {
+
+    if (
+      alunosFiltrados.value.length === 0
+    ) {
+
+      return false;
+
+    }
+
+    return alunosFiltrados.value.every(
+      aluno =>
+        alunosSelecionados.value.includes(
+          aluno.id
+        )
+    );
+
+  });
+
+
+const toggleSelecionarAluno =
+  (id) => {
+
+    const index =
+      alunosSelecionados.value.indexOf(
+        id
+      );
+
+    if (
+      index === -1
+    ) {
+
+      alunosSelecionados.value.push(
+        id
+      );
+
+    } else {
+
+      alunosSelecionados.value.splice(
+        index,
+        1
+      );
+
+    }
+
+  };
+
+
+const selecionarTodosAlunos =
+  () => {
+
+    alunosSelecionados.value =
+      alunosList.value.map(
+        aluno =>
+          aluno.id
+      );
+
+  };
+
+
+const alternarTodosFiltrados =
+  () => {
+
+    const ids =
+      alunosFiltrados.value.map(
+        aluno =>
+          aluno.id
+      );
+
+    if (
+      ids.length === 0
+    ) {
+
+      return;
+
+    }
+
+    const todosSelecionados =
+      ids.every(
+        id =>
+          alunosSelecionados.value.includes(
+            id
+          )
+      );
+
+    if (
+      todosSelecionados
+    ) {
+
+      alunosSelecionados.value =
+        alunosSelecionados.value.filter(
+          id =>
+            !ids.includes(id)
+        );
+
+    } else {
+
+      const conjunto =
+        new Set(
+          alunosSelecionados.value
+        );
+
+      ids.forEach(
+        id =>
+          conjunto.add(id)
+      );
+
+      alunosSelecionados.value =
+        Array.from(conjunto);
+
+    }
+
+  };
+
+
+const limparSelecaoAlunos =
+  () => {
+
+    alunosSelecionados.value =
+      [];
+
+  };
+
+
+/* =============================================================
+   MODAL DE EXCLUSÃO
+============================================================= */
+
+const abrirModalExclusaoSelecionados =
+  () => {
+
+    if (
+      alunosSelecionados.value.length === 0
+    ) {
+
+      return;
+
+    }
+
+    modalExclusao.value = {
+
+      aberto:
+        true,
+
+      tipo:
+        'selecionados',
+
+      ids:
+        [...alunosSelecionados.value],
+
+      quantidade:
+        alunosSelecionados.value.length
+
+    };
+
+  };
+
+
+const abrirModalExclusaoTodos =
+  () => {
+
+    if (
+      alunosList.value.length === 0
+    ) {
+
+      return;
+
+    }
+
+    modalExclusao.value = {
+
+      aberto:
+        true,
+
+      tipo:
+        'todos',
+
+      ids:
+        alunosList.value.map(
+          aluno =>
+            aluno.id
+        ),
+
+      quantidade:
+        alunosList.value.length
+
+    };
+
+  };
+
+
+const fecharModalExclusao =
+  () => {
+
+    modalExclusao.value = {
+
+      aberto:
+        false,
+
+      tipo:
+        '',
+
+      ids:
+        [],
+
+      quantidade:
+        0
+
+    };
+
+  };
+
+
+/* =============================================================
+   CONFIRMAR EXCLUSÃO DE ALUNOS
+============================================================= */
+
+const confirmarExclusaoAlunos =
+  async () => {
+
+    const ids =
+      [...modalExclusao.value.ids];
+
+    const quantidade =
+      modalExclusao.value.quantidade;
+
+    if (
+      ids.length === 0
+    ) {
+
+      fecharModalExclusao();
+
+      return;
+
+    }
+
+    fecharModalExclusao();
+
+    try {
+
+      let excluidos =
+        0;
+
+      for (
+        const id of ids
+      ) {
+
+        try {
+
+          await axios.delete(
+            `${API_URL}/alunos/${id}`
+          );
+
+          excluidos++;
+
+        } catch (erroIndividual) {
+
+          console.error(
+            `Erro ao excluir aluno ${id}:`,
+            erroIndividual
+          );
+
+        }
+
+      }
+
+      alunosSelecionados.value =
+        [];
+
+      await carregarAlunos();
+
+      if (
+        excluidos === quantidade
+      ) {
+
+        mostrarMensagem(
+          `${excluidos} aluno(s) excluído(s) com sucesso!`,
+          'success'
+        );
+
+      } else {
+
+        mostrarMensagem(
+          `${excluidos} de ${quantidade} aluno(s) foram excluídos.`,
+          'warning'
+        );
+
+      }
+
+    } catch (err) {
+
+      console.error(
+        'Erro na exclusão dos alunos:',
+        err
+      );
+
+      await carregarAlunos();
+
+      mostrarMensagem(
+        'Ocorreu um erro durante a exclusão.',
+        'error'
+      );
+
+    }
 
   };
 
@@ -4338,6 +4871,23 @@ const carregarAlunos =
       alunosList.value =
         res.data;
 
+      /*
+       * Remove da seleção IDs que já não existem.
+       */
+      const idsExistentes =
+        new Set(
+          alunosList.value.map(
+            aluno =>
+              aluno.id
+          )
+        );
+
+      alunosSelecionados.value =
+        alunosSelecionados.value.filter(
+          id =>
+            idsExistentes.has(id)
+        );
+
     } catch (err) {
 
       console.error(
@@ -4458,15 +5008,9 @@ const cadastrarAluno =
     };
 
 
-    /* Guarda quais campos estão com erro */
     errosNovoAluno.value =
       erros;
 
-
-    /*
-     * Se existir pelo menos um campo vazio,
-     * interrompe o cadastro.
-     */
 
     if (
       Object.values(
@@ -4486,10 +5030,6 @@ const cadastrarAluno =
     }
 
 
-    /*
-     * Todos preenchidos -> envia para o backend.
-     */
-
     try {
 
       await axios.post(
@@ -4497,10 +5037,6 @@ const cadastrarAluno =
         novoAluno.value
       );
 
-
-      /*
-       * Limpa formulário.
-       */
 
       novoAluno.value = {
 
@@ -4524,10 +5060,6 @@ const cadastrarAluno =
 
       };
 
-
-      /*
-       * Limpa os erros.
-       */
 
       errosNovoAluno.value = {
 
@@ -4574,43 +5106,16 @@ const cadastrarAluno =
 
 
 /* =============================================================
-   EXCLUIR ALUNO
+   EXCLUIR UM ALUNO
 ============================================================= */
 
 const excluirAluno =
-  async (id) => {
+  (id) => {
 
-    if (
-      !confirm(
-        'Excluir este aluno do sistema?'
-      )
-    ) {
+    alunosSelecionados.value =
+      [id];
 
-      return;
-
-    }
-
-    try {
-
-      await axios.delete(
-        `${API_URL}/alunos/${id}`
-      );
-
-      await carregarAlunos();
-
-      mostrarMensagem(
-        'Aluno removido',
-        'success'
-      );
-
-    } catch (err) {
-
-      mostrarMensagem(
-        'Erro ao excluir',
-        'error'
-      );
-
-    }
+    abrirModalExclusaoSelecionados();
 
   };
 
@@ -6183,6 +6688,14 @@ body {
 }
 
 
+.btn-danger:hover {
+
+  background:
+    #B91C1C;
+
+}
+
+
 .btn-secondary {
 
   background:
@@ -6303,6 +6816,22 @@ body {
 
   border-color:
     var(--primary);
+
+}
+
+
+.btn-exclusao-massa {
+
+  white-space:
+    nowrap;
+
+}
+
+
+.btn-excluir-todos {
+
+  white-space:
+    nowrap;
 
 }
 
@@ -6646,6 +7175,167 @@ select.input-field option {
 
 
 /* =========================================================
+   SELEÇÃO DE ALUNOS
+========================================================= */
+
+.coluna-checkbox {
+
+  width:
+    48px;
+
+  min-width:
+    48px;
+
+  max-width:
+    48px;
+
+  text-align:
+    center !important;
+
+}
+
+
+.coluna-checkbox input {
+
+  width:
+    17px;
+
+  height:
+    17px;
+
+  margin:
+    0;
+
+  padding:
+    0;
+
+  cursor:
+    pointer;
+
+  accent-color:
+    var(--primary);
+
+}
+
+
+.alunos-data-table .coluna-checkbox {
+
+  padding-left:
+    0.7rem;
+
+  padding-right:
+    0.7rem;
+
+}
+
+
+.alunos-data-table tbody tr.aluno-selecionado td {
+
+  background:
+    #ECFDF5;
+
+}
+
+
+.alunos-data-table tbody tr.aluno-selecionado:hover td {
+
+  background:
+    #E2F8EE;
+
+}
+
+
+.selecao-info {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  gap:
+    12px;
+
+  margin:
+    -0.2rem
+    0
+    1rem;
+
+  padding:
+    0.7rem
+    0.9rem;
+
+  border:
+    1px solid
+    #A7F3D0;
+
+  border-radius:
+    10px;
+
+  background:
+    #ECFDF5;
+
+  color:
+    #065F46;
+
+  font-size:
+    0.84rem;
+
+  font-weight:
+    500;
+
+}
+
+
+.selecao-info strong {
+
+  font-weight:
+    800;
+
+}
+
+
+.btn-limpar-selecao {
+
+  border:
+    none;
+
+  background:
+    transparent;
+
+  color:
+    #047857;
+
+  font-family:
+    inherit;
+
+  font-size:
+    0.78rem;
+
+  font-weight:
+    700;
+
+  cursor:
+    pointer;
+
+  text-decoration:
+    underline;
+
+}
+
+
+.btn-limpar-selecao:hover {
+
+  color:
+    #065F46;
+
+}
+
+
+/* =========================================================
    TABELAS
 ========================================================= */
 
@@ -6857,6 +7547,9 @@ select.input-field option {
 
   gap:
     8px;
+
+  flex-wrap:
+    wrap;
 
 }
 
@@ -8150,6 +8843,526 @@ select.input-field option {
 
 
 /* =========================================================
+   MODAL EXCLUSÃO ALUNOS
+========================================================= */
+
+.modal-exclusao-overlay {
+
+  position:
+    fixed;
+
+  inset:
+    0;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  padding:
+    1.25rem;
+
+  background:
+    rgba(15,23,42,0.64);
+
+  backdrop-filter:
+    blur(6px);
+
+  z-index:
+    3000;
+
+}
+
+
+.modal-exclusao-box {
+
+  width:
+    min(
+      470px,
+      100%
+    );
+
+  background:
+    #FFFFFF;
+
+  border:
+    1px solid
+    #E5E7EB;
+
+  border-radius:
+    22px;
+
+  padding:
+    2rem;
+
+  text-align:
+    center;
+
+  box-shadow:
+    0 30px 80px
+    rgba(0,0,0,0.28);
+
+  animation:
+    modalExclusaoEntrada
+    0.22s
+    ease-out;
+
+}
+
+
+@keyframes modalExclusaoEntrada {
+
+  from {
+
+    opacity:
+      0;
+
+    transform:
+      translateY(18px)
+      scale(0.96);
+
+  }
+
+  to {
+
+    opacity:
+      1;
+
+    transform:
+      translateY(0)
+      scale(1);
+
+  }
+
+}
+
+
+.modal-exclusao-icone {
+
+  width:
+    74px;
+
+  height:
+    74px;
+
+  margin:
+    0 auto
+    0.8rem;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    50%;
+
+  background:
+    #FEF2F2;
+
+  border:
+    1px solid
+    #FECACA;
+
+  color:
+    #DC2626;
+
+  font-size:
+    2rem;
+
+}
+
+
+.modal-exclusao-indicador {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  padding:
+    4px 10px;
+
+  border-radius:
+    999px;
+
+  background:
+    #FEF2F2;
+
+  color:
+    #B91C1C;
+
+  font-size:
+    0.68rem;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    0.08em;
+
+  margin-bottom:
+    0.7rem;
+
+}
+
+
+.modal-exclusao-box h2 {
+
+  margin:
+    0
+    0
+    0.7rem;
+
+  color:
+    #111827;
+
+  font-size:
+    1.35rem;
+
+  font-weight:
+    800;
+
+}
+
+
+.modal-exclusao-texto {
+
+  width:
+    min(
+      390px,
+      100%
+    );
+
+  margin:
+    0 auto
+    1rem;
+
+  color:
+    #6B7280;
+
+  font-size:
+    0.92rem;
+
+  line-height:
+    1.6;
+
+}
+
+
+.modal-exclusao-texto strong {
+
+  color:
+    #111827;
+
+  font-weight:
+    800;
+
+}
+
+
+.modal-exclusao-resumo {
+
+  width:
+    100%;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    12px;
+
+  padding:
+    0.85rem 1rem;
+
+  margin:
+    0 auto
+    1rem;
+
+  border:
+    1px solid
+    #E5E7EB;
+
+  border-radius:
+    12px;
+
+  background:
+    #F9FAFB;
+
+  text-align:
+    left;
+
+}
+
+
+.modal-exclusao-resumo-icone {
+
+  width:
+    42px;
+
+  height:
+    42px;
+
+  flex:
+    0 0 42px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    10px;
+
+  background:
+    var(--primary-light);
+
+  font-size:
+    1.15rem;
+
+}
+
+
+.modal-exclusao-resumo > div:last-child {
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    1px;
+
+}
+
+
+.modal-exclusao-resumo-label {
+
+  color:
+    #6B7280;
+
+  font-size:
+    0.75rem;
+
+  font-weight:
+    600;
+
+}
+
+
+.modal-exclusao-resumo-valor {
+
+  color:
+    #111827;
+
+  font-size:
+    1.1rem;
+
+  font-weight:
+    800;
+
+}
+
+
+.modal-exclusao-aviso {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    7px;
+
+  width:
+    100%;
+
+  margin:
+    0
+    auto
+    1.25rem;
+
+  padding:
+    0.75rem 1rem;
+
+  border:
+    1px solid
+    #FECACA;
+
+  border-radius:
+    10px;
+
+  background:
+    #FFF7F7;
+
+  color:
+    #991B1B;
+
+  font-size:
+    0.8rem;
+
+  font-weight:
+    600;
+
+}
+
+
+.modal-exclusao-aviso-icone {
+
+  font-size:
+    1rem;
+
+}
+
+
+.modal-exclusao-acoes {
+
+  display:
+    flex;
+
+  justify-content:
+    center;
+
+  gap:
+    10px;
+
+}
+
+
+.btn-modal-cancelar {
+
+  min-width:
+    120px;
+
+  padding:
+    0.68rem
+    1.15rem;
+
+  background:
+    #F8FAFC;
+
+  border:
+    1px solid
+    #CBD5E1;
+
+  border-radius:
+    9px;
+
+  color:
+    #334155;
+
+  font-family:
+    inherit;
+
+  font-size:
+    0.86rem;
+
+  font-weight:
+    700;
+
+  cursor:
+    pointer;
+
+  transition:
+    0.16s;
+
+}
+
+
+.btn-modal-cancelar:hover {
+
+  background:
+    #F1F5F9;
+
+}
+
+
+.btn-modal-confirmar {
+
+  min-width:
+    165px;
+
+  padding:
+    0.68rem
+    1.15rem;
+
+  background:
+    #DC2626;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  color:
+    #FFFFFF;
+
+  font-family:
+    inherit;
+
+  font-size:
+    0.86rem;
+
+  font-weight:
+    800;
+
+  cursor:
+    pointer;
+
+  transition:
+    0.16s;
+
+  box-shadow:
+    0 5px 12px
+    rgba(220,38,38,0.22);
+
+}
+
+
+.btn-modal-confirmar:hover {
+
+  background:
+    #B91C1C;
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 7px 16px
+    rgba(220,38,38,0.26);
+
+}
+
+
+/* =========================================================
    DASHBOARD
 ========================================================= */
 
@@ -8648,6 +9861,41 @@ select.input-field option {
 
     max-width:
       600px;
+
+  }
+
+  .modal-exclusao-box {
+
+    padding:
+      1.5rem;
+
+    border-radius:
+      18px;
+
+  }
+
+  .modal-exclusao-acoes {
+
+    flex-direction:
+      column;
+
+  }
+
+  .btn-modal-cancelar,
+  .btn-modal-confirmar {
+
+    width:
+      100%;
+
+  }
+
+  .selecao-info {
+
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
 
   }
 
