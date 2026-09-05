@@ -154,8 +154,6 @@
                     <th>Turma</th>
                     <th>Turno</th>
                     <th>Último Acesso</th>
-                    <th>Próxima Liberação</th>
-                    <th>Tempo Restante</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -168,8 +166,6 @@
                     <td>{{ aluno.turma }}</td>
                     <td>{{ aluno.turno }}</td>
                     <td>{{ formatarData(aluno.ultimaRefeicao) }}</td>
-                    <td>{{ aluno.ultimaRefeicao ? formatarData(new Date(toUTC(aluno.ultimaRefeicao).getTime() + 6*60*60*1000)) : '—' }}</td>
-                    <td>{{ obterTempoRestante(aluno.ultimaRefeicao) > 0 ? formatarTempoRestante(obterTempoRestante(aluno.ultimaRefeicao)) : 'Liberado' }}</td>
                     <td>
                       <span :class="['badge', obterTempoRestante(aluno.ultimaRefeicao) > 0 ? 'badge-danger' : 'badge-success']">
                         {{ obterTempoRestante(aluno.ultimaRefeicao) > 0 ? 'Bloqueado' : 'Liberado' }}
@@ -197,3 +193,9 @@
             <div class="grid-estoque">
               <div v-for="item in estoqueFiltrado" :key="item.id" class="card card-item glass-effect">
                 <div class="card-item-header">
+                  <strong>{{ item.nomeAlimento }}</strong>
+                  <button @click="deletarAlimento(item.id)" class="btn-icon-danger">🗑️</button>
+                </div>
+                <p>{{ item.quantidadeAtual }} {{ item.unidadeMedida }}</p>
+                <div style="display:flex; gap:6px; margin-top:1rem">
+                  <button @click="quickConsumir(item)" class="btn btn-danger" style="flex:1">− Consumo</button>
