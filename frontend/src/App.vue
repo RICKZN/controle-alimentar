@@ -199,3 +199,12 @@
                 </div>
                 <p>{{ item.quantidadeAtual }} {{ item.unidadeMedida }}</p>
                 <div style="display:flex; gap:6px; margin-top:1rem">
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</template>
