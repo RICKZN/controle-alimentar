@@ -4925,6 +4925,12 @@ select.input-field option {
   width:
     100%;
 
+  max-height:
+    430px;
+
+  overflow-y:
+    auto;
+
   overflow-x:
     auto;
 }
