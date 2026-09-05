@@ -1,7 +1,12 @@
 <template>
-  <div class="app-layout" :class="{ 'sidebar-open': isSidebarOpen }">
+  <div
+    class="app-layout"
+    :class="{ 'sidebar-open': isSidebarOpen }"
+  >
 
-    <!-- Overlay para mobile -->
+    <!-- =========================================================
+         OVERLAY MOBILE
+    ========================================================== -->
     <div
       v-if="isSidebarOpen"
       class="sidebar-overlay"
@@ -94,6 +99,9 @@
     ========================================================== -->
     <main class="main-content">
 
+      <!-- =======================================================
+           TOP BAR
+      ======================================================== -->
       <header class="top-bar">
 
         <button
@@ -136,7 +144,9 @@
           class="tab-pane"
         >
 
-          <!-- CÂMERA -->
+          <!-- =================================================
+               CÂMERA
+          ================================================== -->
           <div class="validacao-central">
 
             <div class="scanner-wrapper card glass-effect">
@@ -163,6 +173,7 @@
 
                 <div id="reader"></div>
 
+                <!-- QR DETECTADO -->
                 <div
                   v-if="matriculaLida"
                   class="scan-success-overlay"
@@ -200,6 +211,7 @@
 
                 </div>
 
+                <!-- CÂMERA DESLIGADA -->
                 <div
                   v-if="!isCameraActive && !matriculaLida"
                   class="camera-placeholder"
@@ -492,59 +504,130 @@
 
         <!-- =====================================================
              TELA DE ALUNOS
-             NÃO ALTERADA
         ====================================================== -->
         <div
           v-if="currentTab === 'alunos'"
           class="tab-pane"
         >
 
+          <!-- CADASTRO -->
           <div class="card glass-effect">
 
             <h3>
               Cadastrar Novo Aluno
             </h3>
 
+            <p class="form-obrigatorio-info">
+              Todos os campos são obrigatórios.
+            </p>
+
+            <!-- AVISO DOS CAMPOS FALTANTES -->
+            <div
+              v-if="camposFaltandoAluno.length > 0"
+              class="cadastro-erro"
+            >
+
+              <strong>
+                ⚠️ Preencha os campos obrigatórios:
+              </strong>
+
+              <span>
+                {{ camposFaltandoAluno.join(', ') }}
+              </span>
+
+            </div>
+
             <div class="input-group-row">
 
+              <!-- NOME -->
               <input
                 type="text"
                 v-model="novoAluno.nome"
                 placeholder="Nome completo do aluno"
+                :class="{
+                  'campo-erro':
+                    errosNovoAluno.nome
+                }"
+                @input="
+                  limparErroAluno('nome')
+                "
               />
 
+              <!-- MATRÍCULA -->
               <input
                 type="text"
                 v-model="novoAluno.matricula"
                 placeholder="Número da matrícula"
                 style="width:180px"
+                :class="{
+                  'campo-erro':
+                    errosNovoAluno.matricula
+                }"
+                @input="
+                  limparErroAluno('matricula')
+                "
               />
 
+              <!-- CURSO -->
               <input
                 type="text"
                 v-model="novoAluno.curso"
                 placeholder="Curso"
+                :class="{
+                  'campo-erro':
+                    errosNovoAluno.curso
+                }"
+                @input="
+                  limparErroAluno('curso')
+                "
               />
 
+              <!-- MODALIDADE -->
               <input
                 type="text"
                 v-model="novoAluno.modalidade"
                 placeholder="Modalidade"
+                :class="{
+                  'campo-erro':
+                    errosNovoAluno.modalidade
+                }"
+                @input="
+                  limparErroAluno('modalidade')
+                "
               />
 
+              <!-- TURMA -->
               <input
                 type="text"
                 v-model="novoAluno.turma"
                 placeholder="Turma"
+                :class="{
+                  'campo-erro':
+                    errosNovoAluno.turma
+                }"
+                @input="
+                  limparErroAluno('turma')
+                "
               />
 
+              <!-- TURNO -->
               <select
                 v-model="novoAluno.turno"
                 class="input-field"
                 style="width:160px"
+                :class="{
+                  'campo-erro':
+                    errosNovoAluno.turno
+                }"
+                @change="
+                  limparErroAluno('turno')
+                "
               >
 
-                <option value="" disabled>
+                <option
+                  value=""
+                  disabled
+                >
                   Turno
                 </option>
 
@@ -569,6 +652,7 @@
 
           </div>
 
+          <!-- LISTAGEM -->
           <div class="card glass-effect">
 
             <div class="table-header">
@@ -695,7 +779,11 @@
                                 toUTC(
                                   aluno.ultimaRefeicao
                                 ).getTime()
-                                + 6 * 60 * 60 * 1000
+                                +
+                                6 *
+                                60 *
+                                60 *
+                                1000
                               )
                             )
                           : '—'
@@ -703,6 +791,7 @@
                     </td>
 
                     <td>
+
                       <span
                         v-if="
                           !podeComer(
@@ -723,10 +812,13 @@
 
                       <span
                         v-else
-                        style="color:#10b981"
+                        style="
+                          color:#10b981
+                        "
                       >
                         —
                       </span>
+
                     </td>
 
                     <td>
@@ -832,7 +924,7 @@
             v-if="abaEstoque === 'atual'"
           >
 
-            <!-- CABEÇALHO ESTOQUE -->
+            <!-- CABEÇALHO -->
             <div class="card glass-effect">
 
               <div class="table-header">
@@ -868,27 +960,17 @@
 
             </div>
 
-            <!-- =================================================
-                 CADASTRAR ALIMENTO NOVO
-                 FICA ANTES DOS CARDS DOS ALIMENTOS
-            ================================================== -->
+            <!-- CADASTRAR ALIMENTO -->
             <div class="card glass-effect">
 
               <h3>
                 Cadastrar Alimento Novo
               </h3>
 
-              <p
-                style="
-                  color:#94a3b8;
-                  font-size:0.85rem;
-                  margin-bottom:0.8rem
-                "
-              >
+              <p class="form-obrigatorio-info">
                 Todos os campos são obrigatórios.
               </p>
 
-              <!-- AVISO -->
               <div
                 v-if="camposFaltandoNovoItem.length > 0"
                 class="cadastro-erro"
@@ -965,7 +1047,7 @@
                   "
                 />
 
-                <!-- VALIDADE -->
+                <!-- DATA VALIDADE -->
                 <input
                   type="date"
                   v-model="novoItem.dataValidade"
@@ -1006,7 +1088,7 @@
 
             </div>
 
-            <!-- CARDS -->
+            <!-- CARDS DOS ALIMENTOS -->
             <div class="estoque-grid">
 
               <div
@@ -1096,7 +1178,7 @@
 
           </div>
 
-          <!-- HISTÓRICO DE ENTRADAS -->
+          <!-- HISTÓRICO -->
           <div
             v-if="abaEstoque === 'historico'"
             class="card glass-effect"
@@ -1148,6 +1230,7 @@
               <table class="data-table">
 
                 <thead>
+
                   <tr>
                     <th>Lote</th>
                     <th>Alimento</th>
@@ -1156,6 +1239,7 @@
                     <th>Validade</th>
                     <th>Responsável</th>
                   </tr>
+
                 </thead>
 
                 <tbody>
@@ -1260,7 +1344,7 @@
 
           </div>
 
-          <!-- REGISTRAR PRATO -->
+          <!-- REGISTRAR -->
           <div
             v-if="abaPrato === 'registrar'"
             class="card glass-effect"
@@ -1269,6 +1353,10 @@
             <h3>
               Registrar Prato do Dia
             </h3>
+
+            <p class="form-obrigatorio-info">
+              Todos os campos são obrigatórios.
+            </p>
 
             <!-- AVISO -->
             <div
@@ -1286,7 +1374,7 @@
 
             </div>
 
-            <!-- DADOS DO PRATO -->
+            <!-- DADOS -->
             <div class="input-group-row">
 
               <!-- NOME -->
@@ -1348,13 +1436,20 @@
 
             </div>
 
-            <h4 style="margin-top:1rem">
+            <h4
+              style="
+                margin-top:1rem
+              "
+            >
               Ingredientes utilizados
             </h4>
 
             <!-- INGREDIENTES -->
             <div
-              v-for="(ing, idx) in pratoDoDia.ingredientes"
+              v-for="(
+                ing,
+                idx
+              ) in pratoDoDia.ingredientes"
               :key="idx"
               class="ingrediente-linha"
             >
@@ -1442,6 +1537,7 @@
 
             </div>
 
+            <!-- BOTÕES -->
             <button
               @click="adicionarIngrediente"
               class="btn btn-secondary"
@@ -1459,7 +1555,7 @@
 
           </div>
 
-          <!-- HISTÓRICO DE PRATOS -->
+          <!-- HISTÓRICO -->
           <div
             v-if="abaPrato === 'historico'"
             class="card glass-effect"
@@ -1470,7 +1566,9 @@
               <div>
 
                 <h3
-                  style="margin-bottom:0.25rem"
+                  style="
+                    margin-bottom:0.25rem
+                  "
                 >
                   Histórico de Pratos
                 </h3>
@@ -1512,6 +1610,7 @@
               <table class="data-table">
 
                 <thead>
+
                   <tr>
                     <th>Data</th>
                     <th>Turno</th>
@@ -1519,6 +1618,7 @@
                     <th>Ingredientes utilizados</th>
                     <th>Ação</th>
                   </tr>
+
                 </thead>
 
                 <tbody>
@@ -1605,7 +1705,7 @@
         </div>
 
         <!-- =====================================================
-             TELA DE ALERTAS
+             ALERTAS
         ====================================================== -->
         <div
           v-if="currentTab === 'alertas'"
@@ -1652,7 +1752,9 @@
               </h3>
 
               <p
-                v-if="!alertas.estoqueBaixo?.length"
+                v-if="
+                  !alertas.estoqueBaixo?.length
+                "
               >
                 Nenhum item abaixo do limite.
               </p>
@@ -1682,7 +1784,9 @@
               </h3>
 
               <p
-                v-if="!alertas.estoqueEsgotado?.length"
+                v-if="
+                  !alertas.estoqueEsgotado?.length
+                "
               >
                 Nenhum item esgotado.
               </p>
@@ -1709,7 +1813,9 @@
               </h3>
 
               <p
-                v-if="!alertas.vencendoEm?.length"
+                v-if="
+                  !alertas.vencendoEm?.length
+                "
               >
                 Nenhum lote em aviso de vencimento
                 (30/25/20/15/10/5 dias).
@@ -1741,7 +1847,9 @@
               </h3>
 
               <p
-                v-if="!alertas.vencidos?.length"
+                v-if="
+                  !alertas.vencidos?.length
+                "
               >
                 Nenhum lote vencido.
               </p>
@@ -1771,7 +1879,9 @@
 
             </div>
 
-            <div class="card glass-effect alert-card">
+            <div
+              class="card glass-effect alert-card"
+            >
 
               <h3>
                 🍽️ Resumo Diário
@@ -1810,7 +1920,7 @@
         </div>
 
         <!-- =====================================================
-             TELA DE GERAÇÃO
+             GERAÇÃO DE FICHAS
         ====================================================== -->
         <div
           v-if="currentTab === 'geracao'"
@@ -2087,7 +2197,11 @@
           {{ loteParaAdicionar.nome }}
         </h3>
 
-        <!-- AVISO DO LOTE -->
+        <p class="form-obrigatorio-info">
+          Todos os campos são obrigatórios.
+        </p>
+
+        <!-- AVISO -->
         <div
           v-if="camposFaltandoNovoLote.length > 0"
           class="cadastro-erro"
@@ -2103,9 +2217,7 @@
 
         </div>
 
-        <div
-          class="input-group"
-        >
+        <div class="input-group">
 
           <!-- QUANTIDADE -->
           <input
@@ -2202,6 +2314,7 @@
 </template>
 
 <script setup>
+
 import {
   ref,
   onMounted,
@@ -2212,8 +2325,13 @@ import {
 } from 'vue';
 
 import axios from 'axios';
+
 import QrcodeVue from 'qrcode.vue';
-import { Html5Qrcode } from 'html5-qrcode';
+
+import {
+  Html5Qrcode
+} from 'html5-qrcode';
+
 
 /* =============================================================
    CONFIGURAÇÃO
@@ -2221,6 +2339,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 
 const API_URL =
   import.meta.env.VITE_API_URL || '/api';
+
 
 /* =============================================================
    ESTADOS GERAIS
@@ -2242,6 +2361,7 @@ const currentCameraId =
   ref('environment');
 
 const tabTitles = {
+
   validacao:
     'Validação de Acesso',
 
@@ -2259,6 +2379,7 @@ const tabTitles = {
 
   geracao:
     'Geração de Fichas'
+
 };
 
 const estoqueList =
@@ -2297,8 +2418,9 @@ const tempoEsperaReal =
 const countdownTimer =
   ref(null);
 
+
 /* =============================================================
-   UTILITÁRIO DE DATA
+   DATA
 ============================================================= */
 
 const hojeISO = () =>
@@ -2306,8 +2428,9 @@ const hojeISO = () =>
     .toISOString()
     .slice(0, 10);
 
+
 /* =============================================================
-   ESTOQUE
+   ESTOQUE / CONFIGURAÇÕES
 ============================================================= */
 
 const abaEstoque =
@@ -2329,15 +2452,34 @@ const TURNOS = [
 const filtroTurno =
   ref('');
 
+
+/* =============================================================
+   NOVO ITEM
+============================================================= */
+
 const novoItem =
   ref({
-    nome: '',
-    unidade: '',
-    quantidade: '',
-    dataCompra: hojeISO(),
-    dataValidade: '',
-    usuarioResponsavel: ''
+
+    nome:
+      '',
+
+    unidade:
+      '',
+
+    quantidade:
+      '',
+
+    dataCompra:
+      hojeISO(),
+
+    dataValidade:
+      '',
+
+    usuarioResponsavel:
+      ''
+
   });
+
 
 const alimentoSelecionado =
   ref(null);
@@ -2351,56 +2493,118 @@ const historicoEntradas =
 const historicoPratos =
   ref([]);
 
+
 const filtroHistorico =
   ref({
-    alimento: '',
-    inicio: '',
-    fim: '',
-    validade: '',
-    lote: ''
+
+    alimento:
+      '',
+
+    inicio:
+      '',
+
+    fim:
+      '',
+
+    validade:
+      '',
+
+    lote:
+      ''
+
   });
+
 
 const alertas =
   ref({
-    estoqueBaixo: [],
-    estoqueEsgotado: [],
-    vencendoEm: [],
-    vencidos: [],
-    pratoDoDia: null
+
+    estoqueBaixo:
+      [],
+
+    estoqueEsgotado:
+      [],
+
+    vencendoEm:
+      [],
+
+    vencidos:
+      [],
+
+    pratoDoDia:
+      null
+
   });
+
+
+/* =============================================================
+   PRATO
+============================================================= */
 
 const pratoDoDia =
   ref({
-    nome: '',
-    data: hojeISO(),
-    turno: '',
+
+    nome:
+      '',
+
+    data:
+      hojeISO(),
+
+    turno:
+      '',
+
     ingredientes: [
+
       {
-        nome: '',
-        unidade: '',
-        quantidade: ''
+
+        nome:
+          '',
+
+        unidade:
+          '',
+
+        quantidade:
+          ''
+
       }
+
     ]
+
   });
 
+
 /* =============================================================
-   ERROS DO CADASTRO DE ALIMENTO
+   ERROS NOVO ITEM
 ============================================================= */
 
 const errosNovoItem =
   ref({
-    nome: false,
-    unidade: false,
-    quantidade: false,
-    dataCompra: false,
-    dataValidade: false,
-    usuarioResponsavel: false
+
+    nome:
+      false,
+
+    unidade:
+      false,
+
+    quantidade:
+      false,
+
+    dataCompra:
+      false,
+
+    dataValidade:
+      false,
+
+    usuarioResponsavel:
+      false
+
   });
+
 
 const camposFaltandoNovoItem =
   computed(() => {
 
     const nomes = {
+
       nome:
         'Nome do alimento',
 
@@ -2418,6 +2622,7 @@ const camposFaltandoNovoItem =
 
       usuarioResponsavel:
         'Responsável'
+
     };
 
     return Object.keys(
@@ -2431,17 +2636,21 @@ const camposFaltandoNovoItem =
         campo =>
           nomes[campo]
       );
+
   });
+
 
 const limparErroNovoItem =
   (campo) => {
 
     errosNovoItem.value[campo] =
       false;
+
   };
 
+
 /* =============================================================
-   ERROS DOS LOTES
+   LOTES
 ============================================================= */
 
 const loteParaAdicionar =
@@ -2449,24 +2658,45 @@ const loteParaAdicionar =
 
 const novoLoteExtra =
   ref({
-    quantidade: '',
-    dataCompra: hojeISO(),
-    dataValidade: '',
-    usuarioResponsavel: ''
+
+    quantidade:
+      '',
+
+    dataCompra:
+      hojeISO(),
+
+    dataValidade:
+      '',
+
+    usuarioResponsavel:
+      ''
+
   });
+
 
 const errosNovoLote =
   ref({
-    quantidade: false,
-    dataCompra: false,
-    dataValidade: false,
-    usuarioResponsavel: false
+
+    quantidade:
+      false,
+
+    dataCompra:
+      false,
+
+    dataValidade:
+      false,
+
+    usuarioResponsavel:
+      false
+
   });
+
 
 const camposFaltandoNovoLote =
   computed(() => {
 
     const nomes = {
+
       quantidade:
         'Quantidade',
 
@@ -2478,6 +2708,7 @@ const camposFaltandoNovoLote =
 
       usuarioResponsavel:
         'Responsável'
+
     };
 
     return Object.keys(
@@ -2491,100 +2722,148 @@ const camposFaltandoNovoLote =
         campo =>
           nomes[campo]
       );
+
   });
+
 
 const limparErroNovoLote =
   (campo) => {
 
     errosNovoLote.value[campo] =
       false;
+
   };
 
+
 /* =============================================================
-   ERROS DO PRATO DO DIA
+   ERROS PRATO
 ============================================================= */
 
 const errosPrato =
   ref({
-    nome: false,
-    data: false,
-    turno: false
+
+    nome:
+      false,
+
+    data:
+      false,
+
+    turno:
+      false
+
   });
+
 
 const errosIngredientes =
   ref([
+
     {
-      nome: false,
-      quantidade: false,
-      unidade: false
+
+      nome:
+        false,
+
+      quantidade:
+        false,
+
+      unidade:
+        false
+
     }
+
   ]);
+
 
 const camposFaltandoPrato =
   computed(() => {
 
-    const faltando = [];
+    const faltando =
+      [];
 
     if (
       errosPrato.value.nome
     ) {
+
       faltando.push(
         'Nome do prato'
       );
+
     }
 
     if (
       errosPrato.value.data
     ) {
+
       faltando.push(
         'Data'
       );
+
     }
 
     if (
       errosPrato.value.turno
     ) {
+
       faltando.push(
         'Turno'
       );
+
     }
 
     errosIngredientes.value.forEach(
       (erro, index) => {
 
-        if (erro.nome) {
+        if (
+          erro.nome
+        ) {
+
           faltando.push(
             `Ingrediente ${index + 1} - Alimento`
           );
+
         }
 
-        if (erro.quantidade) {
+        if (
+          erro.quantidade
+        ) {
+
           faltando.push(
             `Ingrediente ${index + 1} - Quantidade`
           );
+
         }
 
-        if (erro.unidade) {
+        if (
+          erro.unidade
+        ) {
+
           faltando.push(
             `Ingrediente ${index + 1} - Unidade`
           );
+
         }
 
       }
     );
 
     return faltando;
+
   });
+
 
 const limparErroPrato =
   (campo) => {
 
     errosPrato.value[campo] =
       false;
+
   };
 
+
 const limparErroIngrediente =
-  (index, campo) => {
+  (
+    index,
+    campo
+  ) => {
 
     if (
       errosIngredientes.value[index]
@@ -2592,8 +2871,124 @@ const limparErroIngrediente =
 
       errosIngredientes.value[index][campo] =
         false;
+
     }
+
   };
+
+
+/* =============================================================
+   ALUNOS
+============================================================= */
+
+const novoAluno =
+  ref({
+
+    nome:
+      '',
+
+    matricula:
+      '',
+
+    curso:
+      '',
+
+    modalidade:
+      '',
+
+    turma:
+      '',
+
+    turno:
+      ''
+
+  });
+
+
+/* =============================================================
+   NOVO ALUNO - ERROS
+============================================================= */
+
+const errosNovoAluno =
+  ref({
+
+    nome:
+      false,
+
+    matricula:
+      false,
+
+    curso:
+      false,
+
+    modalidade:
+      false,
+
+    turma:
+      false,
+
+    turno:
+      false
+
+  });
+
+
+/* =============================================================
+   NOVO ALUNO - CAMPOS FALTANDO
+============================================================= */
+
+const camposFaltandoAluno =
+  computed(() => {
+
+    const nomes = {
+
+      nome:
+        'Nome',
+
+      matricula:
+        'Matrícula',
+
+      curso:
+        'Curso',
+
+      modalidade:
+        'Modalidade',
+
+      turma:
+        'Turma',
+
+      turno:
+        'Turno'
+
+    };
+
+    return Object.keys(
+      errosNovoAluno.value
+    )
+      .filter(
+        campo =>
+          errosNovoAluno.value[campo]
+      )
+      .map(
+        campo =>
+          nomes[campo]
+      );
+
+  });
+
+
+/* =============================================================
+   LIMPAR ERRO DO ALUNO
+============================================================= */
+
+const limparErroAluno =
+  (campo) => {
+
+    errosNovoAluno.value[campo] =
+      false;
+
+  };
+
 
 /* =============================================================
    ALUNOS DA VALIDAÇÃO
@@ -2614,7 +3009,9 @@ const alunosLiberados =
           if (
             !aluno.ultimaRefeicao
           ) {
+
             return false;
+
           }
 
           const data =
@@ -2625,9 +3022,13 @@ const alunosLiberados =
           return (
             data
               .toISOString()
-              .slice(0, 10) ===
+              .slice(
+                0,
+                10
+              ) ===
             hoje
           );
+
         }
       )
       .sort(
@@ -2643,10 +3044,16 @@ const alunosLiberados =
               b.ultimaRefeicao
             ).getTime();
 
-          return dataB - dataA;
+          return (
+            dataB -
+            dataA
+          );
+
         }
       );
+
   });
+
 
 const alunosNaoLiberados =
   computed(() => {
@@ -2677,7 +3084,9 @@ const alunosNaoLiberados =
             'pt-BR'
           )
       );
+
   });
+
 
 const calcularProximaLiberacao =
   (ultimaRefeicao) => {
@@ -2685,7 +3094,9 @@ const calcularProximaLiberacao =
     if (
       !ultimaRefeicao
     ) {
+
       return '—';
+
     }
 
     const proxima =
@@ -2703,17 +3114,21 @@ const calcularProximaLiberacao =
     return proxima.toLocaleTimeString(
       'pt-BR',
       {
+
         hour:
           '2-digit',
 
         minute:
           '2-digit'
+
       }
     );
+
   };
 
+
 /* =============================================================
-   HISTÓRICO DE PRATOS
+   HISTÓRICO PRATOS
 ============================================================= */
 
 const carregarHistoricoPratos =
@@ -2736,8 +3151,15 @@ const carregarHistoricoPratos =
         err
       );
 
+      mostrarMensagem(
+        'Erro ao carregar histórico de pratos.',
+        'error'
+      );
+
     }
+
   };
+
 
 const excluirPratoHistorico =
   async (id) => {
@@ -2747,7 +3169,9 @@ const excluirPratoHistorico =
         'Excluir este registro do histórico? Os alimentos já baixados não retornarão ao estoque.'
       )
     ) {
+
       return;
+
     }
 
     try {
@@ -2774,8 +3198,11 @@ const excluirPratoHistorico =
         'Erro ao excluir registro',
         'error'
       );
+
     }
+
   };
+
 
 /* =============================================================
    WATCHERS
@@ -2788,11 +3215,14 @@ watch(
     if (
       val === 'historico'
     ) {
+
       await carregarHistorico();
+
     }
 
   }
 );
+
 
 watch(
   abaPrato,
@@ -2801,11 +3231,14 @@ watch(
     if (
       val === 'historico'
     ) {
+
       await carregarHistoricoPratos();
+
     }
 
   }
 );
+
 
 /* =============================================================
    CONTAGEM REGRESSIVA
@@ -2821,6 +3254,7 @@ const iniciarContagemRegressiva =
       clearInterval(
         countdownTimer.value
       );
+
     }
 
     let segundosTotais =
@@ -2854,6 +3288,7 @@ const iniciarContagemRegressiva =
 
         tempoEsperaReal.value =
           `Aguarde mais ${h}h ${m}m ${s}s`;
+
       };
 
     atualizarTexto();
@@ -2863,7 +3298,8 @@ const iniciarContagemRegressiva =
         () => {
 
           if (
-            segundosTotais <= 0
+            segundosTotais <=
+            0
           ) {
 
             clearInterval(
@@ -2874,6 +3310,7 @@ const iniciarContagemRegressiva =
               'Pode comer agora!';
 
             return;
+
           }
 
           segundosTotais--;
@@ -2883,7 +3320,9 @@ const iniciarContagemRegressiva =
         },
         1000
       );
+
   };
+
 
 /* =============================================================
    ESTOQUE
@@ -2914,8 +3353,15 @@ const carregarEstoque =
 
       isOnline.value =
         false;
+
     }
+
   };
+
+
+/* =============================================================
+   ALERTA DE ESTOQUE POR ID
+============================================================= */
 
 const verificarAlertaEstoqueId =
   (id) => {
@@ -2940,6 +3386,7 @@ const verificarAlertaEstoqueId =
       );
 
       return;
+
     }
 
     const baixo =
@@ -2962,8 +3409,15 @@ const verificarAlertaEstoqueId =
         )} ${baixo.unidade} restantes)`,
         'warning'
       );
+
     }
+
   };
+
+
+/* =============================================================
+   ALERTA POR NOME
+============================================================= */
 
 const verificarAlertaPorNomes =
   (nomes) => {
@@ -2992,7 +3446,9 @@ const verificarAlertaPorNomes =
         );
 
         return true;
+
       }
+
     }
 
     for (
@@ -3021,14 +3477,25 @@ const verificarAlertaPorNomes =
         );
 
         return true;
+
       }
+
     }
 
     return false;
+
   };
 
+
+/* =============================================================
+   AJUSTAR ESTOQUE
+============================================================= */
+
 const ajustarEstoque =
-  async (id, delta) => {
+  async (
+    id,
+    delta
+  ) => {
 
     try {
 
@@ -3037,9 +3504,12 @@ const ajustarEstoque =
       );
 
       await carregarEstoque();
+
       await carregarAlertas();
 
-      verificarAlertaEstoqueId(id);
+      verificarAlertaEstoqueId(
+        id
+      );
 
     } catch (err) {
 
@@ -3052,8 +3522,11 @@ const ajustarEstoque =
         'Erro ao atualizar',
         'error'
       );
+
     }
+
   };
+
 
 /* =============================================================
    CADASTRAR NOVO ALIMENTO
@@ -3075,8 +3548,10 @@ const cadastrarNovoAlimento =
         ).trim(),
 
       quantidade:
-        novoItem.value.quantidade === '' ||
-        novoItem.value.quantidade === null ||
+        novoItem.value.quantidade === ''
+        ||
+        novoItem.value.quantidade === null
+        ||
         Number(
           novoItem.value.quantidade
         ) <= 0,
@@ -3095,6 +3570,7 @@ const cadastrarNovoAlimento =
         !String(
           novoItem.value.usuarioResponsavel || ''
         ).trim()
+
     };
 
     errosNovoItem.value =
@@ -3103,7 +3579,9 @@ const cadastrarNovoAlimento =
     if (
       Object.values(
         erros
-      ).some(Boolean)
+      ).some(
+        Boolean
+      )
     ) {
 
       mostrarMensagem(
@@ -3112,6 +3590,7 @@ const cadastrarNovoAlimento =
       );
 
       return;
+
     }
 
     try {
@@ -3122,21 +3601,47 @@ const cadastrarNovoAlimento =
       );
 
       novoItem.value = {
-        nome: '',
-        unidade: '',
-        quantidade: '',
-        dataCompra: hojeISO(),
-        dataValidade: '',
-        usuarioResponsavel: ''
+
+        nome:
+          '',
+
+        unidade:
+          '',
+
+        quantidade:
+          '',
+
+        dataCompra:
+          hojeISO(),
+
+        dataValidade:
+          '',
+
+        usuarioResponsavel:
+          ''
+
       };
 
       errosNovoItem.value = {
-        nome: false,
-        unidade: false,
-        quantidade: false,
-        dataCompra: false,
-        dataValidade: false,
-        usuarioResponsavel: false
+
+        nome:
+          false,
+
+        unidade:
+          false,
+
+        quantidade:
+          false,
+
+        dataCompra:
+          false,
+
+        dataValidade:
+          false,
+
+        usuarioResponsavel:
+          false
+
       };
 
       await carregarEstoque();
@@ -3153,8 +3658,11 @@ const cadastrarNovoAlimento =
         'Erro ao cadastrar',
         'error'
       );
+
     }
+
   };
+
 
 /* =============================================================
    LOTES
@@ -3167,19 +3675,39 @@ const abrirNovoLote =
       item;
 
     novoLoteExtra.value = {
-      quantidade: '',
-      dataCompra: hojeISO(),
-      dataValidade: '',
-      usuarioResponsavel: ''
+
+      quantidade:
+        '',
+
+      dataCompra:
+        hojeISO(),
+
+      dataValidade:
+        '',
+
+      usuarioResponsavel:
+        ''
+
     };
 
     errosNovoLote.value = {
-      quantidade: false,
-      dataCompra: false,
-      dataValidade: false,
-      usuarioResponsavel: false
+
+      quantidade:
+        false,
+
+      dataCompra:
+        false,
+
+      dataValidade:
+        false,
+
+      usuarioResponsavel:
+        false
+
     };
+
   };
+
 
 const confirmarNovoLote =
   async () => {
@@ -3187,8 +3715,10 @@ const confirmarNovoLote =
     const erros = {
 
       quantidade:
-        novoLoteExtra.value.quantidade === '' ||
-        novoLoteExtra.value.quantidade === null ||
+        novoLoteExtra.value.quantidade === ''
+        ||
+        novoLoteExtra.value.quantidade === null
+        ||
         Number(
           novoLoteExtra.value.quantidade
         ) <= 0,
@@ -3207,6 +3737,7 @@ const confirmarNovoLote =
         !String(
           novoLoteExtra.value.usuarioResponsavel || ''
         ).trim()
+
     };
 
     errosNovoLote.value =
@@ -3215,7 +3746,9 @@ const confirmarNovoLote =
     if (
       Object.values(
         erros
-      ).some(Boolean)
+      ).some(
+        Boolean
+      )
     ) {
 
       mostrarMensagem(
@@ -3224,6 +3757,7 @@ const confirmarNovoLote =
       );
 
       return;
+
     }
 
     try {
@@ -3232,12 +3766,16 @@ const confirmarNovoLote =
         loteParaAdicionar.value.nome;
 
       await axios.post(
-        `${API_URL}/estoque/${encodeURIComponent(nome)}/lotes`,
+        `${API_URL}/estoque/${encodeURIComponent(
+          nome
+        )}/lotes`,
         {
+
           unidade:
             loteParaAdicionar.value.unidade,
 
           ...novoLoteExtra.value
+
         }
       );
 
@@ -3245,10 +3783,19 @@ const confirmarNovoLote =
         null;
 
       errosNovoLote.value = {
-        quantidade: false,
-        dataCompra: false,
-        dataValidade: false,
-        usuarioResponsavel: false
+
+        quantidade:
+          false,
+
+        dataCompra:
+          false,
+
+        dataValidade:
+          false,
+
+        usuarioResponsavel:
+          false
+
       };
 
       await carregarEstoque();
@@ -3265,8 +3812,15 @@ const confirmarNovoLote =
         'Erro ao adicionar lote',
         'error'
       );
+
     }
+
   };
+
+
+/* =============================================================
+   CORRIGIR DUPLICADOS
+============================================================= */
 
 const corrigirDuplicados =
   async () => {
@@ -3290,8 +3844,15 @@ const corrigirDuplicados =
         'Erro ao corrigir estoque',
         'error'
       );
+
     }
+
   };
+
+
+/* =============================================================
+   LOTES POR ALIMENTO
+============================================================= */
 
 const abrirLotes =
   async (nome) => {
@@ -3300,7 +3861,9 @@ const abrirLotes =
 
       const res =
         await axios.get(
-          `${API_URL}/estoque/${encodeURIComponent(nome)}/lotes`
+          `${API_URL}/estoque/${encodeURIComponent(
+            nome
+          )}/lotes`
         );
 
       alimentoSelecionado.value =
@@ -3315,11 +3878,14 @@ const abrirLotes =
         'Erro ao carregar lotes',
         'error'
       );
+
     }
+
   };
 
+
 /* =============================================================
-   HISTÓRICO DE ENTRADAS
+   HISTÓRICO ESTOQUE
 ============================================================= */
 
 const carregarHistorico =
@@ -3335,12 +3901,15 @@ const carregarHistorico =
       ).forEach(
         ([k, v]) => {
 
-          if (v) {
+          if (
+            v
+          ) {
 
             params.append(
               k,
               v
             );
+
           }
 
         }
@@ -3365,8 +3934,11 @@ const carregarHistorico =
         'Erro ao carregar histórico',
         'error'
       );
+
     }
+
   };
+
 
 /* =============================================================
    ALERTAS
@@ -3391,28 +3963,47 @@ const carregarAlertas =
         'Erro ao carregar alertas:',
         err
       );
+
     }
+
   };
 
+
 /* =============================================================
-   PRATO DO DIA
+   PRATO - INGREDIENTES
 ============================================================= */
 
 const adicionarIngrediente =
   () => {
 
     pratoDoDia.value.ingredientes.push({
-      nome: '',
-      unidade: '',
-      quantidade: ''
+
+      nome:
+        '',
+
+      unidade:
+        '',
+
+      quantidade:
+        ''
+
     });
 
     errosIngredientes.value.push({
-      nome: false,
-      quantidade: false,
-      unidade: false
+
+      nome:
+        false,
+
+      quantidade:
+        false,
+
+      unidade:
+        false
+
     });
+
   };
+
 
 const removerIngrediente =
   (idx) => {
@@ -3427,6 +4018,7 @@ const removerIngrediente =
       );
 
       return;
+
     }
 
     pratoDoDia.value.ingredientes.splice(
@@ -3438,7 +4030,13 @@ const removerIngrediente =
       idx,
       1
     );
+
   };
+
+
+/* =============================================================
+   SALVAR PRATO DO DIA
+============================================================= */
 
 const salvarPratoDia =
   async () => {
@@ -3459,7 +4057,9 @@ const salvarPratoDia =
         !String(
           pratoDoDia.value.turno || ''
         ).trim()
+
     };
+
 
     const errosDosIngredientes =
       pratoDoDia.value.ingredientes.map(
@@ -3473,8 +4073,10 @@ const salvarPratoDia =
               ).trim(),
 
             quantidade:
-              ingrediente.quantidade === '' ||
-              ingrediente.quantidade === null ||
+              ingrediente.quantidade === ''
+              ||
+              ingrediente.quantidade === null
+              ||
               Number(
                 ingrediente.quantidade
               ) <= 0,
@@ -3483,15 +4085,19 @@ const salvarPratoDia =
               !String(
                 ingrediente.unidade || ''
               ).trim()
+
           };
+
         }
       );
+
 
     errosPrato.value =
       erros;
 
     errosIngredientes.value =
       errosDosIngredientes;
+
 
     if (
       camposFaltandoPrato.value.length > 0
@@ -3503,7 +4109,9 @@ const salvarPratoDia =
       );
 
       return;
+
     }
+
 
     try {
 
@@ -3513,48 +4121,92 @@ const salvarPratoDia =
             ingrediente =>
               ingrediente.nome
           )
-          .filter(Boolean);
+          .filter(
+            Boolean
+          );
+
 
       await axios.post(
         `${API_URL}/prato-dia`,
         pratoDoDia.value
       );
 
+
       pratoDoDia.value = {
-        nome: '',
-        data: hojeISO(),
-        turno: '',
+
+        nome:
+          '',
+
+        data:
+          hojeISO(),
+
+        turno:
+          '',
+
         ingredientes: [
+
           {
-            nome: '',
-            unidade: '',
-            quantidade: ''
+
+            nome:
+              '',
+
+            unidade:
+              '',
+
+            quantidade:
+              ''
+
           }
+
         ]
+
       };
+
 
       errosPrato.value = {
-        nome: false,
-        data: false,
-        turno: false
+
+        nome:
+          false,
+
+        data:
+          false,
+
+        turno:
+          false
+
       };
 
+
       errosIngredientes.value = [
+
         {
-          nome: false,
-          quantidade: false,
-          unidade: false
+
+          nome:
+            false,
+
+          quantidade:
+            false,
+
+          unidade:
+            false
+
         }
+
       ];
 
+
       await carregarEstoque();
+
       await carregarAlertas();
+
       await carregarHistoricoPratos();
+
 
       const teveAlerta =
         verificarAlertaPorNomes(
           nomesConsumidos
         );
+
 
       if (
         !teveAlerta
@@ -3564,6 +4216,7 @@ const salvarPratoDia =
           'Prato registrado e estoque baixado por validade mais próxima!',
           'success'
         );
+
       }
 
     } catch (err) {
@@ -3578,8 +4231,11 @@ const salvarPratoDia =
         'Erro ao registrar prato',
         'error'
       );
+
     }
+
   };
+
 
 /* =============================================================
    DATAS
@@ -3595,26 +4251,33 @@ const formatarDataCurta =
           'pt-BR'
         )
       : '—';
+
   };
+
 
 const diasParaVencer =
   (dateStr) => {
 
     return Math.ceil(
+
       (
         new Date(
           `${dateStr}T00:00:00`
         ) -
         new Date()
-      ) /
+      )
+      /
       (
         1000 *
         60 *
         60 *
         24
       )
+
     );
+
   };
+
 
 /* =============================================================
    EXCLUIR ALIMENTO
@@ -3628,7 +4291,9 @@ const excluirAlimento =
         'Excluir este alimento?'
       )
     ) {
+
       return;
+
     }
 
     try {
@@ -3650,22 +4315,15 @@ const excluirAlimento =
         'Erro ao excluir',
         'error'
       );
+
     }
+
   };
 
-/* =============================================================
-   ALUNOS
-============================================================= */
 
-const novoAluno =
-  ref({
-    nome: '',
-    matricula: '',
-    curso: '',
-    modalidade: '',
-    turma: '',
-    turno: ''
-  });
+/* =============================================================
+   CARREGAR ALUNOS
+============================================================= */
 
 const carregarAlunos =
   async () => {
@@ -3686,8 +4344,15 @@ const carregarAlunos =
         'Erro ao carregar alunos:',
         err
       );
+
     }
+
   };
+
+
+/* =============================================================
+   FILTRO ALUNOS
+============================================================= */
 
 const alunosFiltrados =
   computed(
@@ -3695,6 +4360,7 @@ const alunosFiltrados =
 
       let lista =
         alunosList.value || [];
+
 
       if (
         filtroTurno.value
@@ -3706,21 +4372,27 @@ const alunosFiltrados =
               aluno.turno ===
               filtroTurno.value
           );
+
       }
+
 
       if (
         !filtroAluno.value
       ) {
 
         return lista;
+
       }
+
 
       const f =
         filtroAluno.value
           .toLowerCase();
 
+
       return lista.filter(
         aluno =>
+
           (
             aluno.nome &&
             aluno.nome
@@ -3733,25 +4405,90 @@ const alunosFiltrados =
             aluno.matricula
               .includes(f)
           )
+
       );
+
     }
   );
+
+
+/* =============================================================
+   CADASTRAR ALUNO
+============================================================= */
 
 const cadastrarAluno =
   async () => {
 
+    /*
+     * TODOS OS CAMPOS SÃO OBRIGATÓRIOS.
+     */
+
+    const erros = {
+
+      nome:
+        !String(
+          novoAluno.value.nome || ''
+        ).trim(),
+
+      matricula:
+        !String(
+          novoAluno.value.matricula || ''
+        ).trim(),
+
+      curso:
+        !String(
+          novoAluno.value.curso || ''
+        ).trim(),
+
+      modalidade:
+        !String(
+          novoAluno.value.modalidade || ''
+        ).trim(),
+
+      turma:
+        !String(
+          novoAluno.value.turma || ''
+        ).trim(),
+
+      turno:
+        !String(
+          novoAluno.value.turno || ''
+        ).trim()
+
+    };
+
+
+    /* Guarda quais campos estão com erro */
+    errosNovoAluno.value =
+      erros;
+
+
+    /*
+     * Se existir pelo menos um campo vazio,
+     * interrompe o cadastro.
+     */
+
     if (
-      !novoAluno.value.nome ||
-      !novoAluno.value.matricula
+      Object.values(
+        erros
+      ).some(
+        Boolean
+      )
     ) {
 
       mostrarMensagem(
-        'Informe nome e matrícula.',
+        `Preencha os campos obrigatórios: ${camposFaltandoAluno.value.join(', ')}.`,
         'error'
       );
 
       return;
+
     }
+
+
+    /*
+     * Todos preenchidos -> envia para o backend.
+     */
 
     try {
 
@@ -3760,16 +4497,63 @@ const cadastrarAluno =
         novoAluno.value
       );
 
+
+      /*
+       * Limpa formulário.
+       */
+
       novoAluno.value = {
-        nome: '',
-        matricula: '',
-        curso: '',
-        modalidade: '',
-        turma: '',
-        turno: ''
+
+        nome:
+          '',
+
+        matricula:
+          '',
+
+        curso:
+          '',
+
+        modalidade:
+          '',
+
+        turma:
+          '',
+
+        turno:
+          ''
+
       };
 
+
+      /*
+       * Limpa os erros.
+       */
+
+      errosNovoAluno.value = {
+
+        nome:
+          false,
+
+        matricula:
+          false,
+
+        curso:
+          false,
+
+        modalidade:
+          false,
+
+        turma:
+          false,
+
+        turno:
+          false
+
+      };
+
+
       await carregarAlunos();
+
 
       mostrarMensagem(
         'Aluno cadastrado!',
@@ -3783,8 +4567,15 @@ const cadastrarAluno =
         'Erro ao cadastrar',
         'error'
       );
+
     }
+
   };
+
+
+/* =============================================================
+   EXCLUIR ALUNO
+============================================================= */
 
 const excluirAluno =
   async (id) => {
@@ -3794,7 +4585,9 @@ const excluirAluno =
         'Excluir este aluno do sistema?'
       )
     ) {
+
       return;
+
     }
 
     try {
@@ -3816,8 +4609,11 @@ const excluirAluno =
         'Erro ao excluir',
         'error'
       );
+
     }
+
   };
+
 
 /* =============================================================
    MODAL EDIÇÃO
@@ -3844,6 +4640,7 @@ const editTurma =
 const editTurno =
   ref('');
 
+
 const editarAluno =
   (aluno) => {
 
@@ -3867,7 +4664,9 @@ const editarAluno =
 
     editTurno.value =
       aluno.turno;
+
   };
+
 
 const salvarEdicao =
   async () => {
@@ -3877,6 +4676,7 @@ const salvarEdicao =
     ) {
 
       return;
+
     }
 
     try {
@@ -3884,6 +4684,7 @@ const salvarEdicao =
       await axios.put(
         `${API_URL}/alunos/${alunoEditando.value.id}`,
         {
+
           nome:
             editNome.value,
 
@@ -3901,15 +4702,21 @@ const salvarEdicao =
 
           turno:
             editTurno.value
+
         }
       );
+
 
       alunoEditando.value =
         null;
 
+
       await carregarAlunos();
+
       await carregarAlertas();
+
       await carregarHistorico();
+
 
       mostrarMensagem(
         'Aluno atualizado!',
@@ -3923,17 +4730,24 @@ const salvarEdicao =
         'Erro ao editar aluno',
         'error'
       );
+
     }
+
   };
+
 
 /* =============================================================
    VALIDAÇÃO
 ============================================================= */
 
 const validarFicha =
-  async (matricula) => {
+  async (
+    matricula
+  ) => {
 
-    if (!matricula) {
+    if (
+      !matricula
+    ) {
 
       mostrarMensagem(
         'Informe a matrícula.',
@@ -3941,13 +4755,16 @@ const validarFicha =
       );
 
       return;
+
     }
+
 
     statusValidacao.value =
       null;
 
     tempoEsperaReal.value =
       '';
+
 
     if (
       countdownTimer.value
@@ -3956,7 +4773,9 @@ const validarFicha =
       clearInterval(
         countdownTimer.value
       );
+
     }
+
 
     try {
 
@@ -3967,12 +4786,15 @@ const validarFicha =
           )}`
         );
 
+
       mostrarMensagem(
         res.data.message,
         'success'
       );
 
+
       statusValidacao.value = {
+
         tipo:
           'success',
 
@@ -3981,12 +4803,16 @@ const validarFicha =
 
         msg:
           res.data.message
+
       };
+
 
       matriculaParaValidar.value =
         '';
 
+
       await carregarEstoque();
+
       await carregarAlunos();
 
     } catch (err) {
@@ -3994,7 +4820,9 @@ const validarFicha =
       const errorData =
         err.response?.data;
 
+
       statusValidacao.value = {
+
         tipo:
           'error',
 
@@ -4013,7 +4841,9 @@ const validarFicha =
 
         proximaRefeicao:
           errorData?.proximaRefeicao
+
       };
+
 
       if (
         errorData?.segundosFaltando
@@ -4022,15 +4852,24 @@ const validarFicha =
         iniciarContagemRegressiva(
           errorData.segundosFaltando
         );
+
       }
+
 
       mostrarMensagem(
         errorData?.error ||
         'Erro',
         'error'
       );
+
     }
+
   };
+
+
+/* =============================================================
+   CONFIRMAR QR
+============================================================= */
 
 const confirmarValidacao =
   async () => {
@@ -4040,7 +4879,13 @@ const confirmarValidacao =
     );
 
     resetScan();
+
   };
+
+
+/* =============================================================
+   RESET SCAN
+============================================================= */
 
 const resetScan =
   () => {
@@ -4048,13 +4893,17 @@ const resetScan =
     matriculaLida.value =
       null;
 
+
     if (
       isCameraActive.value
     ) {
 
       startCamera();
+
     }
+
   };
+
 
 /* =============================================================
    UTILITÁRIOS
@@ -4063,77 +4912,109 @@ const resetScan =
 const toUTC =
   (dateStr) => {
 
-    if (!dateStr) {
+    if (
+      !dateStr
+    ) {
 
       return new Date();
+
     }
+
 
     if (
       dateStr instanceof Date
     ) {
 
       return dateStr;
+
     }
 
+
     const str =
-      String(dateStr);
+      String(
+        dateStr
+      );
+
 
     return str.endsWith('Z')
-      ? new Date(str)
+      ? new Date(
+          str
+        )
       : new Date(
           str + 'Z'
         );
+
   };
+
 
 const formatarData =
   (dateStr) => {
 
-    if (!dateStr) {
+    if (
+      !dateStr
+    ) {
 
       return 'Nunca';
+
     }
+
 
     return toUTC(
       dateStr
     ).toLocaleString(
       'pt-BR'
     );
+
   };
+
 
 const podeComer =
   (dateStr) => {
 
-    if (!dateStr) {
+    if (
+      !dateStr
+    ) {
 
       return true;
+
     }
+
 
     const ultima =
       toUTC(
         dateStr
       );
 
+
     const diffHoras =
       (
         new Date() -
         ultima
-      ) /
+      )
+      /
       (
         1000 *
         60 *
         60
       );
 
+
     return diffHoras >= 6;
+
   };
+
 
 const tempoRestanteAluno =
   (dateStr) => {
 
-    if (!dateStr) {
+    if (
+      !dateStr
+    ) {
 
       return '—';
+
     }
+
 
     const proxima =
       new Date(
@@ -4147,6 +5028,7 @@ const tempoRestanteAluno =
         1000
       );
 
+
     const diff =
       Math.max(
         0,
@@ -4154,10 +5036,12 @@ const tempoRestanteAluno =
           (
             proxima -
             new Date()
-          ) /
+          )
+          /
           1000
         )
       );
+
 
     const h =
       Math.floor(
@@ -4165,18 +5049,22 @@ const tempoRestanteAluno =
         3600
       );
 
+
     const m =
       Math.floor(
         (
           diff %
           3600
-        ) /
+        )
+        /
         60
       );
+
 
     const s =
       diff %
       60;
+
 
     return `${String(h).padStart(
       2,
@@ -4188,7 +5076,9 @@ const tempoRestanteAluno =
       2,
       '0'
     )}s`;
+
   };
+
 
 const mostrarMensagem =
   (
@@ -4202,6 +5092,7 @@ const mostrarMensagem =
     mensagemTipo.value =
       tipo;
 
+
     setTimeout(
       () => {
 
@@ -4211,7 +5102,9 @@ const mostrarMensagem =
       },
       4000
     );
+
   };
+
 
 const formatarQuantidade =
   (q) => {
@@ -4221,12 +5114,17 @@ const formatarQuantidade =
         q || 0
       );
 
+
     return Number.isInteger(
       numero
     )
       ? numero
-      : numero.toFixed(1);
+      : numero.toFixed(
+          1
+        );
+
   };
+
 
 /* =============================================================
    CÂMERA
@@ -4234,6 +5132,7 @@ const formatarQuantidade =
 
 let html5QrCode =
   null;
+
 
 const toggleCamera =
   async () => {
@@ -4247,13 +5146,17 @@ const toggleCamera =
     } else {
 
       await startCamera();
+
     }
+
   };
+
 
 const startCamera =
   async () => {
 
     await nextTick();
+
 
     if (
       !html5QrCode
@@ -4263,33 +5166,46 @@ const startCamera =
         new Html5Qrcode(
           'reader'
         );
+
     }
 
+
     const config = {
+
       fps:
         15,
 
       qrbox: {
+
         width:
           250,
 
         height:
           250
+
       }
+
     };
+
 
     try {
 
       await html5QrCode.start(
+
         {
+
           facingMode:
             currentCameraId.value
+
         },
+
         config,
+
         (decodedText) => {
 
           matriculaLida.value =
             decodedText;
+
 
           html5QrCode
             .stop()
@@ -4297,8 +5213,10 @@ const startCamera =
               () => {}
             );
 
+
           isCameraActive.value =
             false;
+
 
           if (
             navigator.vibrate
@@ -4307,9 +5225,13 @@ const startCamera =
             navigator.vibrate(
               200
             );
+
           }
+
         }
+
       );
+
 
       isCameraActive.value =
         true;
@@ -4321,12 +5243,16 @@ const startCamera =
         err
       );
 
+
       mostrarMensagem(
         'Câmera bloqueada ou não encontrada.',
         'error'
       );
+
     }
+
   };
+
 
 const stopCamera =
   async () => {
@@ -4346,17 +5272,23 @@ const stopCamera =
           'Erro ao desligar câmera:',
           err
         );
+
       }
+
 
       isCameraActive.value =
         false;
+
     }
+
   };
+
 
 const switchCamera =
   async () => {
 
     await stopCamera();
+
 
     currentCameraId.value =
       currentCameraId.value ===
@@ -4364,8 +5296,11 @@ const switchCamera =
         ? 'user'
         : 'environment';
 
+
     await startCamera();
+
   };
+
 
 /* =============================================================
    TROCA DE ABA
@@ -4379,43 +5314,57 @@ const changeTab =
     ) {
 
       await stopCamera();
+
     }
+
 
     currentTab.value =
       tab;
 
+
     isSidebarOpen.value =
       false;
+
 
     if (
       tab === 'alunos'
     ) {
 
       await carregarAlunos();
+
     }
+
 
     if (
       tab === 'estoque'
     ) {
 
       await carregarEstoque();
+
     }
+
 
     if (
       tab === 'alertas'
     ) {
 
       await carregarAlertas();
+
     }
+
 
     if (
       tab === 'prato'
     ) {
 
       await carregarEstoque();
+
       await carregarHistoricoPratos();
+
     }
+
   };
+
 
 /* =============================================================
    QR CODE
@@ -4430,14 +5379,26 @@ const gerarQrCode =
 
       qrCodeGerado.value =
         true;
+
+    } else {
+
+      mostrarMensagem(
+        'Informe a matrícula.',
+        'error'
+      );
+
     }
+
   };
+
 
 const imprimirFicha =
   () => {
 
     window.print();
+
   };
+
 
 /* =============================================================
    LIFECYCLE
@@ -4446,14 +5407,20 @@ const imprimirFicha =
 let contadorAlunosTimer =
   null;
 
+
 onMounted(
   () => {
 
     carregarEstoque();
+
     carregarAlunos();
+
     carregarAlertas();
+
     carregarHistorico();
+
     carregarHistoricoPratos();
+
 
     contadorAlunosTimer =
       setInterval(
@@ -4466,13 +5433,16 @@ onMounted(
         },
         1000
       );
+
   }
 );
+
 
 onUnmounted(
   () => {
 
     stopCamera();
+
 
     if (
       countdownTimer.value
@@ -4481,7 +5451,9 @@ onUnmounted(
       clearInterval(
         countdownTimer.value
       );
+
     }
+
 
     if (
       contadorAlunosTimer
@@ -4490,35 +5462,80 @@ onUnmounted(
       clearInterval(
         contadorAlunosTimer
       );
+
     }
+
   }
 );
+
 </script>
 
 <style>
+
 @import url(
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap'
 );
 
+
+/* =========================================================
+   ROOT
+========================================================= */
+
 :root {
-  --primary: #006B3D;
-  --primary-hover: #005530;
-  --primary-light: #E6F4ED;
-  --success: #059669;
-  --success-light: #ECFDF5;
-  --danger: #DC2626;
-  --danger-light: #FEF2F2;
-  --warning: #D97706;
-  --warning-light: #FFFBEB;
-  --bg: #F3F6F4;
-  --surface: #FFFFFF;
-  --sidebar-bg: #0F1E13;
-  --sidebar-text: #8FB49A;
-  --text-primary: #111827;
-  --text-secondary: #6B7280;
-  --text-muted: #9CA3AF;
-  --border: #E5E7EB;
-  --border-strong: #D1D5DB;
+
+  --primary:
+    #006B3D;
+
+  --primary-hover:
+    #005530;
+
+  --primary-light:
+    #E6F4ED;
+
+  --success:
+    #059669;
+
+  --success-light:
+    #ECFDF5;
+
+  --danger:
+    #DC2626;
+
+  --danger-light:
+    #FEF2F2;
+
+  --warning:
+    #D97706;
+
+  --warning-light:
+    #FFFBEB;
+
+  --bg:
+    #F3F6F4;
+
+  --surface:
+    #FFFFFF;
+
+  --sidebar-bg:
+    #0F1E13;
+
+  --sidebar-text:
+    #8FB49A;
+
+  --text-primary:
+    #111827;
+
+  --text-secondary:
+    #6B7280;
+
+  --text-muted:
+    #9CA3AF;
+
+  --border:
+    #E5E7EB;
+
+  --border-strong:
+    #D1D5DB;
 
   --shadow-sm:
     0 1px 3px rgba(0,0,0,0.07),
@@ -4532,14 +5549,18 @@ onUnmounted(
     0 10px 30px rgba(0,0,0,0.10),
     0 4px 8px rgba(0,0,0,0.05);
 
-  --radius: 12px;
+  --radius:
+    12px;
+
 }
+
 
 /* =========================================================
    GERAL
 ========================================================= */
 
 * {
+
   box-sizing:
     border-box;
 
@@ -4548,9 +5569,12 @@ onUnmounted(
 
   padding:
     0;
+
 }
 
+
 body {
+
   font-family:
     'Outfit',
     sans-serif;
@@ -4563,21 +5587,27 @@ body {
 
   overflow-x:
     hidden;
+
 }
 
+
 .app-layout {
+
   display:
     flex;
 
   min-height:
     100vh;
+
 }
+
 
 /* =========================================================
    SIDEBAR
 ========================================================= */
 
 .sidebar {
+
   width:
     256px;
 
@@ -4601,9 +5631,12 @@ body {
 
   flex-direction:
     column;
+
 }
 
+
 .sidebar-header {
+
   padding:
     1.75rem
     1.25rem
@@ -4615,9 +5648,12 @@ body {
   border-bottom:
     1px solid
     rgba(255,255,255,0.07);
+
 }
 
+
 .ifba-logo-img {
+
   width:
     66px;
 
@@ -4626,9 +5662,12 @@ body {
 
   margin-bottom:
     0.75rem;
+
 }
 
+
 .logo {
+
   font-size:
     1.15rem;
 
@@ -4640,14 +5679,20 @@ body {
 
   letter-spacing:
     0.05em;
+
 }
+
 
 .logo span {
+
   color:
     #4ADE80;
+
 }
 
+
 .logo-version {
+
   font-size:
     0.68rem;
 
@@ -4659,9 +5704,12 @@ body {
 
   margin-top:
     0.25rem;
+
 }
 
+
 .sidebar-nav {
+
   padding:
     1.25rem
     0.75rem;
@@ -4677,9 +5725,12 @@ body {
 
   gap:
     2px;
+
 }
 
+
 .sidebar-nav button {
+
   width:
     100%;
 
@@ -4725,17 +5776,23 @@ body {
 
   text-align:
     left;
+
 }
 
+
 .sidebar-nav button:hover {
+
   background:
     rgba(255,255,255,0.07);
 
   color:
     #FFFFFF;
+
 }
 
+
 .sidebar-nav button.active {
+
   background:
     var(--primary);
 
@@ -4748,9 +5805,12 @@ body {
   box-shadow:
     0 2px 10px
     rgba(0,107,61,0.40);
+
 }
 
+
 .sidebar-footer {
+
   padding:
     1rem
     1.25rem;
@@ -4767,13 +5827,16 @@ body {
 
   text-align:
     center;
+
 }
+
 
 /* =========================================================
    MAIN
 ========================================================= */
 
 .main-content {
+
   flex:
     1;
 
@@ -4788,9 +5851,12 @@ body {
 
   flex-direction:
     column;
+
 }
 
+
 .top-bar {
+
   height:
     62px;
 
@@ -4824,9 +5890,12 @@ body {
 
   box-shadow:
     var(--shadow-sm);
+
 }
 
+
 .top-bar h1 {
+
   font-size:
     0.95rem;
 
@@ -4835,9 +5904,12 @@ body {
 
   color:
     var(--text-primary);
+
 }
 
+
 .top-bar-brand {
+
   display:
     flex;
 
@@ -4846,9 +5918,12 @@ body {
 
   gap:
     0.7rem;
+
 }
 
+
 .top-bar-logo {
+
   height:
     30px;
 
@@ -4857,9 +5932,12 @@ body {
 
   display:
     none;
+
 }
 
+
 .content-area {
+
   padding:
     1.75rem
     2rem;
@@ -4872,9 +5950,12 @@ body {
 
   width:
     100%;
+
 }
 
+
 .menu-toggle {
+
   display:
     none;
 
@@ -4892,13 +5973,16 @@ body {
 
   cursor:
     pointer;
+
 }
+
 
 /* =========================================================
    ONLINE
 ========================================================= */
 
 .user-status {
+
   padding:
     3px 11px;
 
@@ -4920,9 +6004,12 @@ body {
   border:
     1px solid
     #FECACA;
+
 }
 
+
 .user-status.online {
+
   background:
     var(--success-light);
 
@@ -4931,13 +6018,16 @@ body {
 
   border-color:
     #A7F3D0;
+
 }
+
 
 /* =========================================================
    CARDS
 ========================================================= */
 
 .card {
+
   background:
     var(--surface);
 
@@ -4956,14 +6046,20 @@ body {
 
   box-shadow:
     var(--shadow-sm);
+
 }
+
 
 .glass-effect {
+
   box-shadow:
     var(--shadow-md);
+
 }
 
+
 .card h3 {
+
   font-size:
     1rem;
 
@@ -4975,9 +6071,12 @@ body {
 
   margin-bottom:
     1rem;
+
 }
 
+
 .card h4 {
+
   font-size:
     0.9rem;
 
@@ -4989,13 +6088,16 @@ body {
 
   margin-bottom:
     0.75rem;
+
 }
+
 
 /* =========================================================
    BOTÕES
 ========================================================= */
 
 .btn {
+
   padding:
     0.55rem
     1.15rem;
@@ -5020,48 +6122,69 @@ body {
 
   font-family:
     inherit;
+
 }
+
 
 .btn:active {
+
   transform:
     scale(0.97);
+
 }
 
+
 .btn-primary {
+
   background:
     var(--primary);
 
   color:
     white;
+
 }
+
 
 .btn-primary:hover {
+
   background:
     var(--primary-hover);
+
 }
 
+
 .btn-success {
+
   background:
     var(--success);
 
   color:
     white;
+
 }
+
 
 .btn-success:hover {
+
   background:
     #047857;
+
 }
 
+
 .btn-danger {
+
   background:
     var(--danger);
 
   color:
     white;
+
 }
 
+
 .btn-secondary {
+
   background:
     #F3F4F6;
 
@@ -5071,14 +6194,20 @@ body {
   border:
     1px solid
     var(--border-strong);
+
 }
+
 
 .btn-secondary:hover {
+
   background:
     #E9EAEC;
+
 }
 
+
 .btn-validate {
+
   background:
     var(--success);
 
@@ -5090,9 +6219,12 @@ body {
 
   margin-top:
     1rem;
+
 }
 
+
 .btn-link {
+
   background:
     transparent;
 
@@ -5116,14 +6248,20 @@ body {
 
   font-weight:
     500;
+
 }
+
 
 .btn-link:hover {
+
   text-decoration:
     underline;
+
 }
 
+
 .btn-refresh {
+
   background:
     #F9FAFB;
 
@@ -5151,9 +6289,12 @@ body {
 
   transition:
     0.16s;
+
 }
 
+
 .btn-refresh:hover {
+
   background:
     var(--primary-light);
 
@@ -5162,18 +6303,24 @@ body {
 
   border-color:
     var(--primary);
+
 }
 
+
 .mt-1 {
+
   margin-top:
     0.5rem;
+
 }
+
 
 /* =========================================================
    INPUTS
 ========================================================= */
 
 .input-group-row {
+
   display:
     flex;
 
@@ -5182,10 +6329,13 @@ body {
 
   flex-wrap:
     wrap;
+
 }
+
 
 .input-group-row input,
 .input-group input {
+
   flex:
     1;
 
@@ -5218,10 +6368,13 @@ body {
   transition:
     border-color 0.16s,
     box-shadow 0.16s;
+
 }
+
 
 .input-group-row input:focus,
 .input-group input:focus {
+
   outline:
     none;
 
@@ -5234,9 +6387,12 @@ body {
   box-shadow:
     0 0 0 3px
     rgba(0,107,61,0.10);
+
 }
 
+
 .input-group {
+
   display:
     flex;
 
@@ -5245,9 +6401,12 @@ body {
 
   gap:
     8px;
+
 }
 
+
 .input-field {
+
   width:
     100%;
 
@@ -5277,9 +6436,12 @@ body {
   transition:
     border-color 0.16s,
     box-shadow 0.16s;
+
 }
 
+
 .input-field:focus {
+
   outline:
     none;
 
@@ -5292,9 +6454,12 @@ body {
   box-shadow:
     0 0 0 3px
     rgba(0,107,61,0.10);
+
 }
 
+
 .search-input {
+
   background:
     #FAFAFA;
 
@@ -5323,39 +6488,72 @@ body {
 
   font-size:
     0.88rem;
+
 }
 
+
 .search-input:focus {
+
   outline:
     none;
 
   border-color:
     var(--primary);
+
 }
+
 
 input::placeholder {
+
   color:
     var(--text-muted);
+
 }
+
 
 select.input-field {
+
   background:
     #FAFAFA;
+
 }
 
+
 select.input-field option {
+
   background:
     white;
 
   color:
     var(--text-primary);
+
 }
+
+
+/* =========================================================
+   INFORMAÇÃO FORMULÁRIO
+========================================================= */
+
+.form-obrigatorio-info {
+
+  color:
+    var(--text-muted);
+
+  font-size:
+    0.82rem;
+
+  margin-bottom:
+    0.8rem;
+
+}
+
 
 /* =========================================================
    CAMPOS OBRIGATÓRIOS
 ========================================================= */
 
 .campo-erro {
+
   border-color:
     #DC2626 !important;
 
@@ -5365,9 +6563,12 @@ select.input-field option {
   box-shadow:
     0 0 0 2px
     rgba(220,38,38,0.10) !important;
+
 }
 
+
 .campo-erro:focus {
+
   border-color:
     #DC2626 !important;
 
@@ -5377,9 +6578,12 @@ select.input-field option {
   box-shadow:
     0 0 0 3px
     rgba(220,38,38,0.15) !important;
+
 }
 
+
 .cadastro-erro {
+
   width:
     100%;
 
@@ -5421,23 +6625,32 @@ select.input-field option {
 
   font-size:
     0.85rem;
+
 }
+
 
 .cadastro-erro strong {
+
   font-weight:
     700;
+
 }
 
+
 .cadastro-erro span {
+
   font-weight:
     500;
+
 }
+
 
 /* =========================================================
    TABELAS
 ========================================================= */
 
 .table-header {
+
   display:
     flex;
 
@@ -5455,9 +6668,12 @@ select.input-field option {
 
   flex-wrap:
     wrap;
+
 }
 
+
 .table-wrapper {
+
   overflow-x:
     auto;
 
@@ -5467,9 +6683,12 @@ select.input-field option {
   border:
     1px solid
     var(--border);
+
 }
 
+
 .data-table {
+
   width:
     100%;
 
@@ -5478,9 +6697,12 @@ select.input-field option {
 
   text-align:
     left;
+
 }
 
+
 .data-table th {
+
   padding:
     0.75rem
     1rem;
@@ -5509,9 +6731,12 @@ select.input-field option {
 
   white-space:
     nowrap;
+
 }
 
+
 .data-table td {
+
   padding:
     0.85rem
     1rem;
@@ -5525,19 +6750,28 @@ select.input-field option {
 
   color:
     var(--text-primary);
+
 }
+
 
 .data-table tr:last-child td {
+
   border-bottom:
     none;
+
 }
+
 
 .data-table tr:hover td {
+
   background:
     #FAFFFE;
+
 }
 
+
 .data-table code {
+
   background:
     var(--primary-light);
 
@@ -5555,9 +6789,12 @@ select.input-field option {
 
   font-weight:
     600;
+
 }
 
+
 .status-badge {
+
   padding:
     3px 9px;
 
@@ -5578,25 +6815,34 @@ select.input-field option {
 
   white-space:
     nowrap;
+
 }
 
+
 .status-badge.can-eat {
+
   background:
     var(--success-light);
 
   color:
     var(--success);
+
 }
 
+
 .status-badge.must-wait {
+
   background:
     var(--warning-light);
 
   color:
     var(--warning);
+
 }
 
+
 .actions {
+
   display:
     flex;
 
@@ -5611,9 +6857,12 @@ select.input-field option {
 
   gap:
     8px;
+
 }
 
+
 .empty-state {
+
   padding:
     3rem;
 
@@ -5622,13 +6871,16 @@ select.input-field option {
 
   color:
     var(--text-muted);
+
 }
+
 
 /* =========================================================
    VALIDAÇÃO
 ========================================================= */
 
 .validacao-central {
+
   width:
     100%;
 
@@ -5637,10 +6889,13 @@ select.input-field option {
 
   justify-content:
     center;
+
 }
+
 
 .validacao-central
 .scanner-wrapper {
+
   width:
     min(
       430px,
@@ -5653,14 +6908,20 @@ select.input-field option {
 
   max-width:
     none;
+
 }
+
 
 .validacao-manual {
+
   width:
     100%;
+
 }
 
+
 .validacao-tabelas {
+
   display:
     grid;
 
@@ -5675,9 +6936,12 @@ select.input-field option {
 
   align-items:
     start;
+
 }
 
+
 .validacao-list-card {
+
   background:
     var(--surface);
 
@@ -5696,21 +6960,30 @@ select.input-field option {
 
   min-width:
     0;
+
 }
 
+
 .validacao-nao-liberados {
+
   border-top:
     4px solid
     var(--danger);
+
 }
 
+
 .validacao-liberados {
+
   border-top:
     4px solid
     var(--success);
+
 }
 
+
 .validacao-list-header {
+
   min-height:
     60px;
 
@@ -5733,9 +7006,12 @@ select.input-field option {
   border-bottom:
     1px solid
     var(--border);
+
 }
 
+
 .validacao-list-header h3 {
+
   margin:
     0;
 
@@ -5744,21 +7020,30 @@ select.input-field option {
 
   font-weight:
     700;
+
 }
+
 
 .validacao-nao-liberados
 .validacao-list-header h3 {
+
   color:
     var(--danger);
+
 }
+
 
 .validacao-liberados
 .validacao-list-header h3 {
+
   color:
     var(--success);
+
 }
 
+
 .validacao-count {
+
   min-width:
     28px;
 
@@ -5788,13 +7073,12 @@ select.input-field option {
 
   font-weight:
     700;
+
 }
 
-/* =========================================================
-   ROLAGEM INTERNA
-========================================================= */
 
 .validacao-table-wrapper {
+
   width:
     100%;
 
@@ -5809,35 +7093,50 @@ select.input-field option {
 
   overflow-x:
     auto;
+
 }
 
+
 .validacao-table-wrapper::-webkit-scrollbar {
+
   width:
     8px;
 
   height:
     8px;
+
 }
+
 
 .validacao-table-wrapper::-webkit-scrollbar-track {
+
   background:
     #F3F4F6;
+
 }
 
+
 .validacao-table-wrapper::-webkit-scrollbar-thumb {
+
   background:
     #C7CDD1;
 
   border-radius:
     8px;
+
 }
+
 
 .validacao-table-wrapper::-webkit-scrollbar-thumb:hover {
+
   background:
     #9CA3AF;
+
 }
 
+
 .validacao-table {
+
   width:
     100%;
 
@@ -5849,9 +7148,12 @@ select.input-field option {
 
   table-layout:
     fixed;
+
 }
 
+
 .validacao-table th {
+
   position:
     sticky;
 
@@ -5892,9 +7194,12 @@ select.input-field option {
 
   white-space:
     nowrap;
+
 }
 
+
 .validacao-table td {
+
   padding:
     0.75rem
     0.65rem;
@@ -5908,43 +7213,64 @@ select.input-field option {
 
   vertical-align:
     middle;
+
 }
+
 
 .validacao-table tr:last-child td {
+
   border-bottom:
     none;
+
 }
 
+
 .validacao-table tr:hover td {
+
   background:
     #FAFFFE;
+
 }
+
 
 .validacao-table th:nth-child(1),
 .validacao-table td:nth-child(1) {
+
   width:
     28%;
+
 }
+
 
 .validacao-table th:nth-child(2),
 .validacao-table td:nth-child(2) {
+
   width:
     22%;
+
 }
+
 
 .validacao-table th:nth-child(3),
 .validacao-table td:nth-child(3) {
+
   width:
     21%;
+
 }
+
 
 .validacao-table th:nth-child(4),
 .validacao-table td:nth-child(4) {
+
   width:
     29%;
+
 }
 
+
 .aluno-nome-validacao {
+
   font-weight:
     600;
 
@@ -5953,9 +7279,12 @@ select.input-field option {
 
   word-break:
     break-word;
+
 }
 
+
 .matricula-validacao {
+
   background:
     var(--primary-light);
 
@@ -5976,9 +7305,12 @@ select.input-field option {
 
   white-space:
     nowrap;
+
 }
 
+
 .status-validacao {
+
   display:
     inline-flex;
 
@@ -6002,25 +7334,34 @@ select.input-field option {
 
   white-space:
     nowrap;
+
 }
 
+
 .status-nao-liberado {
+
   color:
     #991B1B;
 
   background:
     var(--danger-light);
+
 }
 
+
 .status-liberado {
+
   color:
     #047857;
 
   background:
     var(--success-light);
+
 }
 
+
 .proxima-liberacao {
+
   color:
     var(--text-primary);
 
@@ -6029,9 +7370,12 @@ select.input-field option {
 
   white-space:
     nowrap;
+
 }
 
+
 .validacao-empty {
+
   height:
     360px;
 
@@ -6055,13 +7399,16 @@ select.input-field option {
 
   font-size:
     0.82rem;
+
 }
+
 
 /* =========================================================
    INGREDIENTES
 ========================================================= */
 
 .ingrediente-linha {
+
   display:
     grid;
 
@@ -6079,24 +7426,33 @@ select.input-field option {
 
   align-items:
     center;
+
 }
+
 
 .ingrediente-linha
 .input-field {
+
   width:
     100%;
+
 }
 
+
 .ingrediente-linha input {
+
   min-width:
     0;
+
 }
+
 
 /* =========================================================
    SCANNER
 ========================================================= */
 
 .scanner-wrapper {
+
   max-width:
     400px;
 
@@ -6106,30 +7462,42 @@ select.input-field option {
 
   text-align:
     center;
+
 }
+
 
 .scanner-header {
+
   margin-bottom:
     0.5rem;
+
 }
 
+
 .camera-info {
+
   color:
     var(--text-muted);
 
   font-size:
     0.88rem;
+
 }
 
+
 .camera-info.active {
+
   color:
     var(--success);
 
   font-weight:
     600;
+
 }
 
+
 .preview-container {
+
   position:
     relative;
 
@@ -6151,17 +7519,23 @@ select.input-field option {
   border:
     2px solid
     var(--border);
+
 }
 
+
 #reader {
+
   width:
     100%;
 
   height:
     100%;
+
 }
 
+
 .camera-placeholder {
+
   position:
     absolute;
 
@@ -6191,14 +7565,20 @@ select.input-field option {
 
   background:
     #1F2937;
+
 }
+
 
 .icon-large {
+
   font-size:
     2.5rem;
+
 }
 
+
 .scan-success-overlay {
+
   position:
     absolute;
 
@@ -6219,9 +7599,12 @@ select.input-field option {
 
   z-index:
     50;
+
 }
 
+
 .success-card {
+
   text-align:
     center;
 
@@ -6242,14 +7625,20 @@ select.input-field option {
 
   color:
     white;
+
 }
+
 
 .success-icon {
+
   font-size:
     2rem;
+
 }
 
+
 .id-display {
+
   font-size:
     1.15rem;
 
@@ -6268,9 +7657,12 @@ select.input-field option {
 
   margin:
     0.5rem 0;
+
 }
 
+
 .scanner-controls {
+
   display:
     flex;
 
@@ -6282,41 +7674,59 @@ select.input-field option {
 
   flex-wrap:
     wrap;
+
 }
 
+
 .status-card {
+
   border-left:
     4px solid
     var(--primary);
+
 }
 
+
 .status-card.success {
+
   border-color:
     var(--success);
 
   background:
     var(--success-light);
+
 }
+
 
 .status-card.success p {
+
   color:
     #065F46;
+
 }
 
+
 .status-card.error {
+
   border-color:
     var(--danger);
 
   background:
     var(--danger-light);
+
 }
+
 
 .status-card.error p {
+
   color:
     #991B1B;
+
 }
 
+
 .wait-time {
+
   font-weight:
     700;
 
@@ -6328,13 +7738,16 @@ select.input-field option {
 
   margin-top:
     0.5rem;
+
 }
+
 
 /* =========================================================
    ESTOQUE
 ========================================================= */
 
 .estoque-grid {
+
   display:
     grid;
 
@@ -6349,9 +7762,12 @@ select.input-field option {
 
   margin-bottom:
     1.25rem;
+
 }
 
+
 .estoque-card {
+
   padding:
     1.25rem;
 
@@ -6372,9 +7788,12 @@ select.input-field option {
   box-shadow:
     0 2px 8px
     rgba(0,107,61,0.10);
+
 }
 
+
 .estoque-card h4 {
+
   font-size:
     0.95rem;
 
@@ -6386,9 +7805,12 @@ select.input-field option {
 
   margin-bottom:
     0.25rem;
+
 }
 
+
 .btn-delete {
+
   position:
     absolute;
 
@@ -6424,17 +7846,23 @@ select.input-field option {
 
   transition:
     0.16s;
+
 }
 
+
 .btn-delete:hover {
+
   color:
     var(--danger);
 
   background:
     var(--danger-light);
+
 }
 
+
 .unit-label {
+
   font-size:
     0.75rem;
 
@@ -6443,9 +7871,12 @@ select.input-field option {
 
   margin-bottom:
     1rem;
+
 }
 
+
 .item-body {
+
   display:
     flex;
 
@@ -6457,9 +7888,12 @@ select.input-field option {
 
   margin-top:
     0.75rem;
+
 }
 
+
 .adjust-btn {
+
   width:
     32px;
 
@@ -6483,9 +7917,12 @@ select.input-field option {
 
   font-weight:
     700;
+
 }
 
+
 .adjust-btn.minus {
+
   background:
     #F3F4F6;
 
@@ -6495,30 +7932,42 @@ select.input-field option {
   border:
     1px solid
     var(--border-strong);
+
 }
 
+
 .adjust-btn.minus:hover {
+
   background:
     var(--danger-light);
 
   color:
     var(--danger);
+
 }
 
+
 .adjust-btn.plus {
+
   background:
     var(--primary);
 
   color:
     white;
+
 }
+
 
 .adjust-btn.plus:hover {
+
   background:
     var(--primary-hover);
+
 }
 
+
 .qty-value {
+
   font-size:
     1.5rem;
 
@@ -6527,13 +7976,16 @@ select.input-field option {
 
   color:
     var(--text-primary);
+
 }
+
 
 /* =========================================================
    AÇÕES
 ========================================================= */
 
 .btn-icon-delete {
+
   background:
     transparent;
 
@@ -6554,14 +8006,20 @@ select.input-field option {
 
   transition:
     background 0.16s;
+
 }
+
 
 .btn-icon-delete:hover {
+
   background:
     var(--danger-light);
+
 }
 
+
 .btn-icon-edit {
+
   background:
     none;
 
@@ -6585,18 +8043,24 @@ select.input-field option {
 
   transition:
     background 0.16s;
+
 }
 
+
 .btn-icon-edit:hover {
+
   background:
     var(--primary-light);
+
 }
+
 
 /* =========================================================
    MODAL
 ========================================================= */
 
 .modal-overlay {
+
   position:
     fixed;
 
@@ -6620,9 +8084,12 @@ select.input-field option {
 
   backdrop-filter:
     blur(3px);
+
 }
 
+
 .modal-box {
+
   background:
     var(--surface);
 
@@ -6650,17 +8117,23 @@ select.input-field option {
 
   box-shadow:
     var(--shadow-lg);
+
 }
 
+
 .modal-wide {
+
   width:
     min(
       760px,
       94vw
     );
+
 }
 
+
 .modal-box h3 {
+
   color:
     var(--text-primary);
 
@@ -6672,13 +8145,16 @@ select.input-field option {
 
   font-weight:
     700;
+
 }
+
 
 /* =========================================================
    DASHBOARD
 ========================================================= */
 
 .dashboard-grid {
+
   display:
     grid;
 
@@ -6690,53 +8166,74 @@ select.input-field option {
 
   gap:
     1rem;
+
 }
 
+
 .alert-card ul {
+
   margin:
     0.75rem
     0
     0
     1.2rem;
+
 }
 
+
 .alert-card li {
+
   font-size:
     0.88rem;
 
   padding:
     0.2rem 0;
+
 }
 
+
 .alert-card-amarelo {
+
   border-left:
     5px solid
     var(--warning);
 
   background:
     var(--warning-light);
+
 }
+
 
 .alert-card-amarelo ul {
+
   color:
     #92400E;
+
 }
 
+
 .alert-card-vermelho {
+
   border-left:
     5px solid
     var(--danger);
 
   background:
     var(--danger-light);
+
 }
+
 
 .alert-card-vermelho ul {
+
   color:
     #991B1B;
+
 }
 
+
 .chip {
+
   background:
     var(--primary-light);
 
@@ -6754,17 +8251,23 @@ select.input-field option {
 
   font-weight:
     600;
+
 }
 
+
 .ranking-list {
+
   list-style:
     none;
 
   padding:
     0;
+
 }
 
+
 .ranking-list li {
+
   padding:
     0.6rem 0;
 
@@ -6783,9 +8286,12 @@ select.input-field option {
 
   color:
     var(--text-primary);
+
 }
 
+
 .ranking-pos {
+
   font-weight:
     800;
 
@@ -6794,13 +8300,16 @@ select.input-field option {
 
   min-width:
     28px;
+
 }
 
+
 /* =========================================================
-   QR CODE
+   QR
 ========================================================= */
 
 .qr-result {
+
   margin-top:
     1.5rem;
 
@@ -6815,9 +8324,12 @@ select.input-field option {
 
   gap:
     1rem;
+
 }
 
+
 .qr-label {
+
   margin-top:
     0.5rem;
 
@@ -6826,13 +8338,16 @@ select.input-field option {
 
   color:
     var(--text-primary);
+
 }
+
 
 /* =========================================================
    TOAST
 ========================================================= */
 
 .toast {
+
   position:
     fixed;
 
@@ -6860,77 +8375,104 @@ select.input-field option {
 
   font-size:
     0.88rem;
+
 }
 
+
 .toast.success {
+
   background:
     var(--success);
 
   color:
     white;
+
 }
 
+
 .toast.error {
+
   background:
     var(--danger);
 
   color:
     white;
+
 }
 
+
 .toast.warning {
+
   background:
     var(--warning);
 
   color:
     white;
+
 }
+
 
 .slide-fade-enter-active,
 .slide-fade-leave-active {
+
   transition:
     all 0.3s ease;
+
 }
+
 
 .slide-fade-enter-from,
 .slide-fade-leave-to {
+
   transform:
     translateX(20px);
 
   opacity:
     0;
+
 }
+
 
 /* =========================================================
    PULSE
 ========================================================= */
 
 .pulse {
+
   animation:
     pulse 1.5s infinite;
+
 }
+
 
 @keyframes pulse {
 
   0% {
+
     box-shadow:
       0 0 0 0
       rgba(5,150,105,0.4);
+
   }
 
   70% {
+
     box-shadow:
       0 0 0 10px
       rgba(5,150,105,0);
+
   }
 
   100% {
+
     box-shadow:
       0 0 0 0
       rgba(5,150,105,0);
+
   }
 
 }
+
 
 /* =========================================================
    MOBILE
@@ -6939,61 +8481,81 @@ select.input-field option {
 @media (max-width: 1100px) {
 
   .validacao-tabelas {
+
     grid-template-columns:
       1fr;
+
   }
 
   .validacao-table-wrapper {
+
     height:
       360px;
 
     max-height:
       360px;
+
   }
 
   .ingrediente-linha {
+
     grid-template-columns:
       1fr 1fr;
 
     align-items:
       stretch;
+
   }
 
   .ingrediente-linha .btn {
+
     grid-column:
       1 / -1;
+
   }
 
 }
 
+
 @media (max-width: 768px) {
 
   .sidebar {
+
     transform:
       translateX(-100%);
+
   }
 
   .sidebar-open .sidebar {
+
     transform:
       translateX(0);
+
   }
 
   .main-content {
+
     margin-left:
       0;
+
   }
 
   .menu-toggle {
+
     display:
       block;
+
   }
 
   .top-bar-logo {
+
     display:
       block;
+
   }
 
   .sidebar-overlay {
+
     position:
       fixed;
 
@@ -7005,19 +8567,25 @@ select.input-field option {
 
     z-index:
       95;
+
   }
 
   .content-area {
+
     padding:
       1rem;
+
   }
 
   .top-bar {
+
     padding:
       0 1rem;
+
   }
 
   .actions {
+
     width:
       100%;
 
@@ -7026,40 +8594,52 @@ select.input-field option {
 
     align-items:
       stretch;
+
   }
 
   .search-input {
+
     max-width:
       none;
 
     width:
       100%;
+
   }
 
   .data-table {
+
     min-width:
       800px;
+
   }
 
   .validacao-table {
+
     min-width:
       700px;
+
   }
 
   .validacao-table-wrapper {
+
     height:
       360px;
 
     max-height:
       360px;
+
   }
 
   .ingrediente-linha {
+
     grid-template-columns:
       1fr;
+
   }
 
   .modal-box {
+
     min-width:
       0;
 
@@ -7068,9 +8648,11 @@ select.input-field option {
 
     max-width:
       600px;
+
   }
 
 }
+
 
 /* =========================================================
    IMPRESSÃO
@@ -7079,17 +8661,22 @@ select.input-field option {
 @media print {
 
   body * {
+
     display:
       none !important;
+
   }
 
   .printable-area,
   .printable-area * {
+
     display:
       block !important;
+
   }
 
   .printable-area {
+
     position:
       absolute;
 
@@ -7101,7 +8688,9 @@ select.input-field option {
 
     text-align:
       center;
+
   }
 
 }
+
 </style>
