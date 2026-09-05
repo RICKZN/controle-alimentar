@@ -136,9 +136,7 @@
           class="tab-pane"
         >
 
-          <!-- =================================================
-               CÂMERA
-          ================================================== -->
+          <!-- CÂMERA -->
           <div class="validacao-central">
 
             <div class="scanner-wrapper card glass-effect">
@@ -165,7 +163,6 @@
 
                 <div id="reader"></div>
 
-                <!-- Overlay de QR detectado -->
                 <div
                   v-if="matriculaLida"
                   class="scan-success-overlay"
@@ -203,7 +200,6 @@
 
                 </div>
 
-                <!-- Placeholder -->
                 <div
                   v-if="!isCameraActive && !matriculaLida"
                   class="camera-placeholder"
@@ -254,9 +250,7 @@
 
           </div>
 
-          <!-- =================================================
-               MENSAGEM DE STATUS
-          ================================================== -->
+          <!-- STATUS -->
           <div
             v-if="statusValidacao"
             class="card status-card"
@@ -292,9 +286,7 @@
 
           </div>
 
-          <!-- =================================================
-               ENTRADA MANUAL
-          ================================================== -->
+          <!-- ENTRADA MANUAL -->
           <div class="card glass-effect validacao-manual">
 
             <h3>
@@ -325,14 +317,10 @@
 
           </div>
 
-          <!-- =================================================
-               TABELAS ABAIXO DA ENTRADA MANUAL
-          ================================================== -->
+          <!-- TABELAS -->
           <div class="validacao-tabelas">
 
-            <!-- ===============================================
-                 NÃO LIBERADOS
-            ================================================ -->
+            <!-- NÃO LIBERADOS -->
             <div
               class="validacao-list-card validacao-nao-liberados"
             >
@@ -364,14 +352,12 @@
                 <table class="validacao-table">
 
                   <thead>
-
                     <tr>
                       <th>Nome</th>
                       <th>Matrícula</th>
                       <th>Status</th>
                       <th>Próxima liberação</th>
                     </tr>
-
                   </thead>
 
                   <tbody>
@@ -415,9 +401,7 @@
 
             </div>
 
-            <!-- ===============================================
-                 LIBERADOS
-            ================================================ -->
+            <!-- LIBERADOS -->
             <div
               class="validacao-list-card validacao-liberados"
             >
@@ -449,14 +433,12 @@
                 <table class="validacao-table">
 
                   <thead>
-
                     <tr>
                       <th>Nome</th>
                       <th>Matrícula</th>
                       <th>Status</th>
                       <th>Próxima liberação</th>
                     </tr>
-
                   </thead>
 
                   <tbody>
@@ -535,7 +517,7 @@
                 type="text"
                 v-model="novoAluno.matricula"
                 placeholder="Número da matrícula"
-                style="width: 180px"
+                style="width:180px"
               />
 
               <input
@@ -559,7 +541,7 @@
               <select
                 v-model="novoAluno.turno"
                 class="input-field"
-                style="width: 160px"
+                style="width:160px"
               >
 
                 <option value="" disabled>
@@ -607,7 +589,7 @@
                 <select
                   v-model="filtroTurno"
                   class="input-field"
-                  style="width: 160px"
+                  style="width:160px"
                 >
 
                   <option value="">
@@ -653,7 +635,6 @@
               >
 
                 <thead>
-
                   <tr>
                     <th>Nome</th>
                     <th>Matrícula</th>
@@ -667,7 +648,6 @@
                     <th>Status</th>
                     <th>Ação</th>
                   </tr>
-
                 </thead>
 
                 <tbody>
@@ -723,7 +703,6 @@
                     </td>
 
                     <td>
-
                       <span
                         v-if="
                           !podeComer(
@@ -748,7 +727,6 @@
                       >
                         —
                       </span>
-
                     </td>
 
                     <td>
@@ -812,6 +790,7 @@
           class="tab-pane"
         >
 
+          <!-- SUBABAS -->
           <div
             class="card glass-effect"
             style="
@@ -848,11 +827,12 @@
 
           </div>
 
-          <!-- Estoque Atual -->
+          <!-- ESTOQUE ATUAL -->
           <div
             v-if="abaEstoque === 'atual'"
           >
 
+            <!-- CABEÇALHO ESTOQUE -->
             <div class="card glass-effect">
 
               <div class="table-header">
@@ -871,10 +851,6 @@
                   <button
                     @click="corrigirDuplicados"
                     class="btn-refresh"
-                    title="
-                      Normaliza nomes e reconsolida o estoque,
-                      eliminando cards duplicados do mesmo alimento
-                    "
                   >
                     🔧 Corrigir duplicados
                   </button>
@@ -892,6 +868,145 @@
 
             </div>
 
+            <!-- =================================================
+                 CADASTRAR ALIMENTO NOVO
+                 FICA ANTES DOS CARDS DOS ALIMENTOS
+            ================================================== -->
+            <div class="card glass-effect">
+
+              <h3>
+                Cadastrar Alimento Novo
+              </h3>
+
+              <p
+                style="
+                  color:#94a3b8;
+                  font-size:0.85rem;
+                  margin-bottom:0.8rem
+                "
+              >
+                Todos os campos são obrigatórios.
+              </p>
+
+              <!-- AVISO -->
+              <div
+                v-if="camposFaltandoNovoItem.length > 0"
+                class="cadastro-erro"
+              >
+
+                <strong>
+                  ⚠️ Preencha os campos obrigatórios:
+                </strong>
+
+                <span>
+                  {{ camposFaltandoNovoItem.join(', ') }}
+                </span>
+
+              </div>
+
+              <div class="input-group-row">
+
+                <!-- NOME -->
+                <input
+                  type="text"
+                  v-model="novoItem.nome"
+                  placeholder="Nome do alimento"
+                  :class="{
+                    'campo-erro':
+                      errosNovoItem.nome
+                  }"
+                  @input="
+                    limparErroNovoItem('nome')
+                  "
+                />
+
+                <!-- UNIDADE -->
+                <input
+                  type="text"
+                  v-model="novoItem.unidade"
+                  placeholder="Unidade (kg, g, L, un)"
+                  style="width:150px"
+                  :class="{
+                    'campo-erro':
+                      errosNovoItem.unidade
+                  }"
+                  @input="
+                    limparErroNovoItem('unidade')
+                  "
+                />
+
+                <!-- QUANTIDADE -->
+                <input
+                  type="number"
+                  v-model="novoItem.quantidade"
+                  placeholder="Quantidade"
+                  style="width:110px"
+                  min="0"
+                  :class="{
+                    'campo-erro':
+                      errosNovoItem.quantidade
+                  }"
+                  @input="
+                    limparErroNovoItem('quantidade')
+                  "
+                />
+
+                <!-- DATA COMPRA -->
+                <input
+                  type="date"
+                  v-model="novoItem.dataCompra"
+                  title="Data da compra"
+                  :class="{
+                    'campo-erro':
+                      errosNovoItem.dataCompra
+                  }"
+                  @change="
+                    limparErroNovoItem('dataCompra')
+                  "
+                />
+
+                <!-- VALIDADE -->
+                <input
+                  type="date"
+                  v-model="novoItem.dataValidade"
+                  title="Data de validade"
+                  :class="{
+                    'campo-erro':
+                      errosNovoItem.dataValidade
+                  }"
+                  @change="
+                    limparErroNovoItem('dataValidade')
+                  "
+                />
+
+                <!-- RESPONSÁVEL -->
+                <input
+                  type="text"
+                  v-model="novoItem.usuarioResponsavel"
+                  placeholder="Responsável"
+                  :class="{
+                    'campo-erro':
+                      errosNovoItem.usuarioResponsavel
+                  }"
+                  @input="
+                    limparErroNovoItem(
+                      'usuarioResponsavel'
+                    )
+                  "
+                />
+
+                <button
+                  @click="cadastrarNovoAlimento"
+                  class="btn btn-success"
+                >
+                  Cadastrar Alimento
+                </button>
+
+              </div>
+
+            </div>
+
+            <!-- CARDS -->
             <div class="estoque-grid">
 
               <div
@@ -902,9 +1017,7 @@
 
                 <button
                   class="btn-delete"
-                  @click="
-                    excluirAlimento(item.id)
-                  "
+                  @click="excluirAlimento(item.id)"
                 >
                   🗑️
                 </button>
@@ -927,18 +1040,14 @@
 
                   <button
                     class="btn-link"
-                    @click="
-                      abrirLotes(item.nome)
-                    "
+                    @click="abrirLotes(item.nome)"
                   >
                     Ver lotes e validades
                   </button>
 
                   <button
                     class="btn-link"
-                    @click="
-                      abrirNovoLote(item)
-                    "
+                    @click="abrirNovoLote(item)"
                   >
                     + Lote
                   </button>
@@ -985,80 +1094,9 @@
 
             </div>
 
-            <div class="card glass-effect">
-
-              <h3>
-                Cadastrar Alimento Novo
-              </h3>
-
-              <p
-                style="
-                  color:#94a3b8;
-                  font-size:0.85rem;
-                  margin-bottom:0.8rem
-                "
-              >
-                Use este formulário apenas para um alimento que ainda
-                não existe no estoque. Para um alimento já cadastrado,
-                use o botão "+ Lote" no card dele.
-              </p>
-
-              <div class="input-group-row">
-
-                <input
-                  type="text"
-                  v-model="novoItem.nome"
-                  placeholder="Nome do alimento (Ex: Arroz)"
-                />
-
-                <input
-                  type="text"
-                  v-model="novoItem.unidade"
-                  placeholder="Unidade (kg ou g)"
-                  style="width:130px"
-                />
-
-                <input
-                  type="number"
-                  v-model="novoItem.quantidade"
-                  placeholder="Qtd"
-                  style="width:80px"
-                />
-
-                <input
-                  type="date"
-                  v-model="novoItem.dataCompra"
-                  title="Data da compra"
-                />
-
-                <input
-                  type="date"
-                  v-model="novoItem.dataValidade"
-                  title="Data de validade"
-                />
-
-                <input
-                  type="text"
-                  v-model="
-                    novoItem.usuarioResponsavel
-                  "
-                  placeholder="Responsável"
-                />
-
-                <button
-                  @click="cadastrarNovoAlimento"
-                  class="btn btn-success"
-                >
-                  Cadastrar Alimento
-                </button>
-
-              </div>
-
-            </div>
-
           </div>
 
-          <!-- Entradas de Estoque -->
+          <!-- HISTÓRICO DE ENTRADAS -->
           <div
             v-if="abaEstoque === 'historico'"
             class="card glass-effect"
@@ -1184,6 +1222,7 @@
           class="tab-pane"
         >
 
+          <!-- SUBABAS -->
           <div
             class="card glass-effect"
             style="
@@ -1221,7 +1260,7 @@
 
           </div>
 
-          <!-- Registrar -->
+          <!-- REGISTRAR PRATO -->
           <div
             v-if="abaPrato === 'registrar'"
             class="card glass-effect"
@@ -1231,22 +1270,63 @@
               Registrar Prato do Dia
             </h3>
 
+            <!-- AVISO -->
+            <div
+              v-if="camposFaltandoPrato.length > 0"
+              class="cadastro-erro"
+            >
+
+              <strong>
+                ⚠️ Preencha os campos obrigatórios:
+              </strong>
+
+              <span>
+                {{ camposFaltandoPrato.join(', ') }}
+              </span>
+
+            </div>
+
+            <!-- DADOS DO PRATO -->
             <div class="input-group-row">
 
+              <!-- NOME -->
               <input
                 v-model="pratoDoDia.nome"
                 placeholder="Nome do prato/refeição"
+                :class="{
+                  'campo-erro':
+                    errosPrato.nome
+                }"
+                @input="
+                  limparErroPrato('nome')
+                "
               />
 
+              <!-- DATA -->
               <input
                 type="date"
                 v-model="pratoDoDia.data"
+                :class="{
+                  'campo-erro':
+                    errosPrato.data
+                }"
+                @change="
+                  limparErroPrato('data')
+                "
               />
 
+              <!-- TURNO -->
               <select
                 v-model="pratoDoDia.turno"
                 class="input-field"
                 style="width:160px"
+                :class="{
+                  'campo-erro':
+                    errosPrato.turno
+                }"
+                @change="
+                  limparErroPrato('turno')
+                "
               >
 
                 <option
@@ -1268,31 +1348,35 @@
 
             </div>
 
-            <h4
-              style="margin-top:1rem"
-            >
+            <h4 style="margin-top:1rem">
               Ingredientes utilizados
             </h4>
 
+            <!-- INGREDIENTES -->
             <div
-              v-for="(
-                ing,
-                idx
-              ) in pratoDoDia.ingredientes"
+              v-for="(ing, idx) in pratoDoDia.ingredientes"
               :key="idx"
-              class="input-group-row"
-              style="
-                margin-top:0.5rem
-              "
+              class="ingrediente-linha"
             >
 
+              <!-- ALIMENTO -->
               <select
                 v-model="ing.nome"
                 class="input-field"
+                :class="{
+                  'campo-erro':
+                    errosIngredientes[idx]?.nome
+                }"
+                @change="
+                  limparErroIngrediente(
+                    idx,
+                    'nome'
+                  )
+                "
               >
 
                 <option value="">
-                  Selecione
+                  Selecione o alimento
                 </option>
 
                 <option
@@ -1313,15 +1397,38 @@
 
               </select>
 
+              <!-- QUANTIDADE -->
               <input
                 type="number"
                 v-model="ing.quantidade"
                 placeholder="Quantidade"
+                min="0"
+                :class="{
+                  'campo-erro':
+                    errosIngredientes[idx]?.quantidade
+                }"
+                @input="
+                  limparErroIngrediente(
+                    idx,
+                    'quantidade'
+                  )
+                "
               />
 
+              <!-- UNIDADE -->
               <input
                 v-model="ing.unidade"
                 placeholder="Unidade"
+                :class="{
+                  'campo-erro':
+                    errosIngredientes[idx]?.unidade
+                }"
+                @input="
+                  limparErroIngrediente(
+                    idx,
+                    'unidade'
+                  )
+                "
               />
 
               <button
@@ -1345,16 +1452,14 @@
             <button
               @click="salvarPratoDia"
               class="btn btn-success"
-              style="
-                margin-left:0.5rem
-              "
+              style="margin-left:0.5rem"
             >
               Registrar e baixar estoque
             </button>
 
           </div>
 
-          <!-- Histórico -->
+          <!-- HISTÓRICO DE PRATOS -->
           <div
             v-if="abaPrato === 'historico'"
             class="card glass-effect"
@@ -1365,9 +1470,7 @@
               <div>
 
                 <h3
-                  style="
-                    margin-bottom:0.25rem
-                  "
+                  style="margin-bottom:0.25rem"
                 >
                   Histórico de Pratos
                 </h3>
@@ -1384,9 +1487,7 @@
               </div>
 
               <button
-                @click="
-                  carregarHistoricoPratos
-                "
+                @click="carregarHistoricoPratos"
                 class="btn-refresh"
               >
                 🔄 Atualizar
@@ -1395,9 +1496,7 @@
             </div>
 
             <div
-              v-if="
-                historicoPratos.length === 0
-              "
+              v-if="historicoPratos.length === 0"
               class="empty-state"
             >
               <p>
@@ -1413,17 +1512,13 @@
               <table class="data-table">
 
                 <thead>
-
                   <tr>
                     <th>Data</th>
                     <th>Turno</th>
                     <th>Prato</th>
-                    <th>
-                      Ingredientes utilizados
-                    </th>
+                    <th>Ingredientes utilizados</th>
                     <th>Ação</th>
                   </tr>
-
                 </thead>
 
                 <tbody>
@@ -1549,12 +1644,7 @@
           <div class="dashboard-grid">
 
             <div
-              class="
-                card
-                glass-effect
-                alert-card
-                alert-card-amarelo
-              "
+              class="card glass-effect alert-card alert-card-amarelo"
             >
 
               <h3>
@@ -1562,9 +1652,7 @@
               </h3>
 
               <p
-                v-if="
-                  !alertas.estoqueBaixo?.length
-                "
+                v-if="!alertas.estoqueBaixo?.length"
               >
                 Nenhum item abaixo do limite.
               </p>
@@ -1576,11 +1664,7 @@
                   :key="i.id"
                 >
                   {{ i.nome }}:
-                  {{
-                    formatarQuantidade(
-                      i.quantidade
-                    )
-                  }}
+                  {{ formatarQuantidade(i.quantidade) }}
                   {{ i.unidade }}
                   restantes
                 </li>
@@ -1590,12 +1674,7 @@
             </div>
 
             <div
-              class="
-                card
-                glass-effect
-                alert-card
-                alert-card-vermelho
-              "
+              class="card glass-effect alert-card alert-card-vermelho"
             >
 
               <h3>
@@ -1603,9 +1682,7 @@
               </h3>
 
               <p
-                v-if="
-                  !alertas.estoqueEsgotado?.length
-                "
+                v-if="!alertas.estoqueEsgotado?.length"
               >
                 Nenhum item esgotado.
               </p>
@@ -1624,12 +1701,7 @@
             </div>
 
             <div
-              class="
-                card
-                glass-effect
-                alert-card
-                alert-card-amarelo
-              "
+              class="card glass-effect alert-card alert-card-amarelo"
             >
 
               <h3>
@@ -1637,9 +1709,7 @@
               </h3>
 
               <p
-                v-if="
-                  !alertas.vencendoEm?.length
-                "
+                v-if="!alertas.vencendoEm?.length"
               >
                 Nenhum lote em aviso de vencimento
                 (30/25/20/15/10/5 dias).
@@ -1663,12 +1733,7 @@
             </div>
 
             <div
-              class="
-                card
-                glass-effect
-                alert-card
-                alert-card-vermelho
-              "
+              class="card glass-effect alert-card alert-card-vermelho"
             >
 
               <h3>
@@ -1676,9 +1741,7 @@
               </h3>
 
               <p
-                v-if="
-                  !alertas.vencidos?.length
-                "
+                v-if="!alertas.vencidos?.length"
               >
                 Nenhum lote vencido.
               </p>
@@ -1708,13 +1771,7 @@
 
             </div>
 
-            <div
-              class="
-                card
-                glass-effect
-                alert-card
-              "
-            >
+            <div class="card glass-effect alert-card">
 
               <h3>
                 🍽️ Resumo Diário
@@ -1818,7 +1875,7 @@
 
       </div>
 
-      <!-- Toast -->
+      <!-- TOAST -->
       <Transition name="slide-fade">
 
         <div
@@ -1979,28 +2036,16 @@
                 </td>
 
                 <td>
-                  {{
-                    formatarQuantidade(
-                      l.quantidade
-                    )
-                  }}
+                  {{ formatarQuantidade(l.quantidade) }}
                   {{ l.unidade }}
                 </td>
 
                 <td>
-                  {{
-                    formatarDataCurta(
-                      l.dataCompra
-                    )
-                  }}
+                  {{ formatarDataCurta(l.dataCompra) }}
                 </td>
 
                 <td>
-                  {{
-                    formatarDataCurta(
-                      l.dataValidade
-                    )
-                  }}
+                  {{ formatarDataCurta(l.dataValidade) }}
                 </td>
 
               </tr>
@@ -2042,45 +2087,83 @@
           {{ loteParaAdicionar.nome }}
         </h3>
 
+        <!-- AVISO DO LOTE -->
         <div
-          class="input-group"
-          style="
-            display:flex;
-            flex-direction:column;
-            gap:10px
-          "
+          v-if="camposFaltandoNovoLote.length > 0"
+          class="cadastro-erro"
         >
 
+          <strong>
+            ⚠️ Campos obrigatórios:
+          </strong>
+
+          <span>
+            {{ camposFaltandoNovoLote.join(', ') }}
+          </span>
+
+        </div>
+
+        <div
+          class="input-group"
+        >
+
+          <!-- QUANTIDADE -->
           <input
             type="number"
-            v-model="
-              novoLoteExtra.quantidade
-            "
+            v-model="novoLoteExtra.quantidade"
             placeholder="Quantidade"
+            min="0"
+            :class="{
+              'campo-erro':
+                errosNovoLote.quantidade
+            }"
+            @input="
+              limparErroNovoLote('quantidade')
+            "
           />
 
+          <!-- DATA COMPRA -->
           <input
             type="date"
-            v-model="
-              novoLoteExtra.dataCompra
-            "
+            v-model="novoLoteExtra.dataCompra"
             title="Data da compra"
+            :class="{
+              'campo-erro':
+                errosNovoLote.dataCompra
+            }"
+            @change="
+              limparErroNovoLote('dataCompra')
+            "
           />
 
+          <!-- DATA VALIDADE -->
           <input
             type="date"
-            v-model="
-              novoLoteExtra.dataValidade
-            "
+            v-model="novoLoteExtra.dataValidade"
             title="Data de validade"
+            :class="{
+              'campo-erro':
+                errosNovoLote.dataValidade
+            }"
+            @change="
+              limparErroNovoLote('dataValidade')
+            "
           />
 
+          <!-- RESPONSÁVEL -->
           <input
             type="text"
-            v-model="
-              novoLoteExtra.usuarioResponsavel
-            "
+            v-model="novoLoteExtra.usuarioResponsavel"
             placeholder="Responsável"
+            :class="{
+              'campo-erro':
+                errosNovoLote.usuarioResponsavel
+            }"
+            @input="
+              limparErroNovoLote(
+                'usuarioResponsavel'
+              )
+            "
           />
 
         </div>
@@ -2132,11 +2215,15 @@ import axios from 'axios';
 import QrcodeVue from 'qrcode.vue';
 import { Html5Qrcode } from 'html5-qrcode';
 
+/* =============================================================
+   CONFIGURAÇÃO
+============================================================= */
+
 const API_URL =
   import.meta.env.VITE_API_URL || '/api';
 
 /* =============================================================
-   ESTADOS
+   ESTADOS GERAIS
 ============================================================= */
 
 const currentTab =
@@ -2155,12 +2242,23 @@ const currentCameraId =
   ref('environment');
 
 const tabTitles = {
-  validacao: 'Validação de Acesso',
-  alunos: 'Banco de Estudantes',
-  estoque: 'Gestão de Estoque',
-  prato: 'Prato do Dia',
-  alertas: 'Dashboard de Alertas',
-  geracao: 'Geração de Fichas'
+  validacao:
+    'Validação de Acesso',
+
+  alunos:
+    'Banco de Estudantes',
+
+  estoque:
+    'Gestão de Estoque',
+
+  prato:
+    'Prato do Dia',
+
+  alertas:
+    'Dashboard de Alertas',
+
+  geracao:
+    'Geração de Fichas'
 };
 
 const estoqueList =
@@ -2200,6 +2298,15 @@ const countdownTimer =
   ref(null);
 
 /* =============================================================
+   UTILITÁRIO DE DATA
+============================================================= */
+
+const hojeISO = () =>
+  new Date()
+    .toISOString()
+    .slice(0, 10);
+
+/* =============================================================
    ESTOQUE
 ============================================================= */
 
@@ -2222,17 +2329,11 @@ const TURNOS = [
 const filtroTurno =
   ref('');
 
-const hojeISO =
-  () =>
-    new Date()
-      .toISOString()
-      .slice(0, 10);
-
 const novoItem =
   ref({
     nome: '',
-    unidade: 'kg',
-    quantidade: 0,
+    unidade: '',
+    quantidade: '',
     dataCompra: hojeISO(),
     dataValidade: '',
     usuarioResponsavel: ''
@@ -2276,14 +2377,226 @@ const pratoDoDia =
     ingredientes: [
       {
         nome: '',
-        unidade: 'kg',
-        quantidade: 0
+        unidade: '',
+        quantidade: ''
       }
     ]
   });
 
 /* =============================================================
-   ALUNOS DA TELA DE VALIDAÇÃO
+   ERROS DO CADASTRO DE ALIMENTO
+============================================================= */
+
+const errosNovoItem =
+  ref({
+    nome: false,
+    unidade: false,
+    quantidade: false,
+    dataCompra: false,
+    dataValidade: false,
+    usuarioResponsavel: false
+  });
+
+const camposFaltandoNovoItem =
+  computed(() => {
+
+    const nomes = {
+      nome:
+        'Nome do alimento',
+
+      unidade:
+        'Unidade',
+
+      quantidade:
+        'Quantidade',
+
+      dataCompra:
+        'Data da compra',
+
+      dataValidade:
+        'Data de validade',
+
+      usuarioResponsavel:
+        'Responsável'
+    };
+
+    return Object.keys(
+      errosNovoItem.value
+    )
+      .filter(
+        campo =>
+          errosNovoItem.value[campo]
+      )
+      .map(
+        campo =>
+          nomes[campo]
+      );
+  });
+
+const limparErroNovoItem =
+  (campo) => {
+
+    errosNovoItem.value[campo] =
+      false;
+  };
+
+/* =============================================================
+   ERROS DOS LOTES
+============================================================= */
+
+const loteParaAdicionar =
+  ref(null);
+
+const novoLoteExtra =
+  ref({
+    quantidade: '',
+    dataCompra: hojeISO(),
+    dataValidade: '',
+    usuarioResponsavel: ''
+  });
+
+const errosNovoLote =
+  ref({
+    quantidade: false,
+    dataCompra: false,
+    dataValidade: false,
+    usuarioResponsavel: false
+  });
+
+const camposFaltandoNovoLote =
+  computed(() => {
+
+    const nomes = {
+      quantidade:
+        'Quantidade',
+
+      dataCompra:
+        'Data da compra',
+
+      dataValidade:
+        'Data de validade',
+
+      usuarioResponsavel:
+        'Responsável'
+    };
+
+    return Object.keys(
+      errosNovoLote.value
+    )
+      .filter(
+        campo =>
+          errosNovoLote.value[campo]
+      )
+      .map(
+        campo =>
+          nomes[campo]
+      );
+  });
+
+const limparErroNovoLote =
+  (campo) => {
+
+    errosNovoLote.value[campo] =
+      false;
+  };
+
+/* =============================================================
+   ERROS DO PRATO DO DIA
+============================================================= */
+
+const errosPrato =
+  ref({
+    nome: false,
+    data: false,
+    turno: false
+  });
+
+const errosIngredientes =
+  ref([
+    {
+      nome: false,
+      quantidade: false,
+      unidade: false
+    }
+  ]);
+
+const camposFaltandoPrato =
+  computed(() => {
+
+    const faltando = [];
+
+    if (
+      errosPrato.value.nome
+    ) {
+      faltando.push(
+        'Nome do prato'
+      );
+    }
+
+    if (
+      errosPrato.value.data
+    ) {
+      faltando.push(
+        'Data'
+      );
+    }
+
+    if (
+      errosPrato.value.turno
+    ) {
+      faltando.push(
+        'Turno'
+      );
+    }
+
+    errosIngredientes.value.forEach(
+      (erro, index) => {
+
+        if (erro.nome) {
+          faltando.push(
+            `Ingrediente ${index + 1} - Alimento`
+          );
+        }
+
+        if (erro.quantidade) {
+          faltando.push(
+            `Ingrediente ${index + 1} - Quantidade`
+          );
+        }
+
+        if (erro.unidade) {
+          faltando.push(
+            `Ingrediente ${index + 1} - Unidade`
+          );
+        }
+
+      }
+    );
+
+    return faltando;
+  });
+
+const limparErroPrato =
+  (campo) => {
+
+    errosPrato.value[campo] =
+      false;
+  };
+
+const limparErroIngrediente =
+  (index, campo) => {
+
+    if (
+      errosIngredientes.value[index]
+    ) {
+
+      errosIngredientes.value[index][campo] =
+        false;
+    }
+  };
+
+/* =============================================================
+   ALUNOS DA VALIDAÇÃO
 ============================================================= */
 
 const alunosLiberados =
@@ -2296,7 +2609,7 @@ const alunosLiberados =
       alunosList.value || []
     )
       .filter(
-        (aluno) => {
+        aluno => {
 
           if (
             !aluno.ultimaRefeicao
@@ -2330,10 +2643,7 @@ const alunosLiberados =
               b.ultimaRefeicao
             ).getTime();
 
-          return (
-            dataB -
-            dataA
-          );
+          return dataB - dataA;
         }
       );
   });
@@ -2344,7 +2654,7 @@ const alunosNaoLiberados =
     const idsLiberados =
       new Set(
         alunosLiberados.value.map(
-          (aluno) =>
+          aluno =>
             aluno.id
         )
       );
@@ -2353,7 +2663,7 @@ const alunosNaoLiberados =
       alunosList.value || []
     )
       .filter(
-        (aluno) =>
+        aluno =>
           !idsLiberados.has(
             aluno.id
           )
@@ -2370,9 +2680,7 @@ const alunosNaoLiberados =
   });
 
 const calcularProximaLiberacao =
-  (
-    ultimaRefeicao
-  ) => {
+  (ultimaRefeicao) => {
 
     if (
       !ultimaRefeicao
@@ -2384,18 +2692,22 @@ const calcularProximaLiberacao =
       new Date(
         toUTC(
           ultimaRefeicao
-        ).getTime() +
+        ).getTime()
+        +
         6 *
-          60 *
-          60 *
-          1000
+        60 *
+        60 *
+        1000
       );
 
     return proxima.toLocaleTimeString(
       'pt-BR',
       {
-        hour: '2-digit',
-        minute: '2-digit'
+        hour:
+          '2-digit',
+
+        minute:
+          '2-digit'
       }
     );
   };
@@ -2424,10 +2736,6 @@ const carregarHistoricoPratos =
         err
       );
 
-      mostrarMensagem(
-        'Erro ao carregar histórico de pratos',
-        'error'
-      );
     }
   };
 
@@ -2482,6 +2790,7 @@ watch(
     ) {
       await carregarHistorico();
     }
+
   }
 );
 
@@ -2494,6 +2803,7 @@ watch(
     ) {
       await carregarHistoricoPratos();
     }
+
   }
 );
 
@@ -2502,9 +2812,7 @@ watch(
 ============================================================= */
 
 const iniciarContagemRegressiva =
-  (
-    segundosFaltando
-  ) => {
+  (segundosFaltando) => {
 
     if (
       countdownTimer.value
@@ -2517,7 +2825,9 @@ const iniciarContagemRegressiva =
 
     let segundosTotais =
       Math.floor(
-        segundosFaltando
+        Number(
+          segundosFaltando
+        )
       );
 
     const atualizarTexto =
@@ -2534,7 +2844,8 @@ const iniciarContagemRegressiva =
             (
               segundosTotais %
               3600
-            ) / 60
+            ) /
+            60
           );
 
         const s =
@@ -2552,8 +2863,7 @@ const iniciarContagemRegressiva =
         () => {
 
           if (
-            segundosTotais <=
-            0
+            segundosTotais <= 0
           ) {
 
             clearInterval(
@@ -2574,13 +2884,6 @@ const iniciarContagemRegressiva =
         1000
       );
   };
-
-/* =============================================================
-   SCANNER
-============================================================= */
-
-let html5QrCode =
-  null;
 
 /* =============================================================
    ESTOQUE
@@ -2623,7 +2926,7 @@ const verificarAlertaEstoqueId =
           .estoqueEsgotado ||
         []
       ).find(
-        (i) =>
+        i =>
           i.id === id
       );
 
@@ -2645,7 +2948,7 @@ const verificarAlertaEstoqueId =
           .estoqueBaixo ||
         []
       ).find(
-        (i) =>
+        i =>
           i.id === id
       );
 
@@ -2675,7 +2978,7 @@ const verificarAlertaPorNomes =
             .estoqueEsgotado ||
           []
         ).find(
-          (i) =>
+          i =>
             i.nome === nome
         );
 
@@ -2702,7 +3005,7 @@ const verificarAlertaPorNomes =
             .estoqueBaixo ||
           []
         ).find(
-          (i) =>
+          i =>
             i.nome === nome
         );
 
@@ -2725,10 +3028,7 @@ const verificarAlertaPorNomes =
   };
 
 const ajustarEstoque =
-  async (
-    id,
-    delta
-  ) => {
+  async (id, delta) => {
 
     try {
 
@@ -2739,9 +3039,7 @@ const ajustarEstoque =
       await carregarEstoque();
       await carregarAlertas();
 
-      verificarAlertaEstoqueId(
-        id
-      );
+      verificarAlertaEstoqueId(id);
 
     } catch (err) {
 
@@ -2757,16 +3055,59 @@ const ajustarEstoque =
     }
   };
 
+/* =============================================================
+   CADASTRAR NOVO ALIMENTO
+============================================================= */
+
 const cadastrarNovoAlimento =
   async () => {
 
+    const erros = {
+
+      nome:
+        !String(
+          novoItem.value.nome || ''
+        ).trim(),
+
+      unidade:
+        !String(
+          novoItem.value.unidade || ''
+        ).trim(),
+
+      quantidade:
+        novoItem.value.quantidade === '' ||
+        novoItem.value.quantidade === null ||
+        Number(
+          novoItem.value.quantidade
+        ) <= 0,
+
+      dataCompra:
+        !String(
+          novoItem.value.dataCompra || ''
+        ).trim(),
+
+      dataValidade:
+        !String(
+          novoItem.value.dataValidade || ''
+        ).trim(),
+
+      usuarioResponsavel:
+        !String(
+          novoItem.value.usuarioResponsavel || ''
+        ).trim()
+    };
+
+    errosNovoItem.value =
+      erros;
+
     if (
-      !novoItem.value.nome ||
-      !novoItem.value.unidade
+      Object.values(
+        erros
+      ).some(Boolean)
     ) {
 
       mostrarMensagem(
-        'Informe nome e unidade do alimento.',
+        `Preencha os campos obrigatórios: ${camposFaltandoNovoItem.value.join(', ')}.`,
         'error'
       );
 
@@ -2782,11 +3123,20 @@ const cadastrarNovoAlimento =
 
       novoItem.value = {
         nome: '',
-        unidade: 'kg',
-        quantidade: 0,
+        unidade: '',
+        quantidade: '',
         dataCompra: hojeISO(),
         dataValidade: '',
         usuarioResponsavel: ''
+      };
+
+      errosNovoItem.value = {
+        nome: false,
+        unidade: false,
+        quantidade: false,
+        dataCompra: false,
+        dataValidade: false,
+        usuarioResponsavel: false
       };
 
       await carregarEstoque();
@@ -2810,17 +3160,6 @@ const cadastrarNovoAlimento =
    LOTES
 ============================================================= */
 
-const loteParaAdicionar =
-  ref(null);
-
-const novoLoteExtra =
-  ref({
-    quantidade: 0,
-    dataCompra: hojeISO(),
-    dataValidade: '',
-    usuarioResponsavel: ''
-  });
-
 const abrirNovoLote =
   (item) => {
 
@@ -2828,23 +3167,59 @@ const abrirNovoLote =
       item;
 
     novoLoteExtra.value = {
-      quantidade: 0,
+      quantidade: '',
       dataCompra: hojeISO(),
       dataValidade: '',
       usuarioResponsavel: ''
+    };
+
+    errosNovoLote.value = {
+      quantidade: false,
+      dataCompra: false,
+      dataValidade: false,
+      usuarioResponsavel: false
     };
   };
 
 const confirmarNovoLote =
   async () => {
 
+    const erros = {
+
+      quantidade:
+        novoLoteExtra.value.quantidade === '' ||
+        novoLoteExtra.value.quantidade === null ||
+        Number(
+          novoLoteExtra.value.quantidade
+        ) <= 0,
+
+      dataCompra:
+        !String(
+          novoLoteExtra.value.dataCompra || ''
+        ).trim(),
+
+      dataValidade:
+        !String(
+          novoLoteExtra.value.dataValidade || ''
+        ).trim(),
+
+      usuarioResponsavel:
+        !String(
+          novoLoteExtra.value.usuarioResponsavel || ''
+        ).trim()
+    };
+
+    errosNovoLote.value =
+      erros;
+
     if (
-      !novoLoteExtra.value.quantidade ||
-      !novoLoteExtra.value.dataValidade
+      Object.values(
+        erros
+      ).some(Boolean)
     ) {
 
       mostrarMensagem(
-        'Informe quantidade e data de validade.',
+        `Preencha os campos obrigatórios: ${camposFaltandoNovoLote.value.join(', ')}.`,
         'error'
       );
 
@@ -2857,18 +3232,24 @@ const confirmarNovoLote =
         loteParaAdicionar.value.nome;
 
       await axios.post(
-        `${API_URL}/estoque/${encodeURIComponent(
-          nome
-        )}/lotes`,
+        `${API_URL}/estoque/${encodeURIComponent(nome)}/lotes`,
         {
           unidade:
             loteParaAdicionar.value.unidade,
+
           ...novoLoteExtra.value
         }
       );
 
       loteParaAdicionar.value =
         null;
+
+      errosNovoLote.value = {
+        quantidade: false,
+        dataCompra: false,
+        dataValidade: false,
+        usuarioResponsavel: false
+      };
 
       await carregarEstoque();
 
@@ -2919,9 +3300,7 @@ const abrirLotes =
 
       const res =
         await axios.get(
-          `${API_URL}/estoque/${encodeURIComponent(
-            nome
-          )}/lotes`
+          `${API_URL}/estoque/${encodeURIComponent(nome)}/lotes`
         );
 
       alimentoSelecionado.value =
@@ -2957,11 +3336,13 @@ const carregarHistorico =
         ([k, v]) => {
 
           if (v) {
+
             params.append(
               k,
               v
             );
           }
+
         }
       );
 
@@ -3020,19 +3401,40 @@ const carregarAlertas =
 const adicionarIngrediente =
   () => {
 
-    pratoDoDia.value.ingredientes.push(
-      {
-        nome: '',
-        unidade: 'kg',
-        quantidade: 0
-      }
-    );
+    pratoDoDia.value.ingredientes.push({
+      nome: '',
+      unidade: '',
+      quantidade: ''
+    });
+
+    errosIngredientes.value.push({
+      nome: false,
+      quantidade: false,
+      unidade: false
+    });
   };
 
 const removerIngrediente =
   (idx) => {
 
+    if (
+      pratoDoDia.value.ingredientes.length === 1
+    ) {
+
+      mostrarMensagem(
+        'É necessário ter pelo menos um ingrediente.',
+        'error'
+      );
+
+      return;
+    }
+
     pratoDoDia.value.ingredientes.splice(
+      idx,
+      1
+    );
+
+    errosIngredientes.value.splice(
       idx,
       1
     );
@@ -3041,35 +3443,77 @@ const removerIngrediente =
 const salvarPratoDia =
   async () => {
 
+    const erros = {
+
+      nome:
+        !String(
+          pratoDoDia.value.nome || ''
+        ).trim(),
+
+      data:
+        !String(
+          pratoDoDia.value.data || ''
+        ).trim(),
+
+      turno:
+        !String(
+          pratoDoDia.value.turno || ''
+        ).trim()
+    };
+
+    const errosDosIngredientes =
+      pratoDoDia.value.ingredientes.map(
+        ingrediente => {
+
+          return {
+
+            nome:
+              !String(
+                ingrediente.nome || ''
+              ).trim(),
+
+            quantidade:
+              ingrediente.quantidade === '' ||
+              ingrediente.quantidade === null ||
+              Number(
+                ingrediente.quantidade
+              ) <= 0,
+
+            unidade:
+              !String(
+                ingrediente.unidade || ''
+              ).trim()
+          };
+        }
+      );
+
+    errosPrato.value =
+      erros;
+
+    errosIngredientes.value =
+      errosDosIngredientes;
+
+    if (
+      camposFaltandoPrato.value.length > 0
+    ) {
+
+      mostrarMensagem(
+        `Preencha os campos obrigatórios: ${camposFaltandoPrato.value.join(', ')}.`,
+        'error'
+      );
+
+      return;
+    }
+
     try {
 
       const nomesConsumidos =
         pratoDoDia.value.ingredientes
           .map(
-            (i) =>
-              i.nome
+            ingrediente =>
+              ingrediente.nome
           )
           .filter(Boolean);
-
-      if (
-        !pratoDoDia.value.nome
-      ) {
-
-        mostrarMensagem(
-          'Informe o nome do prato.',
-          'error'
-        );
-
-        return;
-      }
-
-      if (
-        !pratoDoDia.value.data
-      ) {
-
-        pratoDoDia.value.data =
-          hojeISO();
-      }
 
       await axios.post(
         `${API_URL}/prato-dia`,
@@ -3083,11 +3527,25 @@ const salvarPratoDia =
         ingredientes: [
           {
             nome: '',
-            unidade: 'kg',
-            quantidade: 0
+            unidade: '',
+            quantidade: ''
           }
         ]
       };
+
+      errosPrato.value = {
+        nome: false,
+        data: false,
+        turno: false
+      };
+
+      errosIngredientes.value = [
+        {
+          nome: false,
+          quantidade: false,
+          unidade: false
+        }
+      ];
 
       await carregarEstoque();
       await carregarAlertas();
@@ -3244,8 +3702,8 @@ const alunosFiltrados =
 
         lista =
           lista.filter(
-            (a) =>
-              a.turno ===
+            aluno =>
+              aluno.turno ===
               filtroTurno.value
           );
       }
@@ -3262,16 +3720,18 @@ const alunosFiltrados =
           .toLowerCase();
 
       return lista.filter(
-        (a) =>
+        aluno =>
           (
-            a.nome &&
-            a.nome
+            aluno.nome &&
+            aluno.nome
               .toLowerCase()
               .includes(f)
-          ) ||
+          )
+          ||
           (
-            a.matricula &&
-            a.matricula.includes(f)
+            aluno.matricula &&
+            aluno.matricula
+              .includes(f)
           )
       );
     }
@@ -3415,6 +3875,7 @@ const salvarEdicao =
     if (
       !alunoEditando.value
     ) {
+
       return;
     }
 
@@ -3470,11 +3931,15 @@ const salvarEdicao =
 ============================================================= */
 
 const validarFicha =
-  async (
-    matricula
-  ) => {
+  async (matricula) => {
 
     if (!matricula) {
+
+      mostrarMensagem(
+        'Informe a matrícula.',
+        'error'
+      );
+
       return;
     }
 
@@ -3508,9 +3973,12 @@ const validarFicha =
       );
 
       statusValidacao.value = {
-        tipo: 'success',
+        tipo:
+          'success',
+
         titulo:
           'Acesso Liberado',
+
         msg:
           res.data.message
       };
@@ -3527,16 +3995,22 @@ const validarFicha =
         err.response?.data;
 
       statusValidacao.value = {
-        tipo: 'error',
+        tipo:
+          'error',
+
         titulo:
           'Acesso Negado',
+
         msg:
           errorData?.error ||
           'Erro na validação',
+
         espera:
           errorData?.espera,
+
         ultimaRefeicao:
           errorData?.horaUltimaRefeicao,
+
         proximaRefeicao:
           errorData?.proximaRefeicao
       };
@@ -3590,12 +4064,14 @@ const toUTC =
   (dateStr) => {
 
     if (!dateStr) {
+
       return new Date();
     }
 
     if (
       dateStr instanceof Date
     ) {
+
       return dateStr;
     }
 
@@ -3613,6 +4089,7 @@ const formatarData =
   (dateStr) => {
 
     if (!dateStr) {
+
       return 'Nunca';
     }
 
@@ -3627,6 +4104,7 @@ const podeComer =
   (dateStr) => {
 
     if (!dateStr) {
+
       return true;
     }
 
@@ -3653,6 +4131,7 @@ const tempoRestanteAluno =
   (dateStr) => {
 
     if (!dateStr) {
+
       return '—';
     }
 
@@ -3660,7 +4139,8 @@ const tempoRestanteAluno =
       new Date(
         toUTC(
           dateStr
-        ).getTime() +
+        ).getTime()
+        +
         6 *
         60 *
         60 *
@@ -3724,8 +4204,10 @@ const mostrarMensagem =
 
     setTimeout(
       () => {
+
         mensagem.value =
           '';
+
       },
       4000
     );
@@ -3749,6 +4231,9 @@ const formatarQuantidade =
 /* =============================================================
    CÂMERA
 ============================================================= */
+
+let html5QrCode =
+  null;
 
 const toggleCamera =
   async () => {
@@ -3781,10 +4266,15 @@ const startCamera =
     }
 
     const config = {
-      fps: 15,
+      fps:
+        15,
+
       qrbox: {
-        width: 250,
-        height: 250
+        width:
+          250,
+
+        height:
+          250
       }
     };
 
@@ -3878,7 +4368,7 @@ const switchCamera =
   };
 
 /* =============================================================
-   TROCAR ABA
+   TROCA DE ABA
 ============================================================= */
 
 const changeTab =
@@ -4656,9 +5146,6 @@ body {
   font-size:
     0.83rem;
 
-  margin-right:
-    8px;
-
   font-family:
     inherit;
 
@@ -4788,7 +5275,8 @@ body {
     inherit;
 
   transition:
-    border-color 0.16s;
+    border-color 0.16s,
+    box-shadow 0.16s;
 }
 
 .input-field:focus {
@@ -4861,6 +5349,88 @@ select.input-field option {
 
   color:
     var(--text-primary);
+}
+
+/* =========================================================
+   CAMPOS OBRIGATÓRIOS
+========================================================= */
+
+.campo-erro {
+  border-color:
+    #DC2626 !important;
+
+  background:
+    #FEF2F2 !important;
+
+  box-shadow:
+    0 0 0 2px
+    rgba(220,38,38,0.10) !important;
+}
+
+.campo-erro:focus {
+  border-color:
+    #DC2626 !important;
+
+  background:
+    #FFFFFF !important;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(220,38,38,0.15) !important;
+}
+
+.cadastro-erro {
+  width:
+    100%;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    6px;
+
+  margin-bottom:
+    1rem;
+
+  padding:
+    0.8rem
+    1rem;
+
+  border:
+    1px solid
+    #FECACA;
+
+  border-left:
+    4px solid
+    #DC2626;
+
+  border-radius:
+    8px;
+
+  background:
+    #FEF2F2;
+
+  color:
+    #991B1B;
+
+  font-size:
+    0.85rem;
+}
+
+.cadastro-erro strong {
+  font-weight:
+    700;
+}
+
+.cadastro-erro span {
+  font-weight:
+    500;
 }
 
 /* =========================================================
@@ -5058,7 +5628,6 @@ select.input-field option {
    VALIDAÇÃO
 ========================================================= */
 
-/* Câmera no centro */
 .validacao-central {
   width:
     100%;
@@ -5086,16 +5655,10 @@ select.input-field option {
     none;
 }
 
-/* Entrada manual */
 .validacao-manual {
   width:
     100%;
 }
-
-/* =========================================================
-   TABELAS DE VALIDAÇÃO
-   FICAM ABAIXO DA ENTRADA MANUAL
-========================================================= */
 
 .validacao-tabelas {
   display:
@@ -5228,7 +5791,7 @@ select.input-field option {
 }
 
 /* =========================================================
-   ROLAGEM INTERNA DAS DUAS TABELAS
+   ROLAGEM INTERNA
 ========================================================= */
 
 .validacao-table-wrapper {
@@ -5248,7 +5811,6 @@ select.input-field option {
     auto;
 }
 
-/* Barra de rolagem */
 .validacao-table-wrapper::-webkit-scrollbar {
   width:
     8px;
@@ -5289,7 +5851,6 @@ select.input-field option {
     fixed;
 }
 
-/* Cabeçalho fica fixo durante a rolagem */
 .validacao-table th {
   position:
     sticky;
@@ -5359,7 +5920,6 @@ select.input-field option {
     #FAFFFE;
 }
 
-/* Colunas */
 .validacao-table th:nth-child(1),
 .validacao-table td:nth-child(1) {
   width:
@@ -5495,6 +6055,41 @@ select.input-field option {
 
   font-size:
     0.82rem;
+}
+
+/* =========================================================
+   INGREDIENTES
+========================================================= */
+
+.ingrediente-linha {
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(200px, 2fr)
+    minmax(120px, 1fr)
+    minmax(120px, 1fr)
+    auto;
+
+  gap:
+    8px;
+
+  margin-top:
+    0.5rem;
+
+  align-items:
+    center;
+}
+
+.ingrediente-linha
+.input-field {
+  width:
+    100%;
+}
+
+.ingrediente-linha input {
+  min-width:
+    0;
 }
 
 /* =========================================================
@@ -6356,6 +6951,19 @@ select.input-field option {
       360px;
   }
 
+  .ingrediente-linha {
+    grid-template-columns:
+      1fr 1fr;
+
+    align-items:
+      stretch;
+  }
+
+  .ingrediente-linha .btn {
+    grid-column:
+      1 / -1;
+  }
+
 }
 
 @media (max-width: 768px) {
@@ -6444,6 +7052,11 @@ select.input-field option {
 
     max-height:
       360px;
+  }
+
+  .ingrediente-linha {
+    grid-template-columns:
+      1fr;
   }
 
   .modal-box {
