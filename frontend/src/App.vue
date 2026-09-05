@@ -137,276 +137,116 @@
         >
 
           <!-- =================================================
-               TRÊS ÁREAS:
-               NÃO LIBERADOS | CÂMERA | LIBERADOS
+               CÂMERA
           ================================================== -->
-          <div class="validacao-layout">
+          <div class="validacao-central">
 
-            <!-- ===============================================
-                 NÃO LIBERADOS
-            ================================================ -->
-            <div
-              class="validacao-list-card validacao-nao-liberados"
-            >
+            <div class="scanner-wrapper card glass-effect">
 
-              <div class="validacao-list-header">
+              <div class="scanner-header">
 
-                <h3>
-                  🔴 Não Liberados
-                </h3>
+                <p
+                  v-if="!isCameraActive"
+                  class="camera-info"
+                >
+                  A câmera está desligada
+                </p>
 
-                <span class="validacao-count">
-                  {{ alunosNaoLiberados.length }}
-                </span>
-
-              </div>
-
-              <div
-                v-if="alunosNaoLiberados.length === 0"
-                class="validacao-empty"
-              >
-                Todos os alunos já fizeram a validação hoje.
-              </div>
-
-              <div
-                v-else
-                class="validacao-table-wrapper"
-              >
-
-                <table class="validacao-table">
-
-                  <thead>
-                    <tr>
-                      <th>Nome</th>
-                      <th>Status</th>
-                      <th>Próxima liberação</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-
-                    <tr
-                      v-for="aluno in alunosNaoLiberados"
-                      :key="aluno.id"
-                    >
-
-                      <td class="aluno-nome-validacao">
-                        {{ aluno.nome }}
-                      </td>
-
-                      <td>
-                        <span
-                          class="status-validacao status-nao-liberado"
-                        >
-                          Não liberado
-                        </span>
-                      </td>
-
-                      <td>
-                        —
-                      </td>
-
-                    </tr>
-
-                  </tbody>
-
-                </table>
+                <p
+                  v-else
+                  class="camera-info active"
+                >
+                  Buscando QR Code...
+                </p>
 
               </div>
 
-            </div>
+              <div class="preview-container">
 
-            <!-- ===============================================
-                 CÂMERA / VALIDAÇÃO
-            ================================================ -->
-            <div class="validacao-central">
+                <div id="reader"></div>
 
-              <div class="scanner-wrapper card glass-effect">
+                <!-- Overlay de QR detectado -->
+                <div
+                  v-if="matriculaLida"
+                  class="scan-success-overlay"
+                >
 
-                <div class="scanner-header">
+                  <div class="success-card">
 
-                  <p
-                    v-if="!isCameraActive"
-                    class="camera-info"
-                  >
-                    A câmera está desligada
-                  </p>
-
-                  <p
-                    v-else
-                    class="camera-info active"
-                  >
-                    Buscando QR Code...
-                  </p>
-
-                </div>
-
-                <div class="preview-container">
-
-                  <div id="reader"></div>
-
-                  <!-- Overlay de QR detectado -->
-                  <div
-                    v-if="matriculaLida"
-                    class="scan-success-overlay"
-                  >
-
-                    <div class="success-card">
-
-                      <div class="success-icon">
-                        ✅
-                      </div>
-
-                      <h3>
-                        QR Code Detectado
-                      </h3>
-
-                      <div class="id-display">
-                        {{ matriculaLida }}
-                      </div>
-
-                      <button
-                        @click="confirmarValidacao"
-                        class="btn btn-validate pulse"
-                      >
-                        LIBERAR ACESSO
-                      </button>
-
-                      <button
-                        @click="resetScan"
-                        class="btn-link"
-                      >
-                        Cancelar
-                      </button>
-
+                    <div class="success-icon">
+                      ✅
                     </div>
 
-                  </div>
+                    <h3>
+                      QR Code Detectado
+                    </h3>
 
-                  <!-- Câmera desligada -->
-                  <div
-                    v-if="!isCameraActive && !matriculaLida"
-                    class="camera-placeholder"
-                    @click="toggleCamera"
-                  >
+                    <div class="id-display">
+                      {{ matriculaLida }}
+                    </div>
 
-                    <span class="icon-large">
-                      📷
-                    </span>
-
-                    <p>
-                      Clique para ligar a câmera
-                    </p>
-
-                  </div>
-
-                </div>
-
-                <div class="scanner-controls">
-
-                  <button
-                    @click="toggleCamera"
-                    :class="[
-                      'btn',
-                      isCameraActive
-                        ? 'btn-danger'
-                        : 'btn-success'
-                    ]"
-                  >
-                    {{
-                      isCameraActive
-                        ? 'Desligar Câmera'
-                        : 'Ligar Câmera'
-                    }}
-                  </button>
-
-                  <button
-                    v-if="isCameraActive"
-                    @click="switchCamera"
-                    class="btn btn-secondary"
-                  >
-                    Trocar Câmera
-                  </button>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            <!-- ===============================================
-                 LIBERADOS
-            ================================================ -->
-            <div
-              class="validacao-list-card validacao-liberados"
-            >
-
-              <div class="validacao-list-header">
-
-                <h3>
-                  🟢 Liberados
-                </h3>
-
-                <span class="validacao-count">
-                  {{ alunosLiberados.length }}
-                </span>
-
-              </div>
-
-              <div
-                v-if="alunosLiberados.length === 0"
-                class="validacao-empty"
-              >
-                Nenhum aluno validado hoje.
-              </div>
-
-              <div
-                v-else
-                class="validacao-table-wrapper"
-              >
-
-                <table class="validacao-table">
-
-                  <thead>
-                    <tr>
-                      <th>Nome</th>
-                      <th>Status</th>
-                      <th>Próxima liberação</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-
-                    <tr
-                      v-for="aluno in alunosLiberados"
-                      :key="aluno.id"
+                    <button
+                      @click="confirmarValidacao"
+                      class="btn btn-validate pulse"
                     >
+                      LIBERAR ACESSO
+                    </button>
 
-                      <td class="aluno-nome-validacao">
-                        {{ aluno.nome }}
-                      </td>
+                    <button
+                      @click="resetScan"
+                      class="btn-link"
+                    >
+                      Cancelar
+                    </button>
 
-                      <td>
-                        <span
-                          class="status-validacao status-liberado"
-                        >
-                          Liberado
-                        </span>
-                      </td>
+                  </div>
 
-                      <td class="proxima-liberacao">
-                        {{
-                          calcularProximaLiberacao(
-                            aluno.ultimaRefeicao
-                          )
-                        }}
-                      </td>
+                </div>
 
-                    </tr>
+                <!-- Placeholder -->
+                <div
+                  v-if="!isCameraActive && !matriculaLida"
+                  class="camera-placeholder"
+                  @click="toggleCamera"
+                >
 
-                  </tbody>
+                  <span class="icon-large">
+                    📷
+                  </span>
 
-                </table>
+                  <p>
+                    Clique para ligar a câmera
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div class="scanner-controls">
+
+                <button
+                  @click="toggleCamera"
+                  :class="[
+                    'btn',
+                    isCameraActive
+                      ? 'btn-danger'
+                      : 'btn-success'
+                  ]"
+                >
+                  {{
+                    isCameraActive
+                      ? 'Desligar Câmera'
+                      : 'Ligar Câmera'
+                  }}
+                </button>
+
+                <button
+                  v-if="isCameraActive"
+                  @click="switchCamera"
+                  class="btn btn-secondary"
+                >
+                  Trocar Câmera
+                </button>
 
               </div>
 
@@ -415,7 +255,7 @@
           </div>
 
           <!-- =================================================
-               MENSAGEM DE STATUS DA VALIDAÇÃO
+               MENSAGEM DE STATUS
           ================================================== -->
           <div
             v-if="statusValidacao"
@@ -480,6 +320,187 @@
               >
                 Validar
               </button>
+
+            </div>
+
+          </div>
+
+          <!-- =================================================
+               TABELAS ABAIXO DA ENTRADA MANUAL
+          ================================================== -->
+          <div class="validacao-tabelas">
+
+            <!-- ===============================================
+                 NÃO LIBERADOS
+            ================================================ -->
+            <div
+              class="validacao-list-card validacao-nao-liberados"
+            >
+
+              <div class="validacao-list-header">
+
+                <h3>
+                  🔴 Não Liberados
+                </h3>
+
+                <span class="validacao-count">
+                  {{ alunosNaoLiberados.length }}
+                </span>
+
+              </div>
+
+              <div
+                v-if="alunosNaoLiberados.length === 0"
+                class="validacao-empty"
+              >
+                Todos os alunos já fizeram a validação hoje.
+              </div>
+
+              <div
+                v-else
+                class="validacao-table-wrapper"
+              >
+
+                <table class="validacao-table">
+
+                  <thead>
+
+                    <tr>
+                      <th>Nome</th>
+                      <th>Matrícula</th>
+                      <th>Status</th>
+                      <th>Próxima liberação</th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    <tr
+                      v-for="aluno in alunosNaoLiberados"
+                      :key="aluno.id"
+                    >
+
+                      <td class="aluno-nome-validacao">
+                        {{ aluno.nome }}
+                      </td>
+
+                      <td>
+                        <code class="matricula-validacao">
+                          {{ aluno.matricula }}
+                        </code>
+                      </td>
+
+                      <td>
+
+                        <span
+                          class="status-validacao status-nao-liberado"
+                        >
+                          Não liberado
+                        </span>
+
+                      </td>
+
+                      <td>
+                        —
+                      </td>
+
+                    </tr>
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            </div>
+
+            <!-- ===============================================
+                 LIBERADOS
+            ================================================ -->
+            <div
+              class="validacao-list-card validacao-liberados"
+            >
+
+              <div class="validacao-list-header">
+
+                <h3>
+                  🟢 Liberados
+                </h3>
+
+                <span class="validacao-count">
+                  {{ alunosLiberados.length }}
+                </span>
+
+              </div>
+
+              <div
+                v-if="alunosLiberados.length === 0"
+                class="validacao-empty"
+              >
+                Nenhum aluno validado hoje.
+              </div>
+
+              <div
+                v-else
+                class="validacao-table-wrapper"
+              >
+
+                <table class="validacao-table">
+
+                  <thead>
+
+                    <tr>
+                      <th>Nome</th>
+                      <th>Matrícula</th>
+                      <th>Status</th>
+                      <th>Próxima liberação</th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    <tr
+                      v-for="aluno in alunosLiberados"
+                      :key="aluno.id"
+                    >
+
+                      <td class="aluno-nome-validacao">
+                        {{ aluno.nome }}
+                      </td>
+
+                      <td>
+                        <code class="matricula-validacao">
+                          {{ aluno.matricula }}
+                        </code>
+                      </td>
+
+                      <td>
+
+                        <span
+                          class="status-validacao status-liberado"
+                        >
+                          Liberado
+                        </span>
+
+                      </td>
+
+                      <td class="proxima-liberacao">
+                        {{
+                          calcularProximaLiberacao(
+                            aluno.ultimaRefeicao
+                          )
+                        }}
+                      </td>
+
+                    </tr>
+
+                  </tbody>
+
+                </table>
+
+              </div>
 
             </div>
 
@@ -691,7 +712,9 @@
                         aluno.ultimaRefeicao
                           ? formatarData(
                               new Date(
-                                toUTC(aluno.ultimaRefeicao).getTime()
+                                toUTC(
+                                  aluno.ultimaRefeicao
+                                ).getTime()
                                 + 6 * 60 * 60 * 1000
                               )
                             )
@@ -702,7 +725,11 @@
                     <td>
 
                       <span
-                        v-if="!podeComer(aluno.ultimaRefeicao)"
+                        v-if="
+                          !podeComer(
+                            aluno.ultimaRefeicao
+                          )
+                        "
                         style="
                           color:#f59e0b;
                           font-weight:700
@@ -729,13 +756,17 @@
                       <span
                         :class="[
                           'status-badge',
-                          podeComer(aluno.ultimaRefeicao)
+                          podeComer(
+                            aluno.ultimaRefeicao
+                          )
                             ? 'can-eat'
                             : 'must-wait'
                         ]"
                       >
                         {{
-                          podeComer(aluno.ultimaRefeicao)
+                          podeComer(
+                            aluno.ultimaRefeicao
+                          )
                             ? 'Pode comer'
                             : 'Aguardar'
                         }}
@@ -871,7 +902,9 @@
 
                 <button
                   class="btn-delete"
-                  @click="excluirAlimento(item.id)"
+                  @click="
+                    excluirAlimento(item.id)
+                  "
                 >
                   🗑️
                 </button>
@@ -894,14 +927,18 @@
 
                   <button
                     class="btn-link"
-                    @click="abrirLotes(item.nome)"
+                    @click="
+                      abrirLotes(item.nome)
+                    "
                   >
                     Ver lotes e validades
                   </button>
 
                   <button
                     class="btn-link"
-                    @click="abrirNovoLote(item)"
+                    @click="
+                      abrirNovoLote(item)
+                    "
                   >
                     + Lote
                   </button>
@@ -913,7 +950,10 @@
                   <button
                     class="adjust-btn minus"
                     @click="
-                      ajustarEstoque(item.id, -1)
+                      ajustarEstoque(
+                        item.id,
+                        -1
+                      )
                     "
                   >
                     −
@@ -930,7 +970,10 @@
                   <button
                     class="adjust-btn plus"
                     @click="
-                      ajustarEstoque(item.id, 1)
+                      ajustarEstoque(
+                        item.id,
+                        1
+                      )
                     "
                   >
                     +
@@ -972,14 +1015,14 @@
                   type="text"
                   v-model="novoItem.unidade"
                   placeholder="Unidade (kg ou g)"
-                  style="width: 130px"
+                  style="width:130px"
                 />
 
                 <input
                   type="number"
                   v-model="novoItem.quantidade"
                   placeholder="Qtd"
-                  style="width: 80px"
+                  style="width:80px"
                 />
 
                 <input
@@ -996,7 +1039,9 @@
 
                 <input
                   type="text"
-                  v-model="novoItem.usuarioResponsavel"
+                  v-model="
+                    novoItem.usuarioResponsavel
+                  "
                   placeholder="Responsável"
                 />
 
@@ -1065,7 +1110,6 @@
               <table class="data-table">
 
                 <thead>
-
                   <tr>
                     <th>Lote</th>
                     <th>Alimento</th>
@@ -1074,7 +1118,6 @@
                     <th>Validade</th>
                     <th>Responsável</th>
                   </tr>
-
                 </thead>
 
                 <tbody>
@@ -1141,7 +1184,6 @@
           class="tab-pane"
         >
 
-          <!-- Subabas -->
           <div
             class="card glass-effect"
             style="
@@ -1179,7 +1221,7 @@
 
           </div>
 
-          <!-- Registrar prato -->
+          <!-- Registrar -->
           <div
             v-if="abaPrato === 'registrar'"
             class="card glass-effect"
@@ -1233,10 +1275,15 @@
             </h4>
 
             <div
-              v-for="(ing, idx) in pratoDoDia.ingredientes"
+              v-for="(
+                ing,
+                idx
+              ) in pratoDoDia.ingredientes"
               :key="idx"
               class="input-group-row"
-              style="margin-top:0.5rem"
+              style="
+                margin-top:0.5rem
+              "
             >
 
               <select
@@ -1255,7 +1302,11 @@
                 >
                   {{ item.nome }}
                   (
-                    {{ formatarQuantidade(item.quantidade) }}
+                    {{
+                      formatarQuantidade(
+                        item.quantidade
+                      )
+                    }}
                     {{ item.unidade }}
                   )
                 </option>
@@ -1274,7 +1325,9 @@
               />
 
               <button
-                @click="removerIngrediente(idx)"
+                @click="
+                  removerIngrediente(idx)
+                "
                 class="btn btn-danger"
               >
                 Remover
@@ -1292,17 +1345,16 @@
             <button
               @click="salvarPratoDia"
               class="btn btn-success"
-              style="margin-left:0.5rem"
+              style="
+                margin-left:0.5rem
+              "
             >
               Registrar e baixar estoque
             </button>
 
           </div>
 
-          <!-- =================================================
-               HISTÓRICO DE PRATOS
-               AGORA DENTRO DE PRATO DO DIA
-          ================================================== -->
+          <!-- Histórico -->
           <div
             v-if="abaPrato === 'historico'"
             class="card glass-effect"
@@ -1313,7 +1365,9 @@
               <div>
 
                 <h3
-                  style="margin-bottom:0.25rem"
+                  style="
+                    margin-bottom:0.25rem
+                  "
                 >
                   Histórico de Pratos
                 </h3>
@@ -1330,7 +1384,9 @@
               </div>
 
               <button
-                @click="carregarHistoricoPratos"
+                @click="
+                  carregarHistoricoPratos
+                "
                 class="btn-refresh"
               >
                 🔄 Atualizar
@@ -1339,7 +1395,9 @@
             </div>
 
             <div
-              v-if="historicoPratos.length === 0"
+              v-if="
+                historicoPratos.length === 0
+              "
               class="empty-state"
             >
               <p>
@@ -1360,7 +1418,9 @@
                     <th>Data</th>
                     <th>Turno</th>
                     <th>Prato</th>
-                    <th>Ingredientes utilizados</th>
+                    <th>
+                      Ingredientes utilizados
+                    </th>
                     <th>Ação</th>
                   </tr>
 
@@ -1374,7 +1434,11 @@
                   >
 
                     <td>
-                      {{ formatarDataCurta(p.data) }}
+                      {{
+                        formatarDataCurta(
+                          p.data
+                        )
+                      }}
                     </td>
 
                     <td>
@@ -1388,19 +1452,27 @@
                     <td>
 
                       <span
-                        v-for="(ing, i) in p.ingredientes"
+                        v-for="(
+                          ing,
+                          i
+                        ) in p.ingredientes"
                         :key="i"
                       >
 
                         {{ ing.nome }}
                         (
-                          {{ formatarQuantidade(ing.quantidade) }}
+                          {{
+                            formatarQuantidade(
+                              ing.quantidade
+                            )
+                          }}
                           {{ ing.unidade }}
                         )
 
                         <span
                           v-if="
-                            i < p.ingredientes.length - 1
+                            i <
+                            p.ingredientes.length - 1
                           "
                         >
                           ,
@@ -1414,7 +1486,9 @@
 
                       <button
                         @click="
-                          excluirPratoHistorico(p.id)
+                          excluirPratoHistorico(
+                            p.id
+                          )
                         "
                         class="btn-icon-delete"
                       >
@@ -1475,7 +1549,12 @@
           <div class="dashboard-grid">
 
             <div
-              class="card glass-effect alert-card alert-card-amarelo"
+              class="
+                card
+                glass-effect
+                alert-card
+                alert-card-amarelo
+              "
             >
 
               <h3>
@@ -1483,7 +1562,9 @@
               </h3>
 
               <p
-                v-if="!alertas.estoqueBaixo?.length"
+                v-if="
+                  !alertas.estoqueBaixo?.length
+                "
               >
                 Nenhum item abaixo do limite.
               </p>
@@ -1495,8 +1576,13 @@
                   :key="i.id"
                 >
                   {{ i.nome }}:
-                  {{ formatarQuantidade(i.quantidade) }}
-                  {{ i.unidade }} restantes
+                  {{
+                    formatarQuantidade(
+                      i.quantidade
+                    )
+                  }}
+                  {{ i.unidade }}
+                  restantes
                 </li>
 
               </ul>
@@ -1504,7 +1590,12 @@
             </div>
 
             <div
-              class="card glass-effect alert-card alert-card-vermelho"
+              class="
+                card
+                glass-effect
+                alert-card
+                alert-card-vermelho
+              "
             >
 
               <h3>
@@ -1512,7 +1603,9 @@
               </h3>
 
               <p
-                v-if="!alertas.estoqueEsgotado?.length"
+                v-if="
+                  !alertas.estoqueEsgotado?.length
+                "
               >
                 Nenhum item esgotado.
               </p>
@@ -1531,7 +1624,12 @@
             </div>
 
             <div
-              class="card glass-effect alert-card alert-card-amarelo"
+              class="
+                card
+                glass-effect
+                alert-card
+                alert-card-amarelo
+              "
             >
 
               <h3>
@@ -1539,7 +1637,9 @@
               </h3>
 
               <p
-                v-if="!alertas.vencendoEm?.length"
+                v-if="
+                  !alertas.vencendoEm?.length
+                "
               >
                 Nenhum lote em aviso de vencimento
                 (30/25/20/15/10/5 dias).
@@ -1563,7 +1663,12 @@
             </div>
 
             <div
-              class="card glass-effect alert-card alert-card-vermelho"
+              class="
+                card
+                glass-effect
+                alert-card
+                alert-card-vermelho
+              "
             >
 
               <h3>
@@ -1571,7 +1676,9 @@
               </h3>
 
               <p
-                v-if="!alertas.vencidos?.length"
+                v-if="
+                  !alertas.vencidos?.length
+                "
               >
                 Nenhum lote vencido.
               </p>
@@ -1590,7 +1697,9 @@
                   {{
                     l.diasRestantes === 0
                       ? 'vence hoje'
-                      : `venceu há ${Math.abs(l.diasRestantes)} dia(s)`
+                      : `venceu há ${Math.abs(
+                          l.diasRestantes
+                        )} dia(s)`
                   }}
 
                 </li>
@@ -1599,7 +1708,13 @@
 
             </div>
 
-            <div class="card glass-effect alert-card">
+            <div
+              class="
+                card
+                glass-effect
+                alert-card
+              "
+            >
 
               <h3>
                 🍽️ Resumo Diário
@@ -1726,7 +1841,9 @@
     <div
       v-if="alunoEditando"
       class="modal-overlay"
-      @click.self="alunoEditando = null"
+      @click.self="
+        alunoEditando = null
+      "
     >
 
       <div class="modal-box">
@@ -1803,7 +1920,9 @@
           </button>
 
           <button
-            @click="alunoEditando = null"
+            @click="
+              alunoEditando = null
+            "
             class="btn btn-secondary"
           >
             Cancelar
@@ -1860,16 +1979,28 @@
                 </td>
 
                 <td>
-                  {{ formatarQuantidade(l.quantidade) }}
+                  {{
+                    formatarQuantidade(
+                      l.quantidade
+                    )
+                  }}
                   {{ l.unidade }}
                 </td>
 
                 <td>
-                  {{ formatarDataCurta(l.dataCompra) }}
+                  {{
+                    formatarDataCurta(
+                      l.dataCompra
+                    )
+                  }}
                 </td>
 
                 <td>
-                  {{ formatarDataCurta(l.dataValidade) }}
+                  {{
+                    formatarDataCurta(
+                      l.dataValidade
+                    )
+                  }}
                 </td>
 
               </tr>
@@ -1922,19 +2053,25 @@
 
           <input
             type="number"
-            v-model="novoLoteExtra.quantidade"
+            v-model="
+              novoLoteExtra.quantidade
+            "
             placeholder="Quantidade"
           />
 
           <input
             type="date"
-            v-model="novoLoteExtra.dataCompra"
+            v-model="
+              novoLoteExtra.dataCompra
+            "
             title="Data da compra"
           />
 
           <input
             type="date"
-            v-model="novoLoteExtra.dataValidade"
+            v-model="
+              novoLoteExtra.dataValidade
+            "
             title="Data de validade"
           />
 
@@ -2063,120 +2200,6 @@ const countdownTimer =
   ref(null);
 
 /* =============================================================
-   CONTROLE DA VALIDAÇÃO
-============================================================= */
-
-const alunosLiberados =
-  computed(() => {
-
-    const hoje =
-      hojeISO();
-
-    return (
-      alunosList.value || []
-    )
-      .filter(
-        (aluno) => {
-
-          if (
-            !aluno.ultimaRefeicao
-          ) {
-            return false;
-          }
-
-          const data =
-            toUTC(
-              aluno.ultimaRefeicao
-            );
-
-          return (
-            data
-              .toISOString()
-              .slice(0, 10) ===
-            hoje
-          );
-        }
-      )
-      .sort(
-        (a, b) => {
-
-          const dataA =
-            toUTC(
-              a.ultimaRefeicao
-            ).getTime();
-
-          const dataB =
-            toUTC(
-              b.ultimaRefeicao
-            ).getTime();
-
-          return (
-            dataB - dataA
-          );
-        }
-      );
-  });
-
-const alunosNaoLiberados =
-  computed(() => {
-
-    const idsLiberados =
-      new Set(
-        alunosLiberados.value.map(
-          (aluno) =>
-            aluno.id
-        )
-      );
-
-    return (
-      alunosList.value || []
-    )
-      .filter(
-        (aluno) =>
-          !idsLiberados.has(
-            aluno.id
-          )
-      )
-      .sort(
-        (a, b) =>
-          (
-            a.nome || ''
-          ).localeCompare(
-            b.nome || '',
-            'pt-BR'
-          )
-      );
-  });
-
-const calcularProximaLiberacao =
-  (
-    ultimaRefeicao
-  ) => {
-
-    if (
-      !ultimaRefeicao
-    ) {
-      return '—';
-    }
-
-    const proxima =
-      new Date(
-        toUTC(
-          ultimaRefeicao
-        ).getTime() +
-        6 * 60 * 60 * 1000
-      );
-
-    return proxima.toLocaleTimeString(
-      'pt-BR',
-      {
-        hour: '2-digit',
-        minute: '2-digit'
-      }
-    );
-  };
-
-/* =============================================================
    ESTOQUE
 ============================================================= */
 
@@ -2260,6 +2283,124 @@ const pratoDoDia =
   });
 
 /* =============================================================
+   ALUNOS DA TELA DE VALIDAÇÃO
+============================================================= */
+
+const alunosLiberados =
+  computed(() => {
+
+    const hoje =
+      hojeISO();
+
+    return (
+      alunosList.value || []
+    )
+      .filter(
+        (aluno) => {
+
+          if (
+            !aluno.ultimaRefeicao
+          ) {
+            return false;
+          }
+
+          const data =
+            toUTC(
+              aluno.ultimaRefeicao
+            );
+
+          return (
+            data
+              .toISOString()
+              .slice(0, 10) ===
+            hoje
+          );
+        }
+      )
+      .sort(
+        (a, b) => {
+
+          const dataA =
+            toUTC(
+              a.ultimaRefeicao
+            ).getTime();
+
+          const dataB =
+            toUTC(
+              b.ultimaRefeicao
+            ).getTime();
+
+          return (
+            dataB -
+            dataA
+          );
+        }
+      );
+  });
+
+const alunosNaoLiberados =
+  computed(() => {
+
+    const idsLiberados =
+      new Set(
+        alunosLiberados.value.map(
+          (aluno) =>
+            aluno.id
+        )
+      );
+
+    return (
+      alunosList.value || []
+    )
+      .filter(
+        (aluno) =>
+          !idsLiberados.has(
+            aluno.id
+          )
+      )
+      .sort(
+        (a, b) =>
+          (
+            a.nome || ''
+          ).localeCompare(
+            b.nome || '',
+            'pt-BR'
+          )
+      );
+  });
+
+const calcularProximaLiberacao =
+  (
+    ultimaRefeicao
+  ) => {
+
+    if (
+      !ultimaRefeicao
+    ) {
+      return '—';
+    }
+
+    const proxima =
+      new Date(
+        toUTC(
+          ultimaRefeicao
+        ).getTime() +
+        6 *
+          60 *
+          60 *
+          1000
+      );
+
+    return proxima.toLocaleTimeString(
+      'pt-BR',
+      {
+        hour: '2-digit',
+        minute: '2-digit'
+      }
+    );
+  };
+
+/* =============================================================
    HISTÓRICO DE PRATOS
 ============================================================= */
 
@@ -2287,7 +2428,6 @@ const carregarHistoricoPratos =
         'Erro ao carregar histórico de pratos',
         'error'
       );
-
     }
   };
 
@@ -2326,7 +2466,6 @@ const excluirPratoHistorico =
         'Erro ao excluir registro',
         'error'
       );
-
     }
   };
 
@@ -2343,7 +2482,6 @@ watch(
     ) {
       await carregarHistorico();
     }
-
   }
 );
 
@@ -2356,7 +2494,6 @@ watch(
     ) {
       await carregarHistoricoPratos();
     }
-
   }
 );
 
@@ -2372,6 +2509,7 @@ const iniciarContagemRegressiva =
     if (
       countdownTimer.value
     ) {
+
       clearInterval(
         countdownTimer.value
       );
@@ -2445,7 +2583,7 @@ let html5QrCode =
   null;
 
 /* =============================================================
-   CARREGAR ESTOQUE
+   ESTOQUE
 ============================================================= */
 
 const carregarEstoque =
@@ -2475,10 +2613,6 @@ const carregarEstoque =
         false;
     }
   };
-
-/* =============================================================
-   ALERTAS
-============================================================= */
 
 const verificarAlertaEstoqueId =
   (id) => {
@@ -2590,10 +2724,6 @@ const verificarAlertaPorNomes =
     return false;
   };
 
-/* =============================================================
-   AJUSTAR ESTOQUE
-============================================================= */
-
 const ajustarEstoque =
   async (
     id,
@@ -2626,10 +2756,6 @@ const ajustarEstoque =
       );
     }
   };
-
-/* =============================================================
-   CADASTRAR ALIMENTO
-============================================================= */
 
 const cadastrarNovoAlimento =
   async () => {
@@ -2836,7 +2962,6 @@ const carregarHistorico =
               v
             );
           }
-
         }
       );
 
@@ -2889,7 +3014,7 @@ const carregarAlertas =
   };
 
 /* =============================================================
-   INGREDIENTES
+   PRATO DO DIA
 ============================================================= */
 
 const adicionarIngrediente =
@@ -2912,10 +3037,6 @@ const removerIngrediente =
       1
     );
   };
-
-/* =============================================================
-   SALVAR PRATO
-============================================================= */
 
 const salvarPratoDia =
   async () => {
@@ -3132,6 +3253,7 @@ const alunosFiltrados =
       if (
         !filtroAluno.value
       ) {
+
         return lista;
       }
 
@@ -3238,7 +3360,7 @@ const excluirAluno =
   };
 
 /* =============================================================
-   MODAL DE EDIÇÃO
+   MODAL EDIÇÃO
 ============================================================= */
 
 const alunoEditando =
@@ -3800,8 +3922,8 @@ const changeTab =
       tab === 'prato'
     ) {
 
-      carregarEstoque();
-      carregarHistoricoPratos();
+      await carregarEstoque();
+      await carregarHistoricoPratos();
     }
   };
 
@@ -3928,9 +4050,14 @@ onUnmounted(
 ========================================================= */
 
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  box-sizing:
+    border-box;
+
+  margin:
+    0;
+
+  padding:
+    0;
 }
 
 body {
@@ -3944,12 +4071,16 @@ body {
   color:
     var(--text-primary);
 
-  overflow-x: hidden;
+  overflow-x:
+    hidden;
 }
 
 .app-layout {
-  display: flex;
-  min-height: 100vh;
+  display:
+    flex;
+
+  min-height:
+    100vh;
 }
 
 /* =========================================================
@@ -3957,20 +4088,29 @@ body {
 ========================================================= */
 
 .sidebar {
-  width: 256px;
+  width:
+    256px;
+
   background:
     var(--sidebar-bg);
 
-  position: fixed;
-  height: 100vh;
+  position:
+    fixed;
 
-  z-index: 100;
+  height:
+    100vh;
+
+  z-index:
+    100;
 
   transition:
     transform 0.3s;
 
-  display: flex;
-  flex-direction: column;
+  display:
+    flex;
+
+  flex-direction:
+    column;
 }
 
 .sidebar-header {
@@ -3979,7 +4119,8 @@ body {
     1.25rem
     1.5rem;
 
-  text-align: center;
+  text-align:
+    center;
 
   border-bottom:
     1px solid
@@ -3987,34 +4128,44 @@ body {
 }
 
 .ifba-logo-img {
-  width: 66px;
-  height: auto;
+  width:
+    66px;
+
+  height:
+    auto;
 
   margin-bottom:
     0.75rem;
 }
 
 .logo {
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size:
+    1.15rem;
 
-  color: #FFFFFF;
+  font-weight:
+    700;
+
+  color:
+    #FFFFFF;
 
   letter-spacing:
     0.05em;
 }
 
 .logo span {
-  color: #4ADE80;
+  color:
+    #4ADE80;
 }
 
 .logo-version {
-  font-size: 0.68rem;
+  font-size:
+    0.68rem;
 
   color:
     var(--sidebar-text);
 
-  font-weight: 400;
+  font-weight:
+    400;
 
   margin-top:
     0.25rem;
@@ -4025,62 +4176,84 @@ body {
     1.25rem
     0.75rem;
 
-  flex: 1;
+  flex:
+    1;
 
-  display: flex;
-  flex-direction: column;
+  display:
+    flex;
 
-  gap: 2px;
+  flex-direction:
+    column;
+
+  gap:
+    2px;
 }
 
 .sidebar-nav button {
-  width: 100%;
+  width:
+    100%;
 
   padding:
     0.72rem
     1rem;
 
-  background: transparent;
+  background:
+    transparent;
 
-  border: none;
+  border:
+    none;
 
   color:
     var(--sidebar-text);
 
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size:
+    0.88rem;
 
-  border-radius: 8px;
+  font-weight:
+    500;
 
-  cursor: pointer;
+  border-radius:
+    8px;
 
-  display: flex;
-  align-items: center;
+  cursor:
+    pointer;
 
-  gap: 10px;
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
 
   transition:
     all 0.16s;
 
-  font-family: inherit;
+  font-family:
+    inherit;
 
-  text-align: left;
+  text-align:
+    left;
 }
 
 .sidebar-nav button:hover {
   background:
     rgba(255,255,255,0.07);
 
-  color: #FFFFFF;
+  color:
+    #FFFFFF;
 }
 
 .sidebar-nav button.active {
   background:
     var(--primary);
 
-  color: #FFFFFF;
+  color:
+    #FFFFFF;
 
-  font-weight: 600;
+  font-weight:
+    600;
 
   box-shadow:
     0 2px 10px
@@ -4095,13 +4268,15 @@ body {
   color:
     var(--sidebar-text);
 
-  font-size: 0.72rem;
+  font-size:
+    0.72rem;
 
   border-top:
     1px solid
     rgba(255,255,255,0.07);
 
-  text-align: center;
+  text-align:
+    center;
 }
 
 /* =========================================================
@@ -4109,25 +4284,34 @@ body {
 ========================================================= */
 
 .main-content {
-  flex: 1;
+  flex:
+    1;
 
   margin-left:
     256px;
 
-  min-width: 0;
+  min-width:
+    0;
 
-  display: flex;
-  flex-direction: column;
+  display:
+    flex;
+
+  flex-direction:
+    column;
 }
 
 .top-bar {
-  height: 62px;
+  height:
+    62px;
 
   background:
     var(--surface);
 
-  display: flex;
-  align-items: center;
+  display:
+    flex;
+
+  align-items:
+    center;
 
   justify-content:
     space-between;
@@ -4139,37 +4323,50 @@ body {
     1px solid
     var(--border);
 
-  position: sticky;
+  position:
+    sticky;
 
-  top: 0;
+  top:
+    0;
 
-  z-index: 90;
+  z-index:
+    90;
 
   box-shadow:
     var(--shadow-sm);
 }
 
 .top-bar h1 {
-  font-size: 0.95rem;
+  font-size:
+    0.95rem;
 
-  font-weight: 600;
+  font-weight:
+    600;
 
   color:
     var(--text-primary);
 }
 
 .top-bar-brand {
-  display: flex;
-  align-items: center;
+  display:
+    flex;
 
-  gap: 0.7rem;
+  align-items:
+    center;
+
+  gap:
+    0.7rem;
 }
 
 .top-bar-logo {
-  height: 30px;
-  width: auto;
+  height:
+    30px;
 
-  display: none;
+  width:
+    auto;
+
+  display:
+    none;
 }
 
 .content-area {
@@ -4177,26 +4374,34 @@ body {
     1.75rem
     2rem;
 
-  max-width: 1400px;
+  max-width:
+    1400px;
 
-  margin: 0 auto;
+  margin:
+    0 auto;
 
-  width: 100%;
+  width:
+    100%;
 }
 
 .menu-toggle {
-  display: none;
+  display:
+    none;
 
-  background: transparent;
+  background:
+    transparent;
 
-  border: none;
+  border:
+    none;
 
   color:
     var(--text-primary);
 
-  font-size: 1.35rem;
+  font-size:
+    1.35rem;
 
-  cursor: pointer;
+  cursor:
+    pointer;
 }
 
 /* =========================================================
@@ -4207,11 +4412,14 @@ body {
   padding:
     3px 11px;
 
-  border-radius: 20px;
+  border-radius:
+    20px;
 
-  font-size: 0.75rem;
+  font-size:
+    0.75rem;
 
-  font-weight: 600;
+  font-weight:
+    600;
 
   background:
     var(--danger-light);
@@ -4266,9 +4474,11 @@ body {
 }
 
 .card h3 {
-  font-size: 1rem;
+  font-size:
+    1rem;
 
-  font-weight: 700;
+  font-weight:
+    700;
 
   color:
     var(--text-primary);
@@ -4278,9 +4488,11 @@ body {
 }
 
 .card h4 {
-  font-size: 0.9rem;
+  font-size:
+    0.9rem;
 
-  font-weight: 600;
+  font-weight:
+    600;
 
   color:
     var(--text-secondary);
@@ -4298,20 +4510,26 @@ body {
     0.55rem
     1.15rem;
 
-  border: none;
+  border:
+    none;
 
-  border-radius: 8px;
+  border-radius:
+    8px;
 
-  font-size: 0.88rem;
+  font-size:
+    0.88rem;
 
-  font-weight: 600;
+  font-weight:
+    600;
 
-  cursor: pointer;
+  cursor:
+    pointer;
 
   transition:
     all 0.16s;
 
-  font-family: inherit;
+  font-family:
+    inherit;
 }
 
 .btn:active {
@@ -4323,7 +4541,8 @@ body {
   background:
     var(--primary);
 
-  color: white;
+  color:
+    white;
 }
 
 .btn-primary:hover {
@@ -4335,7 +4554,8 @@ body {
   background:
     var(--success);
 
-  color: white;
+  color:
+    white;
 }
 
 .btn-success:hover {
@@ -4347,7 +4567,8 @@ body {
   background:
     var(--danger);
 
-  color: white;
+  color:
+    white;
 }
 
 .btn-secondary {
@@ -4371,31 +4592,40 @@ body {
   background:
     var(--success);
 
-  color: white;
+  color:
+    white;
 
-  width: 100%;
+  width:
+    100%;
 
-  margin-top: 1rem;
+  margin-top:
+    1rem;
 }
 
 .btn-link {
-  background: transparent;
+  background:
+    transparent;
 
-  border: none;
+  border:
+    none;
 
   color:
     var(--primary);
 
-  cursor: pointer;
+  cursor:
+    pointer;
 
   margin-top:
     0.5rem;
 
-  font-size: 0.85rem;
+  font-size:
+    0.85rem;
 
-  font-family: inherit;
+  font-family:
+    inherit;
 
-  font-weight: 500;
+  font-weight:
+    500;
 }
 
 .btn-link:hover {
@@ -4420,14 +4650,17 @@ body {
   border-radius:
     8px;
 
-  cursor: pointer;
+  cursor:
+    pointer;
 
-  font-size: 0.83rem;
+  font-size:
+    0.83rem;
 
   margin-right:
     8px;
 
-  font-family: inherit;
+  font-family:
+    inherit;
 
   transition:
     0.16s;
@@ -4454,18 +4687,23 @@ body {
 ========================================================= */
 
 .input-group-row {
-  display: flex;
+  display:
+    flex;
 
-  gap: 8px;
+  gap:
+    8px;
 
-  flex-wrap: wrap;
+  flex-wrap:
+    wrap;
 }
 
 .input-group-row input,
 .input-group input {
-  flex: 1;
+  flex:
+    1;
 
-  min-width: 120px;
+  min-width:
+    120px;
 
   padding:
     0.55rem
@@ -4484,9 +4722,11 @@ body {
   color:
     var(--text-primary);
 
-  font-family: inherit;
+  font-family:
+    inherit;
 
-  font-size: 0.88rem;
+  font-size:
+    0.88rem;
 
   transition:
     border-color 0.16s,
@@ -4495,7 +4735,8 @@ body {
 
 .input-group-row input:focus,
 .input-group input:focus {
-  outline: none;
+  outline:
+    none;
 
   border-color:
     var(--primary);
@@ -4509,16 +4750,19 @@ body {
 }
 
 .input-group {
-  display: flex;
+  display:
+    flex;
 
   flex-direction:
     column;
 
-  gap: 8px;
+  gap:
+    8px;
 }
 
 .input-field {
-  width: 100%;
+  width:
+    100%;
 
   padding:
     0.55rem
@@ -4537,16 +4781,19 @@ body {
   color:
     var(--text-primary);
 
-  font-size: 0.88rem;
+  font-size:
+    0.88rem;
 
-  font-family: inherit;
+  font-family:
+    inherit;
 
   transition:
     border-color 0.16s;
 }
 
 .input-field:focus {
-  outline: none;
+  outline:
+    none;
 
   border-color:
     var(--primary);
@@ -4577,18 +4824,22 @@ body {
   color:
     var(--text-primary);
 
-  flex: 1;
+  flex:
+    1;
 
   max-width:
     340px;
 
-  font-family: inherit;
+  font-family:
+    inherit;
 
-  font-size: 0.88rem;
+  font-size:
+    0.88rem;
 }
 
 .search-input:focus {
-  outline: none;
+  outline:
+    none;
 
   border-color:
     var(--primary);
@@ -4605,7 +4856,8 @@ select.input-field {
 }
 
 select.input-field option {
-  background: white;
+  background:
+    white;
 
   color:
     var(--text-primary);
@@ -4616,23 +4868,28 @@ select.input-field option {
 ========================================================= */
 
 .table-header {
-  display: flex;
+  display:
+    flex;
 
   justify-content:
     space-between;
 
-  align-items: center;
+  align-items:
+    center;
 
   margin-bottom:
     1rem;
 
-  gap: 1rem;
+  gap:
+    1rem;
 
-  flex-wrap: wrap;
+  flex-wrap:
+    wrap;
 }
 
 .table-wrapper {
-  overflow-x: auto;
+  overflow-x:
+    auto;
 
   border-radius:
     8px;
@@ -4643,12 +4900,14 @@ select.input-field option {
 }
 
 .data-table {
-  width: 100%;
+  width:
+    100%;
 
   border-collapse:
     collapse;
 
-  text-align: left;
+  text-align:
+    left;
 }
 
 .data-table th {
@@ -4663,9 +4922,11 @@ select.input-field option {
     2px solid
     var(--border);
 
-  font-weight: 600;
+  font-weight:
+    600;
 
-  font-size: 0.78rem;
+  font-size:
+    0.78rem;
 
   text-transform:
     uppercase;
@@ -4697,7 +4958,8 @@ select.input-field option {
 }
 
 .data-table tr:last-child td {
-  border-bottom: none;
+  border-bottom:
+    none;
 }
 
 .data-table tr:hover td {
@@ -4721,7 +4983,8 @@ select.input-field option {
   font-size:
     0.82rem;
 
-  font-weight: 600;
+  font-weight:
+    600;
 }
 
 .status-badge {
@@ -4734,7 +4997,8 @@ select.input-field option {
   font-size:
     0.72rem;
 
-  font-weight: 700;
+  font-weight:
+    700;
 
   text-transform:
     uppercase;
@@ -4763,16 +5027,20 @@ select.input-field option {
 }
 
 .actions {
-  display: flex;
+  display:
+    flex;
 
-  align-items: center;
+  align-items:
+    center;
 
-  flex: 1;
+  flex:
+    1;
 
   justify-content:
     flex-end;
 
-  gap: 8px;
+  gap:
+    8px;
 }
 
 .empty-state {
@@ -4787,29 +5055,63 @@ select.input-field option {
 }
 
 /* =========================================================
-   NOVA TELA DE VALIDAÇÃO
+   VALIDAÇÃO
 ========================================================= */
 
-.validacao-layout {
-  display: grid;
+/* Câmera no centro */
+.validacao-central {
+  width:
+    100%;
 
-  grid-template-columns:
-    minmax(300px, 1fr)
-    minmax(360px, 430px)
-    minmax(300px, 1fr);
+  display:
+    flex;
 
-  gap: 1.25rem;
-
-  align-items: start;
-
-  width: 100%;
-
-  margin-bottom:
-    1.25rem;
+  justify-content:
+    center;
 }
 
-.validacao-central {
-  min-width: 0;
+.validacao-central
+.scanner-wrapper {
+  width:
+    min(
+      430px,
+      100%
+    );
+
+  margin:
+    0 auto
+    1.25rem;
+
+  max-width:
+    none;
+}
+
+/* Entrada manual */
+.validacao-manual {
+  width:
+    100%;
+}
+
+/* =========================================================
+   TABELAS DE VALIDAÇÃO
+   FICAM ABAIXO DA ENTRADA MANUAL
+========================================================= */
+
+.validacao-tabelas {
+  display:
+    grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:
+    1.25rem;
+
+  width:
+    100%;
+
+  align-items:
+    start;
 }
 
 .validacao-list-card {
@@ -4826,9 +5128,11 @@ select.input-field option {
   box-shadow:
     var(--shadow-md);
 
-  overflow: hidden;
+  overflow:
+    hidden;
 
-  min-width: 0;
+  min-width:
+    0;
 }
 
 .validacao-nao-liberados {
@@ -4851,7 +5155,8 @@ select.input-field option {
     0.9rem
     1rem;
 
-  display: flex;
+  display:
+    flex;
 
   justify-content:
     space-between;
@@ -4859,7 +5164,8 @@ select.input-field option {
   align-items:
     center;
 
-  gap: 10px;
+  gap:
+    10px;
 
   border-bottom:
     1px solid
@@ -4921,12 +5227,19 @@ select.input-field option {
     700;
 }
 
+/* =========================================================
+   ROLAGEM INTERNA DAS DUAS TABELAS
+========================================================= */
+
 .validacao-table-wrapper {
   width:
     100%;
 
+  height:
+    360px;
+
   max-height:
-    430px;
+    360px;
 
   overflow-y:
     auto;
@@ -4935,9 +5248,39 @@ select.input-field option {
     auto;
 }
 
+/* Barra de rolagem */
+.validacao-table-wrapper::-webkit-scrollbar {
+  width:
+    8px;
+
+  height:
+    8px;
+}
+
+.validacao-table-wrapper::-webkit-scrollbar-track {
+  background:
+    #F3F4F6;
+}
+
+.validacao-table-wrapper::-webkit-scrollbar-thumb {
+  background:
+    #C7CDD1;
+
+  border-radius:
+    8px;
+}
+
+.validacao-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background:
+    #9CA3AF;
+}
+
 .validacao-table {
   width:
     100%;
+
+  min-width:
+    700px;
 
   border-collapse:
     collapse;
@@ -4946,7 +5289,17 @@ select.input-field option {
     fixed;
 }
 
+/* Cabeçalho fica fixo durante a rolagem */
 .validacao-table th {
+  position:
+    sticky;
+
+  top:
+    0;
+
+  z-index:
+    5;
+
   padding:
     0.7rem
     0.65rem;
@@ -4978,10 +5331,6 @@ select.input-field option {
 
   white-space:
     nowrap;
-
-  position: sticky;
-  top: 0;
-  z-index: 2;
 }
 
 .validacao-table td {
@@ -5010,22 +5359,29 @@ select.input-field option {
     #FAFFFE;
 }
 
+/* Colunas */
 .validacao-table th:nth-child(1),
 .validacao-table td:nth-child(1) {
   width:
-    42%;
+    28%;
 }
 
 .validacao-table th:nth-child(2),
 .validacao-table td:nth-child(2) {
   width:
-    28%;
+    22%;
 }
 
 .validacao-table th:nth-child(3),
 .validacao-table td:nth-child(3) {
   width:
-    30%;
+    21%;
+}
+
+.validacao-table th:nth-child(4),
+.validacao-table td:nth-child(4) {
+  width:
+    29%;
 }
 
 .aluno-nome-validacao {
@@ -5037,6 +5393,29 @@ select.input-field option {
 
   word-break:
     break-word;
+}
+
+.matricula-validacao {
+  background:
+    var(--primary-light);
+
+  color:
+    var(--primary);
+
+  padding:
+    3px 7px;
+
+  border-radius:
+    5px;
+
+  font-size:
+    0.72rem;
+
+  font-weight:
+    700;
+
+  white-space:
+    nowrap;
 }
 
 .status-validacao {
@@ -5093,8 +5472,8 @@ select.input-field option {
 }
 
 .validacao-empty {
-  min-height:
-    180px;
+  height:
+    360px;
 
   padding:
     1.5rem;
@@ -5116,20 +5495,6 @@ select.input-field option {
 
   font-size:
     0.82rem;
-}
-
-.validacao-central
-.scanner-wrapper {
-  margin:
-    0;
-
-  max-width:
-    none;
-}
-
-.validacao-manual {
-  width:
-    100%;
 }
 
 /* =========================================================
@@ -5246,7 +5611,7 @@ select.input-field option {
     0;
 
   background:
-    rgba(10, 20, 10, 0.96);
+    rgba(10,20,10,0.96);
 
   display:
     flex;
@@ -5955,19 +6320,19 @@ select.input-field option {
   0% {
     box-shadow:
       0 0 0 0
-      rgba(5, 150, 105, 0.4);
+      rgba(5,150,105,0.4);
   }
 
   70% {
     box-shadow:
       0 0 0 10px
-      rgba(5, 150, 105, 0);
+      rgba(5,150,105,0);
   }
 
   100% {
     box-shadow:
       0 0 0 0
-      rgba(5, 150, 105, 0);
+      rgba(5,150,105,0);
   }
 
 }
@@ -5978,34 +6343,17 @@ select.input-field option {
 
 @media (max-width: 1100px) {
 
-  .validacao-layout {
+  .validacao-tabelas {
     grid-template-columns:
       1fr;
   }
 
-  .validacao-central {
-    order:
-      1;
-  }
+  .validacao-table-wrapper {
+    height:
+      360px;
 
-  .validacao-nao-liberados {
-    order:
-      2;
-  }
-
-  .validacao-liberados {
-    order:
-      3;
-  }
-
-  .validacao-list-card {
-    width:
-      100%;
-  }
-
-  .validacao-table {
-    table-layout:
-      auto;
+    max-height:
+      360px;
   }
 
 }
@@ -6087,7 +6435,15 @@ select.input-field option {
 
   .validacao-table {
     min-width:
-      600px;
+      700px;
+  }
+
+  .validacao-table-wrapper {
+    height:
+      360px;
+
+    max-height:
+      360px;
   }
 
   .modal-box {
