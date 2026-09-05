@@ -6,94 +6,116 @@ import com.sistema.controle.model.EstoqueLote;
 import com.sistema.controle.model.PratoDoDia;
 import com.sistema.controle.model.PratoIngrediente;
 import com.sistema.controle.model.RegistroAtendimento;
+import com.sistema.controle.model.RegistroConsumo;
+
 import com.sistema.controle.repository.AlunoRepository;
 import com.sistema.controle.repository.EstoqueLoteRepository;
 import com.sistema.controle.repository.EstoqueRepository;
 import com.sistema.controle.repository.PratoDoDiaRepository;
 import com.sistema.controle.repository.RegistroAtendimentoRepository;
+import com.sistema.controle.repository.RegistroConsumoRepository;
+
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.time.ZoneId;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/controle")
+@RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class ControleController {
 
     @Autowired
-    private AlunoRepository alunoRepository;
+    private EstoqueRepository estoqueRepo;
 
     @Autowired
-    private EstoqueRepository estoqueRepository;
+    private EstoqueLoteRepository loteRepo;
 
     @Autowired
-    private EstoqueLoteRepository estoqueLoteRepository;
+    private PratoDoDiaRepository pratoRepo;
 
     @Autowired
-    private PratoDoDiaRepository pratoDoDiaRepository;
+    private RegistroAtendimentoRepository registroRepo;
 
     @Autowired
-    private RegistroAtendimentoRepository registroAtendimentoRepository;
+    private AlunoRepository alunoRepo;
+
+    @Autowired
+    private RegistroConsumoRepository consumoRepo;
 
 
     // ============================================================
-    // ALUNOS
+    // INICIALIZAÇÃO
     // ============================================================
 
-    @GetMapping("/alunos")
-    public List<Aluno> listarAlunos() {
-        return alunoRepository.findAll();
+    @PostConstruct
+    public void initData() {
+
+        if (loteRepo.count() == 0 && estoqueRepo.count() == 0) {
+
+            adicionarItemInicial("Arroz", "kg", 50.0);
+            adicionarItemInicial("Feijão", "kg", 30.0);
+            adicionarItemInicial("Carnes Vermelhas", "kg", 20.0);
+            adicionarItemInicial("Frango", "kg", 25.0);
+            adicionarItemInicial("Óleo", "litros", 10.0);
+        }
+
+        if (alunoRepo.count() == 0) {
+
+            cadastrarAlunoInicial("2023001", "João Silva");
+            cadastrarAlunoInicial("2023002", "Maria Oliveira");
+            cadastrarAlunoInicial("2023003", "Pedro Santos");
+        }
     }
 
-    @PostMapping("/alunos")
-    public ResponseEntity<?> criarAluno(@RequestBody Aluno aluno) {
 
-        if (aluno == null) {
-            return ResponseEntity.badRequest()
-                    .body("Aluno inválido.");
-        }
+    private void cadastrarAlunoInicial(
+            String matricula,
+            String nome) {
 
-        if (aluno.getMatricula() == null ||
-                aluno.getMatricula().trim().isEmpty()) {
+        Aluno aluno = new Aluno();
 
-            return ResponseEntity.badRequest()
-                    .body("A matrícula é obrigatória.");
-        }
+        aluno.setMatricula(matricula);
+        aluno.setNome(nome);
 
-        if (alunoRepository
-                .findByMatricula(aluno.getMatricula())
-                .isPresent()) {
-
-            return ResponseEntity.badRequest()
-                    .body("Matrícula já cadastrada.");
-        }
-
-        return ResponseEntity.ok(
-                alunoRepository.save(aluno)
-        );
+        alunoRepo.save(aluno);
     }
 
-    @DeleteMapping("/alunos/{id}")
-    public ResponseEntity<?> deletarAluno(
-            @PathVariable Long id) {
 
-        if (!alunoRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
+    private void adicionarItemInicial(
+            String nome,
+            String unidade,
+            Double quantidade) {
 
-        alunoRepository.deleteById(id);
+        LocalDate hoje =
+                LocalDate.now(
+                        ZoneId.of("America/Sao_Paulo")
+                );
 
-        return ResponseEntity.ok().build();
+        EstoqueLote lote = new EstoqueLote();
+
+        lote.setNome(nome);
+        lote.setUnidade(unidade);
+        lote.setQuantidade(quantidade);
+        lote.setDataCompra(hoje);
+        lote.setDataValidade(hoje.plusMonths(6));
+        lote.setUsuarioResponsavel("Sistema");
+        lote.setDataCadastro(hoje);
+
+        loteRepo.save(lote);
+
+        atualizarEstoqueConsolidado(nome);
     }
 
 
@@ -101,530 +123,345 @@ public class ControleController {
     // ESTOQUE
     // ============================================================
 
-    @GetMapping("/estoque")
-    public List<Estoque> listarEstoque() {
+    private Estoque atualizarEstoqueConsolidado(
+            String nome) {
 
-        return estoqueRepository.findAll();
-    }
+        List<EstoqueLote> lotes =
+                loteRepo
+                        .findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(
+                                nome
+                        );
 
-    @GetMapping("/estoque/lotes")
-    public List<EstoqueLote> listarLotes() {
-
-        return estoqueLoteRepository.findAll()
-                .stream()
-                .sorted(
-                        Comparator.comparing(
-                                EstoqueLote::getDataValidade,
-                                Comparator.nullsLast(
-                                        Comparator.naturalOrder()
-                                )
+        double total =
+                lotes.stream()
+                        .mapToDouble(lote ->
+                                lote.getQuantidade() == null
+                                        ? 0.0
+                                        : lote.getQuantidade()
                         )
-                )
-                .collect(Collectors.toList());
+                        .sum();
+
+
+        Estoque item =
+                estoqueRepo.findAll()
+                        .stream()
+                        .filter(e ->
+                                e.getNome() != null &&
+                                e.getNome()
+                                        .equalsIgnoreCase(nome)
+                        )
+                        .findFirst()
+                        .orElseGet(Estoque::new);
+
+
+        item.setNome(nome);
+
+        if (!lotes.isEmpty()) {
+            item.setUnidade(
+                    lotes.get(0).getUnidade()
+            );
+        }
+
+        item.setQuantidade(total);
+
+        return estoqueRepo.save(item);
     }
 
 
-    // ------------------------------------------------------------
-    // CADASTRAR ALIMENTO + LOTE
-    // ------------------------------------------------------------
+    @GetMapping("/estoque")
+    public List<Estoque> obterEstoque() {
+
+        return estoqueRepo.findAll();
+    }
+
 
     @PostMapping("/estoque")
-    public ResponseEntity<?> cadastrarAlimento(
-            @RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> adicionarNovoItem(
+            @RequestBody EstoqueLote novoLote) {
 
         try {
 
-            String nome = obterTexto(
-                    payload,
-                    "nomeAlimento"
-            );
+            if (novoLote == null) {
+                return ResponseEntity.badRequest()
+                        .body("Lote inválido.");
+            }
 
-            String unidade = obterTexto(
-                    payload,
-                    "unidadeMedida"
-            );
 
-            if (nome == null || nome.isBlank()) {
+            if (novoLote.getNome() == null ||
+                    novoLote.getNome().trim().isEmpty()) {
+
                 return ResponseEntity.badRequest()
                         .body("O nome do alimento é obrigatório.");
             }
 
-            if (unidade == null || unidade.isBlank()) {
+
+            if (novoLote.getQuantidade() == null ||
+                    novoLote.getQuantidade() <= 0) {
+
                 return ResponseEntity.badRequest()
-                        .body("A unidade de medida é obrigatória.");
+                        .body("A quantidade deve ser maior que zero.");
             }
 
 
-            Double quantidadeInicial =
-                    Double.parseDouble(
-                            payload
-                                    .get("quantidadeInicial")
-                                    .toString()
+            LocalDate hoje =
+                    LocalDate.now(
+                            ZoneId.of("America/Sao_Paulo")
                     );
 
 
-            if (quantidadeInicial <= 0) {
-
-                return ResponseEntity.badRequest()
-                        .body(
-                                "A quantidade inicial deve ser maior que zero."
-                        );
+            if (novoLote.getDataCadastro() == null) {
+                novoLote.setDataCadastro(hoje);
             }
 
 
-            LocalDate dataValidade =
-                    payload.get("dataValidadeInicial") != null
-                            ? LocalDate.parse(
-                            payload
-                                    .get("dataValidadeInicial")
-                                    .toString()
-                    )
-                            : null;
-
-
-            LocalDate dataCompra =
-                    payload.get("dataEntradaInicial") != null
-                            ? LocalDate.parse(
-                            payload
-                                    .get("dataEntradaInicial")
-                                    .toString()
-                    )
-                            : LocalDate.now();
-
-
-            String responsavel =
-                    payload.get("responsavel") != null
-                            ? payload.get("responsavel").toString()
-                            : null;
-
-
-            // ====================================================
-            // ESTOQUE PRINCIPAL
-            // ====================================================
-
-            Estoque estoque =
-                    estoqueRepository
-                            .findAll()
-                            .stream()
-                            .filter(e ->
-                                    e.getNome() != null &&
-                                    e.getNome()
-                                            .trim()
-                                            .equalsIgnoreCase(nome)
-                            )
-                            .findFirst()
-                            .orElse(null);
-
-
-            if (estoque == null) {
-
-                estoque = new Estoque();
-
-                estoque.setNome(nome);
-                estoque.setUnidade(unidade);
-                estoque.setQuantidade(0.0);
-
-                estoque =
-                        estoqueRepository.save(estoque);
+            if (novoLote.getDataCompra() == null) {
+                novoLote.setDataCompra(hoje);
             }
 
 
-            // ====================================================
-            // LOTE
-            // ====================================================
+            if (novoLote.getUsuarioResponsavel() == null ||
+                    novoLote.getUsuarioResponsavel().isBlank()) {
 
-            EstoqueLote lote =
-                    new EstoqueLote();
-
-            lote.setNome(nome);
-            lote.setUnidade(unidade);
-            lote.setQuantidade(quantidadeInicial);
-            lote.setDataCompra(dataCompra);
-            lote.setDataValidade(dataValidade);
-            lote.setUsuarioResponsavel(responsavel);
-            lote.setDataCadastro(LocalDate.now());
+                novoLote.setUsuarioResponsavel("Cozinha");
+            }
 
 
-            estoqueLoteRepository.save(lote);
-
-
-            // Recalcular estoque principal
-            recalcularQuantidadeEstoque(nome);
+            loteRepo.save(novoLote);
 
 
             return ResponseEntity.ok(
-                    estoqueRepository.findById(
-                            estoque.getId()
-                    ).orElse(estoque)
+                    atualizarEstoqueConsolidado(
+                            novoLote.getNome()
+                    )
             );
 
         } catch (Exception e) {
 
             return ResponseEntity.badRequest()
                     .body(
-                            "Erro ao cadastrar alimento: "
+                            "Erro ao adicionar item: "
                                     + e.getMessage()
                     );
         }
     }
 
 
-    // ------------------------------------------------------------
-    // ADICIONAR LOTE A UM ALIMENTO EXISTENTE
-    // ------------------------------------------------------------
+    @GetMapping("/estoque/{nome}/lotes")
+    public List<EstoqueLote> lotesPorAlimento(
+            @PathVariable String nome) {
 
-    @PostMapping("/estoque/{id}/lote")
-    public ResponseEntity<?> adicionarLote(
+        return loteRepo
+                .findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(
+                        nome
+                );
+    }
+
+
+    @GetMapping("/estoque/historico")
+    public List<EstoqueLote> historicoEntradas(
+            @RequestParam(required = false) String alimento,
+            @RequestParam(required = false) LocalDate inicio,
+            @RequestParam(required = false) LocalDate fim,
+            @RequestParam(required = false) LocalDate validade,
+            @RequestParam(required = false) Long lote) {
+
+
+        if (lote != null) {
+
+            return loteRepo
+                    .findById(lote)
+                    .map(List::of)
+                    .orElse(List.of());
+        }
+
+
+        return loteRepo.findAll()
+                .stream()
+
+                .filter(l ->
+                        alimento == null ||
+                        l.getNome() == null ||
+                        l.getNome()
+                                .equalsIgnoreCase(alimento)
+                )
+
+                .filter(l ->
+                        inicio == null ||
+                        l.getDataCompra() == null ||
+                        !l.getDataCompra()
+                                .isBefore(inicio)
+                )
+
+                .filter(l ->
+                        fim == null ||
+                        l.getDataCompra() == null ||
+                        !l.getDataCompra()
+                                .isAfter(fim)
+                )
+
+                .filter(l ->
+                        validade == null ||
+                        l.getDataValidade() == null ||
+                        l.getDataValidade()
+                                .equals(validade)
+                )
+
+                .toList();
+    }
+
+
+    @PostMapping("/estoque/{id}/ajustar")
+    public ResponseEntity<?> ajustarEstoque(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> payload) {
+            @RequestParam Double variacao) {
 
         try {
 
-            Estoque estoque =
-                    estoqueRepository
-                            .findById(id)
-                            .orElseThrow(() ->
-                                    new RuntimeException(
-                                            "Alimento não encontrado."
-                                    )
-                            );
-
-
-            Double quantidade =
-                    Double.parseDouble(
-                            payload
-                                    .get("quantidade")
-                                    .toString()
-                    );
-
-
-            if (quantidade <= 0) {
+            if (variacao == null || variacao == 0) {
 
                 return ResponseEntity.badRequest()
                         .body(
-                                "A quantidade deve ser maior que zero."
+                                "A variação deve ser diferente de zero."
                         );
             }
 
 
-            LocalDate dataValidade =
-                    payload.get("dataValidade") != null
-                            ? LocalDate.parse(
-                            payload
-                                    .get("dataValidade")
-                                    .toString()
-                    )
-                            : null;
+            Optional<Estoque> itemOpt =
+                    estoqueRepo.findById(id);
 
 
-            LocalDate dataCompra =
-                    payload.get("dataEntrada") != null
-                            ? LocalDate.parse(
-                            payload
-                                    .get("dataEntrada")
-                                    .toString()
-                    )
-                            : LocalDate.now();
+            if (itemOpt.isEmpty()) {
+
+                return ResponseEntity.badRequest()
+                        .body("Item não encontrado.");
+            }
 
 
-            String responsavel =
-                    payload.get("responsavel") != null
-                            ? payload
-                                    .get("responsavel")
-                                    .toString()
-                            : null;
+            Estoque item =
+                    itemOpt.get();
 
 
-            EstoqueLote lote =
-                    new EstoqueLote();
+            if (variacao < 0) {
 
-            lote.setNome(
-                    estoque.getNome()
-            );
-
-            lote.setUnidade(
-                    estoque.getUnidade()
-            );
-
-            lote.setQuantidade(
-                    quantidade
-            );
-
-            lote.setDataCompra(
-                    dataCompra
-            );
-
-            lote.setDataValidade(
-                    dataValidade
-            );
-
-            lote.setUsuarioResponsavel(
-                    responsavel
-            );
-
-            lote.setDataCadastro(
-                    LocalDate.now()
-            );
+                double quantidade =
+                        Math.abs(variacao);
 
 
-            estoqueLoteRepository.save(lote);
+                if (item.getQuantidade() == null ||
+                        item.getQuantidade() < quantidade) {
+
+                    return ResponseEntity.badRequest()
+                            .body(
+                                    "Estoque insuficiente."
+                            );
+                }
 
 
-            recalcularQuantidadeEstoque(
-                    estoque.getNome()
-            );
+                boolean sucesso =
+                        consumirPorFefo(
+                                item.getNome(),
+                                quantidade
+                        );
+
+
+                if (!sucesso) {
+
+                    return ResponseEntity.badRequest()
+                            .body(
+                                    "Não foi possível realizar a baixa."
+                            );
+                }
+
+            } else {
+
+                LocalDate hoje =
+                        LocalDate.now(
+                                ZoneId.of("America/Sao_Paulo")
+                        );
+
+
+                EstoqueLote lote =
+                        new EstoqueLote();
+
+                lote.setNome(
+                        item.getNome()
+                );
+
+                lote.setUnidade(
+                        item.getUnidade()
+                );
+
+                lote.setQuantidade(
+                        variacao
+                );
+
+                lote.setDataCompra(
+                        hoje
+                );
+
+                lote.setDataValidade(
+                        hoje.plusMonths(6)
+                );
+
+                lote.setUsuarioResponsavel(
+                        "Ajuste manual"
+                );
+
+                lote.setDataCadastro(
+                        hoje
+                );
+
+
+                loteRepo.save(lote);
+
+                atualizarEstoqueConsolidado(
+                        item.getNome()
+                );
+            }
 
 
             return ResponseEntity.ok(
-                    estoqueRepository
-                            .findById(id)
-                            .orElse(estoque)
+                    atualizarEstoqueConsolidado(
+                            item.getNome()
+                    )
             );
 
         } catch (Exception e) {
 
             return ResponseEntity.badRequest()
                     .body(
-                            "Erro ao adicionar lote: "
+                            "Erro ao ajustar estoque: "
                                     + e.getMessage()
                     );
         }
     }
 
-
-    // ------------------------------------------------------------
-    // CONSUMIR ESTOQUE MANUALMENTE
-    // ------------------------------------------------------------
-
-    @PostMapping("/estoque/{id}/consumir")
-    public ResponseEntity<?> consumirManualmente(
-            @PathVariable Long id,
-            @RequestParam Double quantidade) {
-
-        try {
-
-            if (quantidade == null ||
-                    quantidade <= 0) {
-
-                return ResponseEntity.badRequest()
-                        .body(
-                                "A quantidade deve ser maior que zero."
-                        );
-            }
-
-
-            Estoque estoque =
-                    estoqueRepository
-                            .findById(id)
-                            .orElseThrow(() ->
-                                    new RuntimeException(
-                                            "Alimento não encontrado."
-                                    )
-                            );
-
-
-            if (estoque.getQuantidade() == null ||
-                    estoque.getQuantidade() < quantidade) {
-
-                return ResponseEntity.badRequest()
-                        .body(
-                                "Estoque insuficiente."
-                        );
-            }
-
-
-            boolean abatido =
-                    abaterLotesInsumo(
-                            estoque.getNome(),
-                            quantidade
-                    );
-
-
-            if (!abatido) {
-
-                return ResponseEntity.badRequest()
-                        .body(
-                                "Não foi possível realizar a baixa."
-                        );
-            }
-
-
-            recalcularQuantidadeEstoque(
-                    estoque.getNome()
-            );
-
-
-            return ResponseEntity.ok().build();
-
-        } catch (Exception e) {
-
-            return ResponseEntity.badRequest()
-                    .body(
-                            "Erro ao consumir estoque: "
-                                    + e.getMessage()
-                    );
-        }
-    }
-
-
-    // ------------------------------------------------------------
-    // EXCLUIR ALIMENTO
-    // ------------------------------------------------------------
 
     @DeleteMapping("/estoque/{id}")
-    public ResponseEntity<?> excluirInsumoCompleto(
+    public ResponseEntity<?> excluirItemEstoque(
             @PathVariable Long id) {
 
-        Optional<Estoque> estoque =
-                estoqueRepository.findById(id);
+        Optional<Estoque> itemOpt =
+                estoqueRepo.findById(id);
 
 
-        if (estoque.isEmpty()) {
+        if (itemOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
 
         String nome =
-                estoque.get().getNome();
+                itemOpt.get().getNome();
 
 
-        // Excluir os lotes correspondentes
-        List<EstoqueLote> lotes =
-                estoqueLoteRepository
-                        .findAll()
-                        .stream()
-                        .filter(lote ->
-                                lote.getNome() != null &&
-                                lote.getNome()
-                                        .equalsIgnoreCase(nome)
-                        )
-                        .collect(Collectors.toList());
+        loteRepo
+                .findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(
+                        nome
+                )
+                .forEach(loteRepo::delete);
 
 
-        for (EstoqueLote lote : lotes) {
-            estoqueLoteRepository.deleteById(
-                    lote.getId()
-            );
-        }
-
-
-        estoqueRepository.deleteById(id);
-
-
-        return ResponseEntity.ok().build();
-    }
-
-
-    // ------------------------------------------------------------
-    // EXCLUIR LOTE
-    // ------------------------------------------------------------
-
-    @DeleteMapping("/estoque/lotes/{id}")
-    public ResponseEntity<?> deletarLoteEspecifico(
-            @PathVariable Long id) {
-
-        Optional<EstoqueLote> lote =
-                estoqueLoteRepository.findById(id);
-
-
-        if (lote.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-
-        String nome =
-                lote.get().getNome();
-
-
-        estoqueLoteRepository.deleteById(id);
-
-
-        if (nome != null) {
-            recalcularQuantidadeEstoque(nome);
-        }
-
-
-        return ResponseEntity.ok().build();
-    }
-
-
-    // ------------------------------------------------------------
-    // CORRIGIR DUPLICADOS
-    // ------------------------------------------------------------
-
-    @PostMapping("/estoque/corrigir-duplicados")
-    public ResponseEntity<?> corrigirDuplicadosSaneamento() {
-
-        List<Estoque> todos =
-                estoqueRepository.findAll();
-
-
-        Map<String, List<Estoque>> agrupados =
-                todos.stream()
-                        .filter(e -> e.getNome() != null)
-                        .collect(
-                                Collectors.groupingBy(
-                                        e -> e.getNome()
-                                                .trim()
-                                                .toLowerCase()
-                                )
-                        );
-
-
-        for (Map.Entry<String, List<Estoque>> entry :
-                agrupados.entrySet()) {
-
-            List<Estoque> itens =
-                    entry.getValue();
-
-
-            if (itens.size() <= 1) {
-                continue;
-            }
-
-
-            Estoque principal =
-                    itens.get(0);
-
-
-            for (int i = 1;
-                 i < itens.size();
-                 i++) {
-
-                Estoque duplicado =
-                        itens.get(i);
-
-
-                // Somar a quantidade do duplicado
-                double quantidadePrincipal =
-                        principal.getQuantidade() != null
-                                ? principal.getQuantidade()
-                                : 0.0;
-
-                double quantidadeDuplicada =
-                        duplicado.getQuantidade() != null
-                                ? duplicado.getQuantidade()
-                                : 0.0;
-
-
-                principal.setQuantidade(
-                        quantidadePrincipal +
-                                quantidadeDuplicada
-                );
-
-
-                estoqueRepository.deleteById(
-                        duplicado.getId()
-                );
-            }
-
-
-            estoqueRepository.save(principal);
-
-            recalcularQuantidadeEstoque(
-                    principal.getNome()
-            );
-        }
+        estoqueRepo.deleteById(id);
 
 
         return ResponseEntity.ok().build();
@@ -632,418 +469,41 @@ public class ControleController {
 
 
     // ============================================================
-    // PRATO DO DIA
+    // CONSUMO POR FEFO
     // ============================================================
 
-    @GetMapping("/prato-do-dia")
-    public List<PratoDoDia> listarHistoricoDePratos() {
+    private void registrarConsumo(
+            String nome,
+            Double quantidade) {
 
-        return pratoDoDiaRepository
-                .findAllByOrderByDataPratoDesc();
-    }
+        if (quantidade == null ||
+                quantidade <= 0) {
 
-
-    @GetMapping("/prato-do-dia/busca")
-    public ResponseEntity<?> buscarPratoPorData(
-            @RequestParam String data) {
-
-        try {
-
-            LocalDate localDate =
-                    LocalDate.parse(data);
-
-
-            Optional<PratoDoDia> prato =
-                    pratoDoDiaRepository
-                            .findByDataPrato(localDate);
-
-
-            if (prato.isPresent()) {
-
-                return ResponseEntity.ok(
-                        prato.get()
-                );
-            }
-
-
-            return ResponseEntity
-                    .notFound()
-                    .build();
-
-        } catch (Exception e) {
-
-            return ResponseEntity.badRequest()
-                    .body(
-                            "Data inválida."
-                    );
-        }
-    }
-
-
-    // ------------------------------------------------------------
-    // SALVAR PRATO DO DIA
-    // ------------------------------------------------------------
-
-    @PostMapping("/prato-do-dia")
-    @SuppressWarnings("unchecked")
-    public ResponseEntity<?> salvarPratoDoDia(
-            @RequestBody Map<String, Object> payload) {
-
-        try {
-
-            String nomePrato =
-                    payload.get("nomePrato") != null
-                            ? payload
-                            .get("nomePrato")
-                            .toString()
-                            .trim()
-                            : null;
-
-
-            if (nomePrato == null ||
-                    nomePrato.isBlank()) {
-
-                return ResponseEntity.badRequest()
-                        .body(
-                                "O nome do prato é obrigatório."
-                        );
-            }
-
-
-            LocalDate dataPrato =
-                    LocalDate.parse(
-                            payload
-                                    .get("dataPrato")
-                                    .toString()
-                    );
-
-
-            if (pratoDoDiaRepository
-                    .findByDataPrato(dataPrato)
-                    .isPresent()) {
-
-                return ResponseEntity.badRequest()
-                        .body(
-                                "Já existe um cardápio cadastrado para esta data."
-                        );
-            }
-
-
-            List<Map<String, Object>>
-                    ingredientesJson =
-                    payload.get("ingredientes")
-                            instanceof List
-                            ? (List<Map<String, Object>>)
-                            payload.get("ingredientes")
-                            : new ArrayList<>();
-
-
-            // ====================================================
-            // PRIMEIRO: VALIDAR TODOS OS INGREDIENTES
-            // ====================================================
-
-            for (Map<String, Object> ingrediente :
-                    ingredientesJson) {
-
-                if (ingrediente.get("estoqueId") == null ||
-                        ingrediente.get("quantidadeGasta") == null) {
-
-                    return ResponseEntity.badRequest()
-                            .body(
-                                    "Ingrediente inválido."
-                            );
-                }
-
-
-                Long estoqueId =
-                        Long.parseLong(
-                                ingrediente
-                                        .get("estoqueId")
-                                        .toString()
-                        );
-
-
-                Double quantidade =
-                        Double.parseDouble(
-                                ingrediente
-                                        .get("quantidadeGasta")
-                                        .toString()
-                        );
-
-
-                if (quantidade <= 0) {
-
-                    return ResponseEntity.badRequest()
-                            .body(
-                                    "A quantidade do ingrediente deve ser maior que zero."
-                            );
-                }
-
-
-                Estoque estoque =
-                        estoqueRepository
-                                .findById(estoqueId)
-                                .orElse(null);
-
-
-                if (estoque == null) {
-
-                    return ResponseEntity.badRequest()
-                            .body(
-                                    "Ingrediente não encontrado no estoque."
-                            );
-                }
-
-
-                if (estoque.getQuantidade() == null ||
-                        estoque.getQuantidade() < quantidade) {
-
-                    return ResponseEntity.badRequest()
-                            .body(
-                                    "Estoque insuficiente para o item: "
-                                            + estoque.getNome()
-                            );
-                }
-            }
-
-
-            // ====================================================
-            // CRIAR PRATO
-            // ====================================================
-
-            PratoDoDia prato =
-                    new PratoDoDia();
-
-            prato.setNomePrato(
-                    nomePrato
-            );
-
-            prato.setDataPrato(
-                    dataPrato
-            );
-
-
-            List<PratoIngrediente>
-                    listaIngredientes =
-                    new ArrayList<>();
-
-
-            // ====================================================
-            // PROCESSAR INGREDIENTES
-            // ====================================================
-
-            for (Map<String, Object> ingrediente :
-                    ingredientesJson) {
-
-                Long estoqueId =
-                        Long.parseLong(
-                                ingrediente
-                                        .get("estoqueId")
-                                        .toString()
-                        );
-
-
-                Double quantidade =
-                        Double.parseDouble(
-                                ingrediente
-                                        .get("quantidadeGasta")
-                                        .toString()
-                        );
-
-
-                Estoque estoque =
-                        estoqueRepository
-                                .findById(estoqueId)
-                                .orElseThrow();
-
-
-                PratoIngrediente pi =
-                        new PratoIngrediente();
-
-
-                // Campos reais de PratoIngrediente
-                pi.setNome(
-                        estoque.getNome()
-                );
-
-                pi.setUnidade(
-                        estoque.getUnidade()
-                );
-
-                pi.setQuantidade(
-                        quantidade
-                );
-
-
-                listaIngredientes.add(pi);
-
-
-                // Baixar do estoque
-                abaterLotesInsumo(
-                        estoque.getNome(),
-                        quantidade
-                );
-            }
-
-
-            prato.setIngredientes(
-                    listaIngredientes
-            );
-
-
-            PratoDoDia salvo =
-                    pratoDoDiaRepository.save(
-                            prato
-                    );
-
-
-            return ResponseEntity.ok(
-                    salvo
-            );
-
-        } catch (Exception e) {
-
-            return ResponseEntity.badRequest()
-                    .body(
-                            "Erro ao salvar prato do dia: "
-                                    + e.getMessage()
-                    );
-        }
-    }
-
-
-    // ------------------------------------------------------------
-    // EXCLUIR PRATO DO DIA
-    // ------------------------------------------------------------
-
-    @DeleteMapping("/prato-do-dia/{id}")
-    public ResponseEntity<?> deletarCardapio(
-            @PathVariable Long id) {
-
-        if (!pratoDoDiaRepository
-                .existsById(id)) {
-
-            return ResponseEntity
-                    .notFound()
-                    .build();
+            return;
         }
 
 
-        pratoDoDiaRepository
-                .deleteById(id);
+        RegistroConsumo reg =
+                new RegistroConsumo();
+
+        reg.setNomeItem(nome);
+
+        reg.setData(
+                LocalDate.now(
+                        ZoneId.of("America/Sao_Paulo")
+                )
+        );
+
+        reg.setQuantidadeGasta(
+                quantidade
+        );
 
 
-        return ResponseEntity.ok().build();
+        consumoRepo.save(reg);
     }
 
 
-    // ============================================================
-    // ATENDIMENTO / SCANNER
-    // ============================================================
-
-    @PostMapping("/atendimento/registrar")
-    public ResponseEntity<?> registrarAtendimento(
-            @RequestParam String identificador) {
-
-        try {
-
-            if (identificador == null ||
-                    identificador.trim().isEmpty()) {
-
-                return ResponseEntity.badRequest()
-                        .body(
-                                "A matrícula é obrigatória."
-                        );
-            }
-
-
-            Aluno aluno =
-                    alunoRepository
-                            .findByMatricula(
-                                    identificador.trim()
-                            )
-                            .orElse(null);
-
-
-            if (aluno == null) {
-
-                return ResponseEntity.badRequest()
-                        .body(
-                                "Aluno não encontrado para a matrícula: "
-                                        + identificador
-                        );
-            }
-
-
-            RegistroAtendimento registro =
-                    new RegistroAtendimento();
-
-
-            // Campos reais de RegistroAtendimento
-            registro.setMatricula(
-                    aluno.getMatricula()
-            );
-
-            registro.setDataHoraAtendimento(
-                    LocalDateTime.now()
-            );
-
-
-            RegistroAtendimento salvo =
-                    registroAtendimentoRepository
-                            .save(registro);
-
-
-            return ResponseEntity.ok(
-                    salvo
-            );
-
-        } catch (Exception e) {
-
-            return ResponseEntity.badRequest()
-                    .body(
-                            "Erro ao registrar atendimento: "
-                                    + e.getMessage()
-                    );
-        }
-    }
-
-
-    // ============================================================
-    // MÉTODOS AUXILIARES
-    // ============================================================
-
-    /**
-     * Retorna texto de um campo do JSON.
-     */
-    private String obterTexto(
-            Map<String, Object> payload,
-            String chave) {
-
-        if (payload == null) {
-            return null;
-        }
-
-        Object valor =
-                payload.get(chave);
-
-        if (valor == null) {
-            return null;
-        }
-
-        return valor.toString().trim();
-    }
-
-
-    /**
-     * Abate quantidade dos lotes de um alimento.
-     *
-     * Os lotes não possuem relacionamento com Estoque.
-     * A ligação é feita pelo nome do alimento.
-     *
-     * Os lotes com validade mais próxima são consumidos primeiro.
-     */
-    private boolean abaterLotesInsumo(
+    private boolean consumirPorFefo(
             String nome,
             Double quantidade) {
 
@@ -1057,43 +517,33 @@ public class ControleController {
 
 
         List<EstoqueLote> lotes =
-                estoqueLoteRepository
-                        .findAll()
-                        .stream()
-                        .filter(lote ->
-                                lote.getNome() != null &&
-                                lote.getNome()
-                                        .trim()
-                                        .equalsIgnoreCase(nome) &&
-                                lote.getQuantidade() != null &&
-                                lote.getQuantidade() > 0
-                        )
-                        .sorted(
-                                Comparator.comparing(
-                                        EstoqueLote::getDataValidade,
-                                        Comparator.nullsLast(
-                                                Comparator.naturalOrder()
-                                        )
-                                )
-                        )
-                        .collect(Collectors.toList());
+                loteRepo
+                        .findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(
+                                nome
+                        );
 
 
-        double disponivelTotal =
+        double totalDisponivel =
                 lotes.stream()
-                        .map(EstoqueLote::getQuantidade)
-                        .filter(q -> q != null)
-                        .mapToDouble(Double::doubleValue)
+                        .mapToDouble(lote ->
+                                lote.getQuantidade() == null
+                                        ? 0.0
+                                        : lote.getQuantidade()
+                        )
                         .sum();
 
 
-        if (disponivelTotal < quantidade) {
+        if (totalDisponivel < quantidade) {
             return false;
         }
 
 
         double restante =
                 quantidade;
+
+
+        double consumido =
+                0.0;
 
 
         for (EstoqueLote lote : lotes) {
@@ -1103,101 +553,640 @@ public class ControleController {
             }
 
 
-            double quantidadeLote =
-                    lote.getQuantidade();
+            double disponivel =
+                    lote.getQuantidade() == null
+                            ? 0.0
+                            : lote.getQuantidade();
 
 
-            if (quantidadeLote <= restante) {
-
-                lote.setQuantidade(
-                        0.0
-                );
-
-                restante -=
-                        quantidadeLote;
-
-            } else {
-
-                lote.setQuantidade(
-                        quantidadeLote -
-                                restante
-                );
-
-                restante = 0;
-            }
+            double consumo =
+                    Math.min(
+                            disponivel,
+                            restante
+                    );
 
 
-            estoqueLoteRepository.save(
-                    lote
+            lote.setQuantidade(
+                    disponivel - consumo
             );
+
+
+            loteRepo.save(lote);
+
+
+            restante -= consumo;
+
+            consumido += consumo;
         }
 
 
-        recalcularQuantidadeEstoque(
+        registrarConsumo(
+                nome,
+                consumido
+        );
+
+
+        atualizarEstoqueConsolidado(
                 nome
         );
 
 
-        return true;
+        return consumido >= quantidade;
     }
 
 
-    /**
-     * Recalcula a quantidade principal do Estoque
-     * com base na soma dos lotes.
-     */
-    private void recalcularQuantidadeEstoque(
-            String nome) {
+    // ============================================================
+    // ALERTAS
+    // ============================================================
 
-        if (nome == null ||
-                nome.isBlank()) {
+    @GetMapping("/alertas")
+    public Map<String, Object> alertas(
+            @RequestParam(defaultValue = "2")
+            Double limiteBaixo) {
 
-            return;
-        }
+        LocalDate hoje =
+                LocalDate.now(
+                        ZoneId.of("America/Sao_Paulo")
+                );
 
 
-        Estoque estoque =
-                estoqueRepository
-                        .findAll()
+        Map<String, Object> resposta =
+                new HashMap<>();
+
+
+        resposta.put(
+                "estoqueBaixo",
+                estoqueRepo.findAll()
                         .stream()
                         .filter(e ->
-                                e.getNome() != null &&
-                                e.getNome()
-                                        .trim()
-                                        .equalsIgnoreCase(nome)
+                                e.getQuantidade() != null &&
+                                e.getQuantidade() <= limiteBaixo
                         )
-                        .findFirst()
-                        .orElse(null);
-
-
-        if (estoque == null) {
-            return;
-        }
-
-
-        double total =
-                estoqueLoteRepository
-                        .findAll()
-                        .stream()
-                        .filter(lote ->
-                                lote.getNome() != null &&
-                                lote.getNome()
-                                        .trim()
-                                        .equalsIgnoreCase(nome)
-                        )
-                        .map(EstoqueLote::getQuantidade)
-                        .filter(q -> q != null)
-                        .mapToDouble(Double::doubleValue)
-                        .sum();
-
-
-        estoque.setQuantidade(
-                total
+                        .toList()
         );
 
 
-        estoqueRepository.save(
-                estoque
+        resposta.put(
+                "vencimentos",
+                loteRepo
+                        .findByQuantidadeGreaterThanOrderByDataValidadeAscDataCompraAscIdAsc(
+                                0.0
+                        )
+                        .stream()
+                        .filter(l ->
+                                l.getDataValidade() != null &&
+                                !l.getDataValidade()
+                                        .isBefore(hoje) &&
+                                !l.getDataValidade()
+                                        .isAfter(
+                                                hoje.plusDays(30)
+                                        )
+                        )
+                        .toList()
+        );
+
+
+        resposta.put(
+                "pratoDoDia",
+                pratoRepo
+                        .findTopByDataOrderByIdDesc(hoje)
+                        .orElse(null)
+        );
+
+
+        return resposta;
+    }
+
+
+    // ============================================================
+    // PRATO DO DIA
+    // ============================================================
+
+    @PostMapping("/prato-dia")
+    public ResponseEntity<?> salvarPratoDia(
+            @RequestBody PratoDoDia prato) {
+
+        try {
+
+            if (prato == null) {
+
+                return ResponseEntity.badRequest()
+                        .body("Prato inválido.");
+            }
+
+
+            LocalDate hoje =
+                    LocalDate.now(
+                            ZoneId.of("America/Sao_Paulo")
+                    );
+
+
+            if (prato.getData() == null) {
+
+                prato.setData(hoje);
+            }
+
+
+            if (prato.getRefeicoesLiberadas() == null) {
+
+                prato.setRefeicoesLiberadas(0);
+            }
+
+
+            if (prato.getIngredientes() == null) {
+
+                prato.setIngredientes(
+                        new java.util.ArrayList<>()
+                );
+            }
+
+
+            // Verifica estoque antes de consumir
+            for (PratoIngrediente ingrediente :
+                    prato.getIngredientes()) {
+
+                if (ingrediente == null ||
+                        ingrediente.getNome() == null ||
+                        ingrediente.getNome().isBlank()) {
+
+                    return ResponseEntity.badRequest()
+                            .body(
+                                    "Ingrediente inválido."
+                            );
+                }
+
+
+                if (ingrediente.getQuantidade() == null ||
+                        ingrediente.getQuantidade() <= 0) {
+
+                    return ResponseEntity.badRequest()
+                            .body(
+                                    "Quantidade inválida para o ingrediente: "
+                                            + ingrediente.getNome()
+                            );
+                }
+
+
+                Optional<Estoque> estoque =
+                        estoqueRepo.findAll()
+                                .stream()
+                                .filter(e ->
+                                        e.getNome() != null &&
+                                        e.getNome()
+                                                .equalsIgnoreCase(
+                                                        ingrediente.getNome()
+                                                )
+                                )
+                                .findFirst();
+
+
+                if (estoque.isEmpty() ||
+                        estoque.get().getQuantidade() == null ||
+                        estoque.get().getQuantidade()
+                                < ingrediente.getQuantidade()) {
+
+                    return ResponseEntity.badRequest()
+                            .body(
+                                    "Estoque insuficiente para o item: "
+                                            + ingrediente.getNome()
+                            );
+                }
+            }
+
+
+            // Consome os ingredientes
+            for (PratoIngrediente ingrediente :
+                    prato.getIngredientes()) {
+
+                if (!consumirPorFefo(
+                        ingrediente.getNome(),
+                        ingrediente.getQuantidade()
+                )) {
+
+                    return ResponseEntity.badRequest()
+                            .body(
+                                    "Não foi possível consumir o ingrediente: "
+                                            + ingrediente.getNome()
+                            );
+                }
+            }
+
+
+            return ResponseEntity.ok(
+                    pratoRepo.save(prato)
+            );
+
+        } catch (Exception e) {
+
+            return ResponseEntity.badRequest()
+                    .body(
+                            "Erro ao salvar prato: "
+                                    + e.getMessage()
+                    );
+        }
+    }
+
+
+    @GetMapping("/prato-dia/hoje")
+    public ResponseEntity<?> pratoDiaHoje() {
+
+        LocalDate hoje =
+                LocalDate.now(
+                        ZoneId.of("America/Sao_Paulo")
+                );
+
+
+        return ResponseEntity.ok(
+                pratoRepo
+                        .findTopByDataOrderByIdDesc(hoje)
+                        .orElse(null)
+        );
+    }
+
+
+    // ============================================================
+    // ALUNOS
+    // ============================================================
+
+    @GetMapping("/alunos")
+    public List<Aluno> listarAlunos() {
+
+        return alunoRepo.findAll();
+    }
+
+
+    @PostMapping("/alunos")
+    public ResponseEntity<?> cadastrarAluno(
+            @RequestBody Aluno novoAluno) {
+
+        try {
+
+            if (novoAluno == null) {
+
+                return ResponseEntity.badRequest()
+                        .body("Aluno inválido.");
+            }
+
+
+            if (novoAluno.getMatricula() == null ||
+                    novoAluno.getMatricula()
+                            .trim()
+                            .isEmpty()) {
+
+                return ResponseEntity.badRequest()
+                        .body("A matrícula é obrigatória.");
+            }
+
+
+            if (alunoRepo
+                    .findByMatricula(
+                            novoAluno.getMatricula()
+                    )
+                    .isPresent()) {
+
+                Map<String, String> response =
+                        new HashMap<>();
+
+                response.put(
+                        "error",
+                        "Matrícula já cadastrada!"
+                );
+
+                return ResponseEntity
+                        .badRequest()
+                        .body(response);
+            }
+
+
+            return ResponseEntity.ok(
+                    alunoRepo.save(novoAluno)
+            );
+
+        } catch (Exception e) {
+
+            return ResponseEntity.badRequest()
+                    .body(
+                            "Erro ao cadastrar aluno: "
+                                    + e.getMessage()
+                    );
+        }
+    }
+
+
+    @PutMapping("/alunos/{id}")
+    public ResponseEntity<?> editarAluno(
+            @PathVariable Long id,
+            @RequestBody Aluno dadosNovos) {
+
+        Optional<Aluno> alunoOpt =
+                alunoRepo.findById(id);
+
+
+        if (alunoOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+
+        Aluno aluno =
+                alunoOpt.get();
+
+
+        aluno.setNome(
+                dadosNovos.getNome()
+        );
+
+        aluno.setMatricula(
+                dadosNovos.getMatricula()
+        );
+
+        aluno.setCurso(
+                dadosNovos.getCurso()
+        );
+
+        aluno.setModalidade(
+                dadosNovos.getModalidade()
+        );
+
+        aluno.setTurma(
+                dadosNovos.getTurma()
+        );
+
+        aluno.setTurno(
+                dadosNovos.getTurno()
+        );
+
+
+        return ResponseEntity.ok(
+                alunoRepo.save(aluno)
+        );
+    }
+
+
+    @DeleteMapping("/alunos/{id}")
+    public ResponseEntity<?> excluirAluno(
+            @PathVariable Long id) {
+
+        if (!alunoRepo.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+
+        alunoRepo.deleteById(id);
+
+
+        return ResponseEntity.ok().build();
+    }
+
+
+    // ============================================================
+    // VALIDAÇÃO DA FICHA / REFEIÇÃO
+    // ============================================================
+
+    @PostMapping("/validar")
+    public ResponseEntity<?> validarFicha(
+            @RequestParam String matricula) {
+
+        Map<String, Object> response =
+                new HashMap<>();
+
+
+        if (matricula == null ||
+                matricula.trim().isEmpty()) {
+
+            response.put(
+                    "error",
+                    "A matrícula é obrigatória."
+            );
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(response);
+        }
+
+
+        LocalDateTime agora =
+                LocalDateTime.now();
+
+
+        LocalDateTime limite6Horas =
+                agora.minusHours(6);
+
+
+        Optional<Aluno> alunoOpt =
+                alunoRepo.findByMatricula(
+                        matricula.trim()
+                );
+
+
+        if (alunoOpt.isEmpty()) {
+
+            response.put(
+                    "error",
+                    "Estudante não cadastrado no sistema."
+            );
+
+            return ResponseEntity
+                    .status(404)
+                    .body(response);
+        }
+
+
+        Aluno aluno =
+                alunoOpt.get();
+
+
+        if (aluno.getUltimaRefeicao() != null &&
+                aluno.getUltimaRefeicao()
+                        .isAfter(limite6Horas)) {
+
+
+            LocalDateTime proximaRefeicao =
+                    aluno.getUltimaRefeicao()
+                            .plusHours(6);
+
+
+            Duration restante =
+                    Duration.between(
+                            agora,
+                            proximaRefeicao
+                    );
+
+
+            long minutosFaltando =
+                    Math.max(
+                            0,
+                            restante.toMinutes()
+                    );
+
+
+            long segundosFaltando =
+                    Math.max(
+                            0,
+                            restante.toSeconds()
+                    );
+
+
+            response.put(
+                    "error",
+                    "Já recebeu refeição recentemente."
+            );
+
+
+            response.put(
+                    "horaUltimaRefeicao",
+                    aluno.getUltimaRefeicao()
+                            .toString()
+            );
+
+
+            response.put(
+                    "proximaRefeicao",
+                    proximaRefeicao.toString()
+            );
+
+
+            response.put(
+                    "minutosFaltando",
+                    minutosFaltando
+            );
+
+
+            response.put(
+                    "segundosFaltando",
+                    segundosFaltando
+            );
+
+
+            response.put(
+                    "espera",
+                    String.format(
+                            "Aguarde mais %d horas e %d minutos.",
+                            minutosFaltando / 60,
+                            minutosFaltando % 60
+                    )
+            );
+
+
+            return ResponseEntity
+                    .status(429)
+                    .body(response);
+        }
+
+
+        RegistroAtendimento registro =
+                new RegistroAtendimento();
+
+
+        registro.setMatricula(
+                aluno.getMatricula()
+        );
+
+
+        registro.setDataHoraAtendimento(
+                agora
+        );
+
+
+        registroRepo.save(
+                registro
+        );
+
+
+        aluno.setUltimaRefeicao(
+                agora
+        );
+
+
+        alunoRepo.save(
+                aluno
+        );
+
+
+        response.put(
+                "message",
+                "Refeição liberada para "
+                        + aluno.getNome()
+        );
+
+
+        response.put(
+                "matricula",
+                aluno.getMatricula()
+        );
+
+
+        response.put(
+                "dataHora",
+                agora.toString()
+        );
+
+
+        return ResponseEntity.ok(
+                response
+        );
+    }
+
+
+    // ============================================================
+    // RELATÓRIOS DE CONSUMO
+    // ============================================================
+
+    @GetMapping("/consumo/diario")
+    public ResponseEntity<?> consumoDiario() {
+
+        LocalDate hoje =
+                LocalDate.now(
+                        ZoneId.of("America/Sao_Paulo")
+                );
+
+
+        return ResponseEntity.ok(
+                consumoRepo.findByDataBetween(
+                        hoje,
+                        hoje
+                )
+        );
+    }
+
+
+    @GetMapping("/consumo/semanal")
+    public ResponseEntity<?> consumoSemanal() {
+
+        LocalDate hoje =
+                LocalDate.now(
+                        ZoneId.of("America/Sao_Paulo")
+                );
+
+
+        LocalDate inicio =
+                hoje.minusDays(
+                        hoje.getDayOfWeek().getValue() - 1
+                );
+
+
+        return ResponseEntity.ok(
+                consumoRepo.findByDataBetween(
+                        inicio,
+                        hoje
+                )
+        );
+    }
+
+
+    @GetMapping("/consumo/mensal")
+    public ResponseEntity<?> consumoMensal() {
+
+        LocalDate hoje =
+                LocalDate.now(
+                        ZoneId.of("America/Sao_Paulo")
+                );
+
+
+        return ResponseEntity.ok(
+                consumoRepo.findByDataBetween(
+                        hoje.withDayOfMonth(1),
+                        hoje
+                )
         );
     }
 }
