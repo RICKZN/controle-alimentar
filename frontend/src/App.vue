@@ -198,7 +198,6 @@
           <div class="card glass-effect" style="padding:0.8rem 1.5rem; margin-bottom:1rem; display:flex; gap:8px">
             <button @click="abaEstoque = 'atual'" :class="['btn', abaEstoque==='atual' ? 'btn-primary' : 'btn-secondary']">📦 Estoque Atual</button>
             <button @click="abaEstoque = 'historico'" :class="['btn', abaEstoque==='historico' ? 'btn-primary' : 'btn-secondary']">📥 Entradas de Estoque</button>
-            <button @click="abaEstoque = 'historico-pratos'" :class="['btn', abaEstoque==='historico-pratos' ? 'btn-primary' : 'btn-secondary']">🍽️ Histórico de Pratos</button>
           </div>
 
           <!-- Aba: Estoque Atual -->
@@ -254,17 +253,52 @@
             <div class="table-wrapper"><table class="data-table"><thead><tr><th>Lote</th><th>Alimento</th><th>Quantidade</th><th>Compra</th><th>Validade</th><th>Responsável</th></tr></thead><tbody><tr v-for="l in historicoEntradas" :key="l.id"><td>{{ l.id }}</td><td>{{ l.nome }}</td><td>{{ formatarQuantidade(l.quantidade) }} {{ l.unidade }}</td><td>{{ formatarDataCurta(l.dataCompra) }}</td><td>{{ formatarDataCurta(l.dataValidade) }}</td><td>{{ l.usuarioResponsavel }}</td></tr></tbody></table></div>
           </div>
 
-          <div v-if="abaEstoque === 'historico-pratos'" class="card glass-effect">
-            <h3>Histórico de Pratos</h3>
-            <p style="color:#6B7280; font-size:0.85rem; margin-bottom:0.8rem">
-              Excluir um registro aqui remove apenas o histórico — não devolve os alimentos ao estoque.
-            </p>
+        <div v-if="currentTab === 'prato'" class="tab-pane">
+          <div class="card glass-effect" style="padding:0.8rem 1.5rem; margin-bottom:1rem; display:flex; gap:8px; flex-wrap:wrap">
+            <button @click="abaPrato = 'registrar'" :class="['btn', abaPrato==='registrar' ? 'btn-primary' : 'btn-secondary']">🍽️ Registrar Prato do Dia</button>
+            <button @click="abaPrato = 'historico'" :class="['btn', abaPrato==='historico' ? 'btn-primary' : 'btn-secondary']">📋 Histórico de Pratos</button>
+          </div>
+
+          <div v-if="abaPrato === 'registrar'" class="card glass-effect">
+            <h3>Registrar Prato do Dia</h3>
+            <div class="input-group-row">
+              <input v-model="pratoDoDia.nome" placeholder="Nome do prato/refeição" />
+              <input type="date" v-model="pratoDoDia.data" />
+              <select v-model="pratoDoDia.turno" class="input-field" style="width:160px">
+                <option value="" disabled>Turno</option>
+                <option v-for="t in TURNOS" :key="t" :value="t">{{ t }}</option>
+              </select>
+            </div>
+            <h4 style="margin-top:1rem">Ingredientes utilizados</h4>
+            <div v-for="(ing, idx) in pratoDoDia.ingredientes" :key="idx" class="input-group-row" style="margin-top:0.5rem">
+              <select v-model="ing.nome" class="input-field">
+                <option value="">Selecione</option>
+                <option v-for="item in estoqueList" :key="item.id" :value="item.nome">{{ item.nome }} ({{ formatarQuantidade(item.quantidade) }} {{ item.unidade }})</option>
+              </select>
+              <input type="number" v-model="ing.quantidade" placeholder="Quantidade" />
+              <input v-model="ing.unidade" placeholder="Unidade" />
+              <button @click="removerIngrediente(idx)" class="btn btn-danger">Remover</button>
+            </div>
+            <button @click="adicionarIngrediente" class="btn btn-secondary">+ Ingrediente</button>
+            <button @click="salvarPratoDia" class="btn btn-success" style="margin-left:0.5rem">Registrar e baixar estoque</button>
+          </div>
+
+          <div v-if="abaPrato === 'historico'" class="card glass-effect">
+            <div class="table-header">
+              <div>
+                <h3 style="margin-bottom:0.25rem">Histórico de Pratos</h3>
+                <p style="color:#6B7280; font-size:0.85rem">Registros dos pratos já cadastrados no sistema.</p>
+              </div>
+              <button @click="carregarHistoricoPratos" class="btn-refresh">🔄 Atualizar</button>
+            </div>
             <div v-if="historicoPratos.length === 0" class="empty-state">
               <p>Nenhum prato registrado ainda.</p>
             </div>
             <div v-else class="table-wrapper">
               <table class="data-table">
-                <thead><tr><th>Data</th><th>Turno</th><th>Prato</th><th>Ingredientes utilizados</th><th>Ação</th></tr></thead>
+                <thead>
+                  <tr><th>Data</th><th>Turno</th><th>Prato</th><th>Ingredientes utilizados</th><th>Ação</th></tr>
+                </thead>
                 <tbody>
                   <tr v-for="p in historicoPratos" :key="p.id">
                     <td>{{ formatarDataCurta(p.data) }}</td>
@@ -282,8 +316,6 @@
             </div>
           </div>
         </div>
-
-        <div v-if="currentTab === 'prato'" class="tab-pane"><div class="card glass-effect"><h3>Registrar Prato do Dia</h3><div class="input-group-row"><input v-model="pratoDoDia.nome" placeholder="Nome do prato/refeição" /><input type="date" v-model="pratoDoDia.data" /><select v-model="pratoDoDia.turno" class="input-field" style="width:160px"><option value="" disabled>Turno</option><option v-for="t in TURNOS" :key="t" :value="t">{{ t }}</option></select></div><h4 style="margin-top:1rem">Ingredientes utilizados</h4><div v-for="(ing, idx) in pratoDoDia.ingredientes" :key="idx" class="input-group-row" style="margin-top:0.5rem"><select v-model="ing.nome" class="input-field"><option value="">Selecione</option><option v-for="item in estoqueList" :key="item.id" :value="item.nome">{{ item.nome }} ({{ formatarQuantidade(item.quantidade) }} {{ item.unidade }})</option></select><input type="number" v-model="ing.quantidade" placeholder="Quantidade" /><input v-model="ing.unidade" placeholder="Unidade" /><button @click="removerIngrediente(idx)" class="btn btn-danger">Remover</button></div><button @click="adicionarIngrediente" class="btn btn-secondary">+ Ingrediente</button><button @click="salvarPratoDia" class="btn btn-success" style="margin-left:0.5rem">Registrar e baixar estoque</button></div></div>
 
         <div v-if="currentTab === 'alertas'" class="tab-pane">
           <div class="card glass-effect" style="margin-bottom:1rem; display:flex; align-items:center; gap:10px">
@@ -436,6 +468,7 @@ const countdownTimer      = ref(null);
 
 // ── Estoque ────────────────────────────────────────────────────────────────────
 const abaEstoque      = ref('atual');
+const abaPrato        = ref('registrar');
 const limiteBaixo = ref(2);
 
 const TURNOS = ['Matutino', 'Vespertino', 'Integral', 'Noturno'];
@@ -467,7 +500,6 @@ const excluirPratoHistorico = async (id) => {
 
 watch(abaEstoque, async (val) => {
   if (val === 'historico') carregarHistorico();
-  if (val === 'historico-pratos') carregarHistoricoPratos();
 });
 
 // ── Contagem regressiva ───────────────────────────────────────────────────────
@@ -825,7 +857,11 @@ const changeTab = async (tab) => {
   isSidebarOpen.value = false;
   if (tab === 'alunos') carregarAlunos();
   if (tab === 'alertas') carregarAlertas();
-  if (tab === 'prato') carregarEstoque();
+  if (tab === 'prato') {
+    abaPrato.value = 'registrar';
+    carregarEstoque();
+    carregarHistoricoPratos();
+  }
 };
 
 // ── QR Code / Impressão ───────────────────────────────────────────────────────
