@@ -222,6 +222,23 @@ public class ControleController {
     }
 
     // --- REFEITÓRIO: ATENDIMENTO / SCANNER ---
-    @PostMapping("/atendimento/registrar")
+      @PostMapping("/atendimento/registrar")
     public ResponseEntity<?> registrarAtendimento(@RequestParam String identificador) {
+
         Aluno aluno = alunoRepository.findByMatricula(identificador)
+                .orElse(null);
+
+        if (aluno == null) {
+            return ResponseEntity.badRequest()
+                    .body("Aluno não encontrado para a matrícula: " + identificador);
+        }
+
+        RegistroAtendimento registro = new RegistroAtendimento();
+        registro.setAluno(aluno);
+        registro.setDataHora(LocalDateTime.now());
+
+        registroAtendimentoRepository.save(registro);
+
+        return ResponseEntity.ok(registro);
+    }
+}
