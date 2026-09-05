@@ -4978,6 +4978,10 @@ select.input-field option {
 
   white-space:
     nowrap;
+
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .validacao-table td {
