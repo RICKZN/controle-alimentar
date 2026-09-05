@@ -185,6 +185,7 @@
             <button @click="abaEstoque = 'historico'" :class="['btn', abaEstoque==='historico' ? 'btn-primary' : 'btn-secondary']">📥 Entradas de Estoque</button>
           </div>
 
+          <!-- ESTOQUE ATUAL -->
           <div v-if="abaEstoque === 'atual'">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
               <input type="text" v-model="filtroEstoque" placeholder="Filtrar estoque..." class="form-control" style="max-width:250px" />
@@ -198,4 +199,3 @@
                 </div>
                 <p>{{ item.quantidadeAtual }} {{ item.unidadeMedida }}</p>
                 <div style="display:flex; gap:6px; margin-top:1rem">
-                  <button @click="quickConsumir(item)" class="btn btn-danger" style="flex:1">− Consumo</button>
