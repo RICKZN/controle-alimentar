@@ -1,19 +1,21 @@
-import { createApp } from 'vue'
-import './style.css'
-import App from './App.vue'
-
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from './components/Login.vue'
-import Alunos from './components/Alunos.vue' // Seu componente existente
-import Estoque from './components/Estoque.vue' // Seu componente existente
-import PratoDia from './components/PratoDia.vue' // Tela pública do Prato do Dia
-
+import AppDashboard from './App.vue'
+import Login from './components/Login.vue' 
 const routes = [
+  { 
+    path: '/', 
+    component: AppDashboard,
+
+    children: [
+      { path: 'validacao', component: AppDashboard },
+      { path: 'alunos', component: AppDashboard },
+      { path: 'estoque', component: AppDashboard },
+      { path: 'prato-do-dia', component: AppDashboard },
+      { path: 'alertas', component: AppDashboard }
+    ]
+  },
   { path: '/login', component: Login },
-  { path: '/prato-do-dia', component: PratoDia }, // Alunos usam esta sem login administrativo
-  { path: '/alunos', component: Alunos, meta: { requiresAuth: true } },
-  { path: '/estoque', component: Estoque, meta: { requiresAuth: true } },
-  { path: '/:pathMatch(.*)*', redirect: '/prato-do-dia' }
+  { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 
 const router = createRouter({
@@ -21,17 +23,16 @@ const router = createRouter({
   routes
 })
 
-// Guarda de segurança que valida o acesso
+
 router.beforeEach((to, from, next) => {
   const loggedIn = localStorage.getItem('isAuthenticated') === 'true';
+  const rotasRestritas = ['/alunos', '/estoque', '/alertas'];
 
-  if (to.matched.some(record => record.meta.requiresAuth) && !loggedIn) {
-    next('/login'); // Se não estiver logado, barra e joga pro login
+  if (rotasRestritas.includes(to.path) && !loggedIn) {
+    next('/login');
   } else {
-    next(); // Se estiver logado ou for rota pública (Prato do Dia), permite
+    next();
   }
 })
 
 export default router;
-
-createApp(App).mount('#app')
