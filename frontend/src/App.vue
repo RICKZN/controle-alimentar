@@ -2499,10 +2499,61 @@
     </div>
 
   </div>
+    <div id="app" class="app-layout">
+    <!-- Barra Lateral (Sidebar) -->
+    <aside class="sidebar">
+      <nav>
+        <!-- Prato do dia sempre fica visível (Alunos usam livremente) -->
+        <router-link to="/prato-do-dia" class="nav-item">
+          <span>🍽️ Prato do Dia</span>
+        </router-link>
+
+        <!-- Itens protegidos: Só renderizam com v-if se o usuário estiver logado -->
+        <div v-if="isUserAdmin">
+          <router-link to="/alunos" class="nav-item active-green">
+            <span>👥 Alunos</span>
+          </router-link>
+          
+          <router-link to="/estoque" class="nav-item">
+            <span>📦 Estoque</span>
+          </router-link>
+
+          <button @click="logout" class="btn-logout">🚪 Sair</button>
+        </div>
+
+        <!-- Se não for admin, mostra opção para logar -->
+        <div v-else>
+          <router-link to="/login" class="nav-item"><span>🔑 Login Restrito</span></router-link>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Conteúdo Principal das Telas -->
+    <main class="main-content">
+      <router-view></router-view>
+    </main>
+  </div>
 </template>
 
 <script setup>
-
+  
+export default {
+  name: 'App',
+  computed: {
+    isUserAdmin() {
+      // Reativo: verifica se o item existe no localStorage
+      return localStorage.getItem('isAuthenticated') === 'true';
+    }
+  },
+  methods: {
+    logout() {
+      localStorage.removeItem('isAuthenticated');
+      this.$router.push('/prato-do-dia');
+      // Força a atualização do estado visual da navbar
+      window.location.reload(); 
+    }
+  }
+}
 import {
   ref,
   onMounted,
@@ -9940,5 +9991,9 @@ select.input-field option {
   }
 
 }
+.sidebar { background-color: #0b1611; width: 250px; padding: 1rem; }
+.nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; color: #9aa0a6; border-radius: 8px; margin-bottom: 0.5rem; text-decoration: none; }
+.active-green { background-color: #00693e; color: #ffffff; font-weight: bold; }
+.btn-logout { background: none; border: none; color: #ff5252; padding: 0.75rem 1rem; width: 100%; text-align: left; cursor: pointer; }
 
 </style>
