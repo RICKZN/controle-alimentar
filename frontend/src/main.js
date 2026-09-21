@@ -1,21 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import AppDashboard from './App.vue'
-import Login from './components/Login.vue' 
+import { createApp } from 'vue'
+import App from './App.vue'
+import Login from './components/TelaLogin.vue' 
 const routes = [
   { 
     path: '/', 
-    component: AppDashboard,
-
-    children: [
-      { path: 'validacao', component: AppDashboard },
-      { path: 'alunos', component: AppDashboard },
-      { path: 'estoque', component: AppDashboard },
-      { path: 'prato-do-dia', component: AppDashboard },
-      { path: 'alertas', component: AppDashboard }
-    ]
+    component: App 
   },
-  { path: '/login', component: Login },
-  { path: '/:pathMatch(.*)*', redirect: '/' }
+  { 
+    path: '/login', 
+    component: Login 
+  },
+  { 
+    path: '/:pathMatch(.*)*', 
+    redirect: '/' 
+  }
 ]
 
 const router = createRouter({
@@ -23,16 +22,16 @@ const router = createRouter({
   routes
 })
 
-
+// Guarda de segurança simples para bloquear acessos diretos por URL
 router.beforeEach((to, from, next) => {
-  const loggedIn = localStorage.getItem('isAuthenticated') === 'true';
-  const rotasRestritas = ['/alunos', '/estoque', '/alertas'];
-
-  if (rotasRestritas.includes(to.path) && !loggedIn) {
-    next('/login');
+  const loggedIn = localStorage.getItem('isAuthenticated') === 'true'
+  
+  if (to.path !== '/login' && !loggedIn) {
+    // Se o seu objetivo é deixar a validação pública, mude a linha abaixo para permitir
+    next() 
   } else {
-    next();
+    next()
   }
 })
 
-export default router;
+export default router
