@@ -2537,22 +2537,29 @@
 
 <script setup>
   
-export default {
-  name: 'App',
-  computed: {
-    isUserAdmin() {
-      // Reativo: verifica se o item existe no localStorage
-      return localStorage.getItem('isAuthenticated') === 'true';
-    }
-  },
-  methods: {
-    logout() {
-      localStorage.removeItem('isAuthenticated');
-      this.$router.push('/prato-do-dia');
-      // Força a atualização do estado visual da navbar
-      window.location.reload(); 
-    }
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+
+
+const router = useRouter();
+
+// Declaração da propriedade reativa para verificar se é Admin
+const isUserAdmin = computed(() => {
+  return localStorage.getItem('isAuthenticated') === 'true';
+});
+
+
+function logout() {
+  localStorage.removeItem('isAuthenticated');
+  
+  if (router) {
+    router.push('/prato-do-dia');
+  } else {
+    window.location.href = '/prato-do-dia'; 
   }
+  
+
+  window.location.reload();
 }
 import {
   ref,
