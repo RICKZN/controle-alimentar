@@ -143,7 +143,7 @@ public class ControleController {
     // 📦 ENDPOINTS DE ESTOQUE
     // ==========================================
 
-    @getMapping("/estoque")
+    @GetMapping("/estoque")
     public List<Estoque> obterEstoque() {
         return estoqueRepo.findAll();
     }
