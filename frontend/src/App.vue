@@ -1,5 +1,5 @@
 
-
+<template>
 <template class="app-layout" :class="{ 'sidebar-open': isSidebarOpen }">
 
 
@@ -2485,6 +2485,7 @@
             </div>
         </div>
     </main>
+    </template>
     </template>
 
 <script setup>
