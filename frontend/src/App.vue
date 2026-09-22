@@ -2516,41 +2516,6 @@
 
     </div>
 
-  </div>
-    <div id="app" class="app-layout">
-    <!-- Barra Lateral (Sidebar) -->
-    <aside class="sidebar">
-      <nav>
-        <!-- Prato do dia sempre fica visível (Alunos usam livremente) -->
-        <router-link to="/prato-do-dia" class="nav-item">
-          <span>🍽️ Prato do Dia</span>
-        </router-link>
-
-        <!-- Itens protegidos: Só renderizam com v-if se o usuário estiver logado -->
-        <div v-if="isUserAdmin">
-          <router-link to="/alunos" class="nav-item active-green">
-            <span>👥 Alunos</span>
-          </router-link>
-          
-          <router-link to="/estoque" class="nav-item">
-            <span>📦 Estoque</span>
-          </router-link>
-
-          <button @click="logout" class="btn-logout">🚪 Sair</button>
-        </div>
-
-        <!-- Se não for admin, mostra opção para logar -->
-        <div v-else>
-          <router-link to="/login" class="nav-item"><span>🔑 Login Restrito</span></router-link>
-        </div>
-      </nav>
-    </aside>
-
-    <!-- Conteúdo Principal das Telas -->
-    <main class="main-content">
-      <router-view></router-view>
-    </main>
-  </div>
 </template>
 
 <script setup>
