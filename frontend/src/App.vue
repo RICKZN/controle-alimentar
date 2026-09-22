@@ -142,8 +142,9 @@
                 <label>Senha:</label>
                 <input type="password" v-model="passwordInput" placeholder="••••••••" @keyup.enter="efetuarLoginAdmin" style="padding: 0.75rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;" />
               </div>
-
-              <p v-if="loginError" style="color: #ef4444; font-size: 0.85rem; text-align: center;">{{ loginError }}</p>
+              <p v-if="loginError" style="color: #ef4444; font-size: 0.9rem; font-weight: bold; text-align: center; margin-top: 0.5rem;">
+                ⚠️ {{ loginError }}
+                  </p>
 
               <button @click="efetuarLoginAdmin" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 1rem;">
                 Entrar no Sistema
@@ -2574,6 +2575,7 @@ function verificarLoginAdmin() {
     currentTab.value = 'validacao'; // Libera o sistema direto na aba principal de validação
   } else {
     loginError.value = 'Usuário ou senha inválidos para o Campus Brumado!';
+    
   }
 }
 
