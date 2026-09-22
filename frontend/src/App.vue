@@ -1,8 +1,7 @@
 
 <template>
 <template class="app-layout" :class="{ 'sidebar-open': isSidebarOpen }">
-
-
+</template>
     <!-- =========================================================
          OVERLAY MOBILE
     ========================================================== -->
