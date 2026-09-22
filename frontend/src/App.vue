@@ -2480,8 +2480,7 @@
             Confirmar exclusão
           </button>
 
-        </div>
-      </div>
+
     </div> 
 
 </template>
