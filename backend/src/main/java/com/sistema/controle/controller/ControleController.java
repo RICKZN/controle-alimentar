@@ -13,7 +13,6 @@ import com.sistema.controle.repository.PratoDoDiaRepository;
 import com.sistema.controle.repository.RegistroAtendimentoRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,12 +20,12 @@ import java.time.LocalDateTime;
 import java.time.Duration;
 import java.util.*;
 import java.time.LocalDate;
+
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
 import com.sistema.controle.model.RegistroConsumo;
 import com.sistema.controle.repository.RegistroConsumoRepository;
-
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*") // Habilita CORS para o Vue.js
@@ -47,12 +46,8 @@ public class ControleController {
     @Autowired
     private AlunoRepository alunoRepo;
     
-    @Autowired
-    private RegistroConsumoRepository consumoRepo;
-
-    // Credenciais administrativas fixas obrigatórias para alterações
-    private final String ADMIN_USER = "ifbabdo123";
-    private final String ADMIN_PASS = "campusbdo321";
+@Autowired
+private RegistroConsumoRepository consumoRepo;
 
     @PostConstruct
     public void initData() {
@@ -132,77 +127,41 @@ public class ControleController {
         atualizarEstoqueConsolidado(nome);
     }
 
-    /**
-     * Valida se a requisição possui os cabeçalhos de administrador corretos.
-     */
-    private boolean verificarCredenciaisAdmin(String user, String pass) {
-        return ADMIN_USER.equals(user) && ADMIN_PASS.equals(pass);
-    }
-
-    // ==========================================
-    // 📦 ENDPOINTS DE ESTOQUE
-    // ==========================================
-
     @GetMapping("/estoque")
     public List<Estoque> obterEstoque() {
         return estoqueRepo.findAll();
     }
 
-    @PostMapping("/estoque/{id}/ajustar")
-    public ResponseEntity<?> ajustarEstoque(
-            @RequestHeader(value = "X-Admin-User", required = false) String user,
-            @RequestHeader(value = "X-Admin-Pass", required = false) String pass,
-            @PathVariable Long id, 
-            @RequestParam Double variacao) {
-        
-        if (!verificarCredenciaisAdmin(user, pass)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Acesso negado: Credenciais inválidas para alteração de estoque."));
-        }
-
-        Optional<Estoque> itemOpt = estoqueRepo.findById(id);
-        if (itemOpt.isEmpty()) return ResponseEntity.badRequest().body("Item não encontrado.");
-        Estoque item = itemOpt.get();
-        if (variacao < 0) consumirPorFefo(item.getNome(), Math.abs(variacao));
-        else {
-            EstoqueLote lote = new EstoqueLote();
-            lote.setNome(item.getNome());
-            lote.setUnidade(item.getUnidade());
-            lote.setQuantidade(variacao);
-            lote.setDataCompra(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
-            lote.setDataValidade(LocalDate.now(ZoneId.of("America/Sao_Paulo")).plusMonths(6));
-            lote.setUsuarioResponsavel("Ajuste manual");
-            lote.setDataCadastro(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
-            loteRepo.save(lote);
-            atualizarEstoqueConsolidado(item.getNome());
-        }
-        return ResponseEntity.ok(atualizarEstoqueConsolidado(item.getNome()));
+   @PostMapping("/estoque/{id}/ajustar")
+public ResponseEntity<?> ajustarEstoque(@PathVariable Long id, @RequestParam Double variacao) {
+    Optional<Estoque> itemOpt = estoqueRepo.findById(id);
+    if (itemOpt.isEmpty()) return ResponseEntity.badRequest().body("Item não encontrado.");
+    Estoque item = itemOpt.get();
+    if (variacao < 0) consumirPorFefo(item.getNome(), Math.abs(variacao));
+    else {
+        EstoqueLote lote = new EstoqueLote();
+        lote.setNome(item.getNome());
+        lote.setUnidade(item.getUnidade());
+        lote.setQuantidade(variacao);
+        lote.setDataCompra(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        lote.setDataValidade(LocalDate.now(ZoneId.of("America/Sao_Paulo")).plusMonths(6));
+        lote.setUsuarioResponsavel("Ajuste manual");
+        lote.setDataCadastro(LocalDate.now(ZoneId.of("America/Sao_Paulo")));
+        loteRepo.save(lote);
+        atualizarEstoqueConsolidado(item.getNome());
     }
+    return ResponseEntity.ok(atualizarEstoqueConsolidado(item.getNome()));
+}
 
     @DeleteMapping("/estoque/{id}")
-    public ResponseEntity<?> excluirItemEstoque(
-            @RequestHeader(value = "X-Admin-User", required = false) String user,
-            @RequestHeader(value = "X-Admin-Pass", required = false) String pass,
-            @PathVariable Long id) {
-        
-        if (!verificarCredenciaisAdmin(user, pass)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Acesso negado: Credenciais inválidas para exclusão de estoque."));
-        }
-
+    public ResponseEntity<?> excluirItemEstoque(@PathVariable Long id) {
         estoqueRepo.findById(id).ifPresent(item -> loteRepo.findByNomeIgnoreCaseOrderByDataValidadeAscDataCompraAscIdAsc(item.getNome()).forEach(loteRepo::delete));
         estoqueRepo.deleteById(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/estoque")
-    public ResponseEntity<?> adicionarNovoItem(
-            @RequestHeader(value = "X-Admin-User", required = false) String user,
-            @RequestHeader(value = "X-Admin-Pass", required = false) String pass,
-            @RequestBody EstoqueLote novoLote) {
-        
-        if (!verificarCredenciaisAdmin(user, pass)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Acesso negado: Credenciais inválidas para cadastro de novos itens."));
-        }
-
+    public ResponseEntity<?> adicionarNovoItem(@RequestBody EstoqueLote novoLote) {
         String nome = normalizar(novoLote.getNome());
         if (nome == null || nome.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Informe o nome do alimento."));
@@ -222,13 +181,7 @@ public class ControleController {
     }
 
     @PostMapping("/estoque/{nome}/lotes")
-    public ResponseEntity<?> adicionarLoteExistente(
-            @RequestHeader(value = "X-Admin-User", required = false) String user,
-            @RequestHeader(value = "X-Admin-Pass", required = false) String pass,
-            @PathVariable String nome, 
-            @RequestBody EstoqueLote novoLote) {
-        
-
+    public ResponseEntity<?> adicionarLoteExistente(@PathVariable String nome, @RequestBody EstoqueLote novoLote) {
         String nomeNormalizado = normalizar(nome);
         boolean existe = estoqueRepo.findAll().stream()
             .anyMatch(e -> e.getNome() != null && e.getNome().trim().equalsIgnoreCase(nomeNormalizado));
