@@ -127,6 +127,33 @@
       </header>
 
       <div class="content-area">
+                <!-- =====================================================
+             TELA DE LOGIN RESTRITO (ADMINISTRATIVO)
+        ====================================================== -->
+        <div v-if="currentTab === 'loginRestrito'" class="tab-pane">
+          <div class="card glass-effect" style="max-width: 400px; margin: 4rem auto; padding: 2rem;">
+            <h3 style="text-align: center; color: #10b981; margin-bottom: 1.5rem;">Acesso Administrativo</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label>Usuário:</label>
+                <input type="text" v-model="usernameInput" placeholder="ifbabdo123" style="padding: 0.75rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label>Senha:</label>
+                <input type="password" v-model="passwordInput" placeholder="••••••••" @keyup.enter="efetuarLoginAdmin" style="padding: 0.75rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+              </div>
+
+              <p v-if="loginError" style="color: #ef4444; font-size: 0.85rem; text-align: center;">{{ loginError }}</p>
+
+              <button @click="efetuarLoginAdmin" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 1rem;">
+                Entrar no Sistema
+              </button>
+            </div>
+          </div>
+        </div>
+
 
         <!-- =====================================================
              TELA DE VALIDAÇÃO
