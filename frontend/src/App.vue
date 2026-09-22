@@ -128,30 +128,32 @@
                 <!-- =====================================================
              TELA DE LOGIN RESTRITO (ADMINISTRATIVO)
         ====================================================== -->
-        <div v-if="currentTab === 'loginRestrito'" class="tab-pane">
-          <div class="card glass-effect" style="max-width: 400px; margin: 4rem auto; padding: 2rem;">
+         <div v-if="currentTab === 'loginRestrito'" class="tab-pane">
+          <div class="card glass-effect" style="max-width: 400px; margin: 4rem auto; padding: 2rem; background: #121e17; border: 1px solid #10b981; border-radius: 8px;">
             <h3 style="text-align: center; color: #10b981; margin-bottom: 1.5rem;">Acesso Administrativo</h3>
             
             <div style="display: flex; flex-direction: column; gap: 1rem;">
               <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <label>Usuário:</label>
-                <input type="text" v-model="usernameInput" placeholder="Usuário" style="padding: 0.75rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+                <input type="text" v-model="usernameInput" placeholder="ifbabdo123" style="padding: 0.75rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;" />
               </div>
               
               <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <label>Senha:</label>
                 <input type="password" v-model="passwordInput" placeholder="••••••••" @keyup.enter="efetuarLoginAdmin" style="padding: 0.75rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;" />
               </div>
+
               <p v-if="loginError" style="color: #ef4444; font-size: 0.9rem; font-weight: bold; text-align: center; margin-top: 0.5rem;">
                 ⚠️ {{ loginError }}
-                  </p>
+              </p>
 
-              <button @click="efetuarLoginAdmin" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 1rem;">
+              <button @click="efetuarLoginAdmin" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 1rem; background: #10b981; color: #fff; border: none; cursor: pointer;">
                 Entrar no Sistema
               </button>
             </div>
           </div>
         </div>
+
 
 
         <!-- =====================================================
