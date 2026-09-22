@@ -9,8 +9,7 @@
       v-if="isSidebarOpen"
       class="sidebar-overlay"
       @click="isSidebarOpen = false"
-    ></div>
-
+    > 
     <!-- =========================================================
          SIDEBAR
     ========================================================== -->
