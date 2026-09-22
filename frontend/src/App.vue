@@ -2559,50 +2559,35 @@ const usernameInput = ref('');
 const passwordInput = ref('');
 const loginError = ref('');
 
-import { useRouter } from 'vue-router';
-const router = useRouter();
+// 1. Mudamos de volta para 'ref' para que a barra lateral mude de estado NA HORA ao fazer o login
+const isUserAdmin = ref(localStorage.getItem('isAuthenticated') === 'true');
 
-// Mantenha apenas esta declaração do isUserAdmin como computed [1]
-const isUserAdmin = computed(() => {
-  return localStorage.getItem('isAuthenticated') === 'true';
-});
-
-
-// 1. Função com o primeiro nome possível
-function efetuarLoginAdmin() {
-  executarValidacaoLogin();
-}
-
-// 2. Função com o segundo nome possível
-function verificarLoginAdmin() {
-  executarValidacaoLogin();
-}
-
-// 3. A lógica real que valida os campos usando o .value correto
+// 2. Função unificada que faz a validação e força a atualização do estado
 function executarValidacaoLogin() {
   if (usernameInput.value === 'ifbabdo123' && passwordInput.value === 'campusbdo321') {
     localStorage.setItem('isAuthenticated', 'true');
-    isUserAdmin.value = true; // Atualiza as abas da sidebar na hora
+    isUserAdmin.value = true; // DESTRAVA TODAS AS ABAS DA SIDEBAR NA HORA
     loginError.value = '';
-    currentTab.value = 'validacao'; // Abre o sistema na tela inicial
+    currentTab.value = 'validacao'; // Abre na tela inicial, mas com o menu todo liberado
   } else {
     loginError.value = 'Usuário ou senha inválidos para o Campus Brumado!';
   }
 }
 
+// Mapeamento dos dois nomes possíveis para o HTML encontrar
+function efetuarLoginAdmin() {
+  executarValidacaoLogin();
+}
+
+function verificarLoginAdmin() {
+  executarValidacaoLogin();
+}
+
+// 3. Função de logout ajustada para limpar o estado reativo
 function logoutAdmin() {
   localStorage.removeItem('isAuthenticated');
-  
-  try {
-    if (router) {
-      router.push('/');
-    } else {
-      window.location.href = '/';
-    }
-  } catch (e) {
-    window.location.href = '/'; // Fallback de segurança para evitar tela branca
-  }
-  
+  isUserAdmin.value = false; // Tranca o menu lateral novamente
+  currentTab.value = 'loginRestrito';
   window.location.reload();
 }
 
