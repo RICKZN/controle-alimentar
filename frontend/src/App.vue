@@ -2537,6 +2537,33 @@
 
 <script setup>
   
+  import { ref, computed } from 'vue';
+
+
+const usernameInput = ref('');
+const passwordInput = ref('');
+const loginError = ref('');
+const isUserAdmin = ref(localStorage.getItem('isAuthenticated') === 'true');
+
+
+function efetuarLoginAdmin() {
+  if (usernameInput.value === 'ifbabdo123' && passwordInput.value === 'campusbdo321') {
+    localStorage.setItem('isAuthenticated', 'true');
+    isUserAdmin.value = true;
+    loginError.value = '';
+    currentTab.value = 'alunos'; 
+  } else {
+    loginError.value = 'Usuário ou senha inválidos para o Campus Brumado!';
+  }
+}
+
+
+function logoutAdmin() {
+  localStorage.removeItem('isAuthenticated');
+  isUserAdmin.value = false;
+  currentTab.value = 'validacao';
+}
+
 
 import { useRouter } from 'vue-router';
 
