@@ -2562,13 +2562,19 @@
 const usernameInput = ref('');
 const passwordInput = ref('');
 const loginError = ref('');
-const isUserAdmin = ref(localStorage.getItem('isAuthenticated') === 'true');
 
+import { useRouter } from 'vue-router';
+const router = useRouter();
+
+// Mantenha apenas esta declaração do isUserAdmin como computed [1]
+const isUserAdmin = computed(() => {
+  return localStorage.getItem('isAuthenticated') === 'true';
+});
 
 function efetuarLoginAdmin() {
   if (usernameInput.value === 'ifbabdo123' && passwordInput.value === 'campusbdo321') {
     localStorage.setItem('isAuthenticated', 'true');
-    isUserAdmin.value = true;
+    // Como agora é uma computed, as alterações no localStorage refletem automaticamente [1]
     loginError.value = '';
     currentTab.value = 'alunos'; 
   } else {
@@ -2576,24 +2582,10 @@ function efetuarLoginAdmin() {
   }
 }
 
-
 function logoutAdmin() {
   localStorage.removeItem('isAuthenticated');
-  isUserAdmin.value = false;
   currentTab.value = 'validacao';
 }
-
-
-import { useRouter } from 'vue-router';
-
-
-const router = useRouter();
-
-// Declaração da propriedade reativa para verificar se é Admin
-const isUserAdmin = computed(() => {
-  return localStorage.getItem('isAuthenticated') === 'true';
-});
-
 
 function logout() {
   localStorage.removeItem('isAuthenticated');
