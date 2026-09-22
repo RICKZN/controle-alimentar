@@ -2463,8 +2463,7 @@
           </span>
 
         </div>
-
-        <div class="modal-exclusao-acoes">
+   <div class="modal-exclusao-acoes">
 
           <button
             @click="fecharModalExclusao"
@@ -2483,8 +2482,9 @@
 
         </div>
       </div>
-      </div>
-        
+    </div> 
+
+</template>
     
 
 </template>
