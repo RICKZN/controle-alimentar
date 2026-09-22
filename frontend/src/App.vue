@@ -135,7 +135,7 @@
             <div style="display: flex; flex-direction: column; gap: 1rem;">
               <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <label>Usuário:</label>
-                <input type="text" v-model="usernameInput" placeholder="ifbabdo123" style="padding: 0.75rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+                <input type="text" v-model="usernameInput" placeholder="Usuário" style="padding: 0.75rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;" />
               </div>
               
               <div style="display: flex; flex-direction: column; gap: 0.5rem;">
