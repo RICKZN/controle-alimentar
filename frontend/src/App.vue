@@ -1,6 +1,7 @@
-<template>
 
-  <div class="app-layout" :class="{ 'sidebar-open': isSidebarOpen }">
+
+<template class="app-layout" :class="{ 'sidebar-open': isSidebarOpen }">
+
 
     <!-- =========================================================
          OVERLAY MOBILE
@@ -2480,15 +2481,11 @@
             🗑️
             Confirmar exclusão
           </button>
-     </div>
-      </div> 
-    </div> 
-  </main> 
-</div> 
-
-    
-
-</template>
+              </div>
+            </div>
+        </div>
+    </main>
+    </template>
 
 <script setup>
   
