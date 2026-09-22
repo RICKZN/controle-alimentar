@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { createApp } from 'vue'
 import App from './App.vue'
-import Login from './components/TelaLogin.vue' 
+import Login from './components/Login.vue' 
 const routes = [
   { 
     path: '/', 
