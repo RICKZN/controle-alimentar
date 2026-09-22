@@ -1,6 +1,6 @@
 <template>
 
-  <!-- 🔒 TELA DE LOGIN FIXA: Aparece apenas se NÃO estiver logado -->
+
   <div v-show="!isUserAdmin" class="login-obrigatorio-container" style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #0b1611; color: #fff; width: 100vw; position: fixed; inset: 0; z-index: 9999;">
     <div class="card glass-effect" style="max-width: 400px; width: 100%; padding: 2rem; background: #121e17; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid #10b981;">
       
@@ -33,8 +33,7 @@
     </div>
   </div>
 
-  <!-- 🔓 O SEU LAYOUT ORIGINAL DO IFBA: Adicionado v-show reativo direto na sua div da linha 2 -->
-  <div v-show="isUserAdmin" class="app-layout" :class="{ 'sidebar-open': isSidebarOpen }">
+
 
 
 
