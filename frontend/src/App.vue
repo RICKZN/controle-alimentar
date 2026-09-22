@@ -36,50 +36,90 @@
         </div>
 
       </div>
+<nav class="sidebar-nav">
 
-      <nav class="sidebar-nav">
-
-
-        <button @click="changeTab('validacao')" :class="{ active: currentTab === 'validacao' }">
-          <span class="icon">📷</span> Validação
+        <!-- =========================================================
+             SEÇÕES DE ACESSO LIVRE (SEMPRE VISÍVEIS)
+        ========================================================== -->
+        <button
+          @click="changeTab('validacao')"
+          :class="{ active: currentTab === 'validacao' }"
+        >
+          <span class="icon">📷</span>
+          Validação
         </button>
 
-        <button @click="changeTab('prato')" :class="{ active: currentTab === 'prato' }">
-          <span class="icon">🍽️</span> Prato do Dia
+        <button
+          @click="changeTab('prato')"
+          :class="{ active: currentTab === 'prato' }"
+        >
+          <span class="icon">🍽️</span>
+          Prato do Dia
         </button>
 
+        <button
+          @click="changeTab('alertas')"
+          :class="{ active: currentTab === 'alertas' }"
+        >
+          <span class="icon">⚠️</span>
+          Alertas
+        </button>
 
+        <button
+          @click="changeTab('geracao')"
+          :class="{ active: currentTab === 'geracao' }"
+        >
+          <span class="icon">🎟️</span>
+          Gerar Fichas
+        </button>
+
+        <!-- =========================================================
+             SEÇÕES PROTEGIDAS (ALUNOS E ESTOQUE) - EXIGEM LOGIN
+        ========================================================== -->
         <template v-if="isUserAdmin">
-          <button @click="changeTab('alunos')" :class="{ active: currentTab === 'alunos' }">
-            <span class="icon">👥</span> Alunos
+          
+          <button
+            @click="changeTab('alunos')"
+            :class="{ active: currentTab === 'alunos' }"
+            style="border-top: 1px solid #2d3748; padding-top: 1rem; margin-top: 1rem;"
+          >
+            <span class="icon">👥</span>
+            Alunos
           </button>
 
-          <button @click="changeTab('estoque')" :class="{ active: currentTab === 'estoque' }">
-            <span class="icon">📦</span> Estoque
+          <button
+            @click="changeTab('estoque')"
+            :class="{ active: currentTab === 'estoque' }"
+          >
+            <span class="icon">📦</span>
+            Estoque
           </button>
 
-          <button @click="changeTab('alertas')" :class="{ active: currentTab === 'alertas' }">
-            <span class="icon">⚠️</span> Alertas
+          <!-- Botão Sair visível somente para o administrador -->
+          <button
+            @click="logoutAdmin"
+            class="btn-logout"
+            style="color: #ef4444; margin-top: 2rem; background: none; border: none; width: 100%; text-align: left; cursor: pointer;"
+          >
+            <span class="icon">🚪</span>
+            Sair do Admin
           </button>
 
-          <button @click="changeTab('geracao')" :class="{ active: currentTab === 'geracao' }">
-            <span class="icon">🎟️</span> Gerar Fichas
-          </button>
-
-          <button @click="logoutAdmin" class="btn-logout-sidebar" style="color: #ef4444; margin-top: 2rem;">
-            <span class="icon">🚪</span> Sair
-          </button>
         </template>
 
- 
+        <!-- SE NÃO LOGADO: Exibe a opção de efetuar login para liberar Alunos/Estoque -->
         <template v-else>
-          <button @click="changeTab('loginRestrito')" :class="{ active: currentTab === 'loginRestrito' }" style="border-top: 1px solid #333; margin-top: 1rem;">
-            <span class="icon">🔑</span> Login Restrito
+          <button
+            @click="changeTab('loginRestrito')"
+            :class="{ active: currentTab === 'loginRestrito' }"
+            style="border-top: 1px solid #2d3748; margin-top: 1rem; color: #10b981;"
+          >
+            <span class="icon">🔑</span>
+            Login Admin
           </button>
         </template>
 
       </nav>
-
 
       <div class="sidebar-footer">
         <p>Controle de Refeições</p>
