@@ -1,6 +1,5 @@
-
 <template>
- <div
+  <div
     class="app-layout"
     :class="{ 'sidebar-open': isSidebarOpen }"
   >
@@ -13,11 +12,11 @@
       class="sidebar-overlay"
       @click="isSidebarOpen = false"
     ></div>
+
     <!-- =========================================================
          SIDEBAR
     ========================================================== -->
     <aside class="sidebar">
-
 
       <div class="sidebar-header">
 
@@ -36,47 +35,58 @@
         </div>
 
       </div>
+
       <nav class="sidebar-nav">
 
+        <button
+          @click="changeTab('validacao')"
+          :class="{ active: currentTab === 'validacao' }"
+        >
+          <span class="icon">📷</span>
+          Validação
+        </button>
 
-        <template v-if="isUserAdmin">
-          <button @click="changeTab('validacao')" :class="{ active: currentTab === 'validacao' }">
-            <span class="icon">📷</span> Validação
-          </button>
+        <button
+          @click="changeTab('alunos')"
+          :class="{ active: currentTab === 'alunos' }"
+        >
+          <span class="icon">👥</span>
+          Alunos
+        </button>
 
-          <button @click="changeTab('alunos')" :class="{ active: currentTab === 'alunos' }">
-            <span class="icon">👥</span> Alunos
-          </button>
+        <button
+          @click="changeTab('estoque')"
+          :class="{ active: currentTab === 'estoque' }"
+        >
+          <span class="icon">📦</span>
+          Estoque
+        </button>
 
-          <button @click="changeTab('estoque')" :class="{ active: currentTab === 'estoque' }">
-            <span class="icon">📦</span> Estoque
-          </button>
+        <button
+          @click="changeTab('prato')"
+          :class="{ active: currentTab === 'prato' }"
+        >
+          <span class="icon">🍽️</span>
+          Prato do Dia
+        </button>
 
-          <button @click="changeTab('prato')" :class="{ active: currentTab === 'prato' }">
-            <span class="icon">🍽️</span> Prato do Dia
-          </button>
+        <button
+          @click="changeTab('alertas')"
+          :class="{ active: currentTab === 'alertas' }"
+        >
+          <span class="icon">⚠️</span>
+          Alertas
+        </button>
 
-          <button @click="changeTab('alertas')" :class="{ active: currentTab === 'alertas' }">
-            <span class="icon">⚠️</span> Alertas
-          </button>
-
-          <button @click="changeTab('geracao')" :class="{ active: currentTab === 'geracao' }">
-            <span class="icon">🎟️</span> Gerar Fichas
-          </button>
-
-          <button @click="efetuarLogoutGeral" class="btn-logout" style="color: #ef4444; margin-top: 2rem; background: none; border: none; width: 100%; text-align: left; cursor: pointer;">
-            <span class="icon">🚪</span> Bloquear Sistema
-          </button>
-        </template>
-
-        <template v-else>
-          <button :class="{ active: currentTab === 'loginRestrito' }" style="color: #ef4444; border-top: 1px solid #333; margin-top: 1rem; cursor: default;">
-            <span class="icon">🔒</span> Sistema Bloqueado
-          </button>
-        </template>
+        <button
+          @click="changeTab('geracao')"
+          :class="{ active: currentTab === 'geracao' }"
+        >
+          <span class="icon">🎟️</span>
+          Gerar Fichas
+        </button>
 
       </nav>
-
 
       <div class="sidebar-footer">
         <p>Controle de Refeições</p>
@@ -125,9 +135,6 @@
       </header>
 
       <div class="content-area">
-
- </div>
-
 
         <!-- =====================================================
              TELA DE VALIDAÇÃO
@@ -2467,7 +2474,8 @@
           </span>
 
         </div>
-   <div class="modal-exclusao-acoes">
+
+        <div class="modal-exclusao-acoes">
 
           <button
             @click="fecharModalExclusao"
@@ -2483,52 +2491,17 @@
             🗑️
             Confirmar exclusão
           </button>
-              </div>
-            </div>
-        </div>
-    </main>
-    </template>
 
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</template>
 
 <script setup>
-  
-const usernameInput = ref('');
-const passwordInput = ref('');
-const loginError = ref('');
-
-// 1. Mudamos de volta para 'ref' para que a barra lateral mude de estado NA HORA ao fazer o login
-const isUserAdmin = ref(localStorage.getItem('isAuthenticated') === 'true');
-
-// 2. Função unificada que faz a validação e força a atualização do estado
-function executarValidacaoLogin() {
-  if (usernameInput.value === 'ifbabdo123' && passwordInput.value === 'campusbdo321') {
-    localStorage.setItem('isAuthenticated', 'true');
-    isUserAdmin.value = true; // DESTRAVA TODAS AS ABAS DA SIDEBAR NA HORA
-    loginError.value = '';
-    currentTab.value = 'validacao'; // Abre na tela inicial, mas com o menu todo liberado
-  } else {
-    loginError.value = 'Usuário ou senha inválidos para o Campus Brumado!';
-  }
-}
-
-// Mapeamento dos dois nomes possíveis para o HTML encontrar
-function efetuarLoginAdmin() {
-  executarValidacaoLogin();
-}
-
-function verificarLoginAdmin() {
-  executarValidacaoLogin();
-}
-
-// 3. Função de logout ajustada para limpar o estado reativo
-function logoutAdmin() {
-  localStorage.removeItem('isAuthenticated');
-  isUserAdmin.value = false; // Tranca o menu lateral novamente
-  currentTab.value = 'loginRestrito';
-  window.location.reload();
-}
-
-
 
 import {
   ref,
@@ -2560,19 +2533,8 @@ const API_URL =
    ESTADOS GERAIS
 ============================================================= */
 
-
-const currentTab = ref('loginRestrito');
-
-
-
-
-
-if (!isUserAdmin.value) {
-  currentTab.value = 'loginRestrito';
-} else if (currentTab.value === 'loginRestrito') {
-  currentTab.value = 'validacao'; 
-}
-
+const currentTab =
+  ref('validacao');
 
 const isSidebarOpen =
   ref(false);
@@ -5852,18 +5814,6 @@ const switchCamera =
 const changeTab =
   async (tab) => {
 
-  
-    if (!isUserAdmin.value && tab !== 'loginRestrito') {
-      loginError.value = 'Acesso restrito! Digite o usuário e a senha para liberar o sistema.';
-      currentTab.value = 'loginRestrito';
-      isSidebarOpen.value = false;
-      if (isCameraActive.value) {
-        await stopCamera();
-      }
-      return; 
-    }
-
-
     if (
       isCameraActive.value
     ) {
@@ -5919,7 +5869,6 @@ const changeTab =
     }
 
   };
-
 
 
 /* =============================================================
@@ -9991,9 +9940,5 @@ select.input-field option {
   }
 
 }
-.sidebar { background-color: #0b1611; width: 250px; padding: 1rem; }
-.nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; color: #9aa0a6; border-radius: 8px; margin-bottom: 0.5rem; text-decoration: none; }
-.active-green { background-color: #00693e; color: #ffffff; font-weight: bold; }
-.btn-logout { background: none; border: none; color: #ff5252; padding: 0.75rem 1rem; width: 100%; text-align: left; cursor: pointer; }
 
 </style>
