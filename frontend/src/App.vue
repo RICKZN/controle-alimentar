@@ -31,12 +31,7 @@
     </div>
   </div>
 
-  <!-- 🔓 SE ESTIVER LOGADO: Carrega a sua estrutura original completa -->
-  <div v-else class="app-layout" :class="{ 'sidebar-open': isSidebarOpen }">
-  <div
-    class="app-layout"
-    :class="{ 'sidebar-open': isSidebarOpen }"
-  >
+
 
     <!-- =========================================================
          OVERLAY MOBILE
@@ -2547,10 +2542,10 @@
           </button>
 
         </div>
-
+      </div>
       </div>
 
-    </div>
+    </main>
     </div>
 
 </template>
