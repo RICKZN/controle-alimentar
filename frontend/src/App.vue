@@ -2518,8 +2518,8 @@
       </div>
       </div>
 
-    </main>
-    </div>
+
+    
 
 </template>
 
