@@ -2552,15 +2552,20 @@ const isUserAdmin = computed(() => {
 function logout() {
   localStorage.removeItem('isAuthenticated');
   
-  if (router) {
-    router.push('/prato-do-dia');
-  } else {
-    window.location.href = '/prato-do-dia'; 
+  try {
+    if (router) {
+      router.push('/login');
+    } else {
+      window.location.href = '/login';
+    }
+  } catch (e) {
+    window.location.href = '/login'; // Fallback de segurança para evitar tela branca
   }
   
-
   window.location.reload();
 }
+
+
 import {
   ref,
   onMounted,
