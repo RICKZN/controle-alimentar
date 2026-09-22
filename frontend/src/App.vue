@@ -2565,14 +2565,7 @@ const router = useRouter();
 const isUserAdmin = computed(() => {
   return localStorage.getItem('isAuthenticated') === 'true';
 });
-function changeTab(tab) {
-  if (!isUserAdmin.value) {
-    loginError.value = 'Acesso restrito! Digite o usuário e a senha para liberar o sistema.';
-    currentTab.value = 'loginRestrito';
-  } else {
-    currentTab.value = tab;
-  }
-}
+
 
 function verificarLoginAdmin() {
   if (usernameInput.value === 'ifbabdo123' && passwordInput.value === 'campusbdo321') {
@@ -5930,6 +5923,18 @@ const switchCamera =
 const changeTab =
   async (tab) => {
 
+  
+    if (!isUserAdmin.value && tab !== 'loginRestrito') {
+      loginError.value = 'Acesso restrito! Digite o usuário e a senha para liberar o sistema.';
+      currentTab.value = 'loginRestrito';
+      isSidebarOpen.value = false;
+      if (isCameraActive.value) {
+        await stopCamera();
+      }
+      return; 
+    }
+
+
     if (
       isCameraActive.value
     ) {
@@ -5985,6 +5990,7 @@ const changeTab =
     }
 
   };
+
 
 
 /* =============================================================
