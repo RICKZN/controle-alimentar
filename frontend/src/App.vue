@@ -2642,9 +2642,7 @@ const API_URL =
 const currentTab = ref('loginRestrito');
 
 
-const isUserAdmin = computed(() => {
-  return localStorage.getItem('isAuthenticated') === 'true';
-});
+
 
 
 if (!isUserAdmin.value) {
