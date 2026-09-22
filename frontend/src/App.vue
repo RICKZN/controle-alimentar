@@ -2568,39 +2568,44 @@ const isUserAdmin = computed(() => {
 });
 
 
+// 1. Função com o primeiro nome possível
+function efetuarLoginAdmin() {
+  executarValidacaoLogin();
+}
+
+// 2. Função com o segundo nome possível
 function verificarLoginAdmin() {
+  executarValidacaoLogin();
+}
+
+// 3. A lógica real que valida os campos usando o .value correto
+function executarValidacaoLogin() {
   if (usernameInput.value === 'ifbabdo123' && passwordInput.value === 'campusbdo321') {
     localStorage.setItem('isAuthenticated', 'true');
+    isUserAdmin.value = true; // Atualiza as abas da sidebar na hora
     loginError.value = '';
-    currentTab.value = 'validacao'; // Libera o sistema direto na aba principal de validação
+    currentTab.value = 'validacao'; // Abre o sistema na tela inicial
   } else {
     loginError.value = 'Usuário ou senha inválidos para o Campus Brumado!';
-    
   }
 }
 
-function efetuarLogoutGeral() {
-  localStorage.removeItem('isAuthenticated');
-  currentTab.value = 'loginRestrito'; // Tranca o sistema inteiro novamente no ato
-  window.location.reload(); // Atualiza a página de forma limpa
-}
-
-
-function logout() {
+function logoutAdmin() {
   localStorage.removeItem('isAuthenticated');
   
   try {
     if (router) {
-      router.push('/login');
+      router.push('/');
     } else {
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   } catch (e) {
-    window.location.href = '/login'; // Fallback de segurança para evitar tela branca
+    window.location.href = '/'; // Fallback de segurança para evitar tela branca
   }
   
   window.location.reload();
 }
+
 
 
 import {
