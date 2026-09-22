@@ -18,6 +18,7 @@
     ========================================================== -->
     <aside class="sidebar">
 
+
       <div class="sidebar-header">
 
         <img
@@ -2556,9 +2557,6 @@
 
 <script setup>
   
-  import { ref, computed } from 'vue';
-
-
 const usernameInput = ref('');
 const passwordInput = ref('');
 const loginError = ref('');
