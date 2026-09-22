@@ -1,7 +1,10 @@
 
 <template>
-<template class="app-layout" :class="{ 'sidebar-open': isSidebarOpen }">
-</template>
+ <div
+    class="app-layout"
+    :class="{ 'sidebar-open': isSidebarOpen }"
+  >
+
     <!-- =========================================================
          OVERLAY MOBILE
     ========================================================== -->
@@ -9,7 +12,7 @@
       v-if="isSidebarOpen"
       class="sidebar-overlay"
       @click="isSidebarOpen = false"
-    > </div>
+    ></div>
     <!-- =========================================================
          SIDEBAR
     ========================================================== -->
